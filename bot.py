@@ -11,8 +11,6 @@ token = '613654042:AAHnLhu4TFC-xJ4IylkXdczX9ihnIgtqnI8'
 updater = Updater(token=token)
 dispatcher = updater.dispatcher
 #Karma Dictionary
-import numpy as np
-
 import pickle
 
 karma_dictionary = dict()
@@ -77,7 +75,7 @@ def reply(bot: tg.Bot, update: tg.Update):
         print(user)
         save_user(user)
 
-    bot.send_message(chat_id=update.message.chat_id, text=update.message.text)
+    #bot.send_message(chat_id=update.message.chat_id, text=update.message.text)
 
 def start(bot, update):
     bot.send_message(chat_id=update.message.chat_id, text="I'm a bot, please talk to me!")
@@ -100,7 +98,9 @@ def showkarma(bot,update,args):
     users.sort(key=lambda user: user.get_karma(), reverse=True)
     for user in users:
         message = message + str(user) + "\n"
-        
+
+    if message == "":
+        message = "Oops I did not find any karma"
     bot.send_message(chat_id=update.message.chat_id, text=message)
 
 def pluskarma(bot, update, args):
