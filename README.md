@@ -18,3 +18,8 @@ There should be a /showscores command which shows all users scores. If arguments
 Then only that username's score is shown.
 
 It would be fun to add pretty html5 representations since that is supported by telegram api bot.
+
+
+TODO:
+
+[ ] Seperate karma by chatid so bot can be run for seperate chats
