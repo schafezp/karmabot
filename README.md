@@ -5,4 +5,16 @@ For architecture I was imaging using some type of database server to correlate u
 
 
 ## Actions
-Users should be able to reply to another users post with a short message indicating if they give or take away karma. This message could be plain text like "+1" or a command like "/+1"
+The Karma bot will track each user in the telegram group it is a member of and keep track of a score for that individual. Anyone in the chat can use the command /plus1 to add one total score to that user/post or /minus1 to remove a score point.
+
+There should be a way to check the score of posts perhaps by replying to the post with another command like /checkscore.
+
+There should be a /showscores command which shows all users scores. If arguments are passed such as,
+
+```
+/showscore username
+```
+
+Then only that username's score is shown.
+
+It would be fun to add pretty html5 representations since that is supported by telegram api bot.
