@@ -2,11 +2,14 @@ from telegram.ext import Updater
 import telegram as tg
 from user import User
 import logging
+
+import random
+
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-version = '1.00'
+version = '1.01'
 changelog_url = 'https://schafezp.com/schafezp/txkarmabot/blob/master/CHANGELOG.md'
 
 production_token = '613654042:AAHnLhu4TFC-xJ4IylkXdczX9ihnIgtqnI8'
@@ -42,10 +45,6 @@ except FileNotFoundError as fnfe:
 def get_user_by_reply_user(reply_user: tg.User):
     if reply_user.id not in karma_dictionary:
         user = User(reply_user)
-        print(reply_user.id)
-        print(karma_dictionary)
-        print(type(karma_dictionary))
-
         karma_dictionary[reply_user.id] = user
         return user
     else:
@@ -65,7 +64,6 @@ def reset_karma():
 
 def reply(bot: tg.Bot, update: tg.Update):
     reply_user = update.message.reply_to_message.from_user
-    
 
     # might consume this info later down the line for metrics
     """ reply_to_message = update.message.reply_to_message
@@ -76,17 +74,25 @@ def reply(bot: tg.Bot, update: tg.Update):
 
     #TODO: check if +1 is first 2chars
     if reply_text == "/plus1" or reply_text == "+1" :
-        user = get_user_by_reply_user(reply_user)
-        user.give_karma()
-        print(user)
-        save_user(user)
+        #if user tried to +1 self themselves 
+        if(reply_user.id == update.message.from_user.id):
+            responses = [" how could you +1 yourself?", " what do you think you're doing?", " is your post really worth +1ing yourself?", " you won't get any goodie points for that", " try +1ing someone else instead of yourself!", " who are you to +1 yourself?", " beware the Jabberwocky", " have a 🍪!"]
+            response = random.choice(responses)
+            message = "" + reply_user.first_name + response
+            bot.send_message(chat_id=update.message.chat_id, text=message)        
+        else:
+            user = get_user_by_reply_user(reply_user)
+            user.give_karma()
+            print(user)
+            save_user(user)
+        
     elif reply_text == "/minus1" or reply_text == "-1":
         user = get_user_by_reply_user(reply_user)
         user.remove_karma()
         print(user)
         save_user(user)
 
-    #bot.send_message(chat_id=update.message.chat_id, text=update.message.text)
+    
 
 def start(bot, update):
     bot.send_message(chat_id=update.message.chat_id, text="I'm a bot, please talk to me!")
