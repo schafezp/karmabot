@@ -15,6 +15,17 @@ changelog_url = 'https://schafezp.com/schafezp/txkarmabot/blob/master/CHANGELOG.
 production_token = '613654042:AAHnLhu4TFC-xJ4IylkXdczX9ihnIgtqnI8'
 test_token = '650879477:AAFO_o2_nt2gmwA-h0TeIo4bSqI-WLxp6VM'
 is_production = False
+
+import os
+
+try:
+    if os.environ['PROD'] == "true":
+        print("PROD var found! running in production mode")
+        is_production = True
+except KeyError as ke:
+    print("PROD var not found so running test")
+    is_production = False
+
 updater = None
 if is_production:
     updater = Updater(token=production_token)
