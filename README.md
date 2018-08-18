@@ -25,3 +25,5 @@ TODO:
 [ ] Seperate karma by chatid so bot can be run for seperate chats
 [ ] fix /plus1 and /minus1 being parsed by reply handler
 [ ] reply to a message with /showpostkarma (or similar) to do a print out of the karma of a post 
+[ ] Make a user unable to +1 or -1 themselves
+[ ] Don't show the bot on /showkarma
