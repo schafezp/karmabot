@@ -137,7 +137,7 @@ def echo(bot, update):
 def caps(bot, update, args):
      text_caps = ' '.join(args).upper()
      bot.send_message(chat_id=update.message.chat_id, text=text_caps)
-def showversion(bot,update,args):
+def show_version(bot,update,args):
     message = "Version: " + version + "\n" + "Bot powered by Python."
     message = message + "\nChangelog found at: " + changelog_url
     bot.send_message(chat_id=update.message.chat_id, text=message)
@@ -176,10 +176,10 @@ def showkarma(bot,update,args):
         message = "Oops I did not find any karma"
     bot.send_message(chat_id=update.message.chat_id, text=message)
 
-def pluskarma(bot, update, args):
+def plus_karma(bot, update, args):
     bot.send_message(chat_id=update.message.chat_id, text="you threw +1 karma into the void")
 
-def minuskarma(bot, update, args):
+def minus_karma(bot, update, args):
     bot.send_message(chat_id=update.message.chat_id, text="you threw -1 karma into the void")
 
 def error(bot, update, error):
@@ -211,7 +211,7 @@ def main():
     showkarma_handler = CommandHandler('showkarma', showkarma, pass_args=True)
     dispatcher.add_handler(showkarma_handler)
 
-    showversion_handler = CommandHandler('version', showversion, pass_args=True)
+    showversion_handler = CommandHandler('version', show_version, pass_args=True)
     dispatcher.add_handler(showversion_handler)
 
     """ plus_karma_handler = CommandHandler('+1', pluskarma, pass_args=True)
