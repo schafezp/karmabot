@@ -43,7 +43,7 @@ dispatcher = updater.dispatcher
 import pickle
 
 
-#dict of chat_id: int -> Karma_dictionary
+#dict of chat_id: int -> Karma_dictionary (which is user_id: int -> user: User)
 chat_to_karma_dictionary = dict()
 chat_to_karma_filename = None
 if is_production:
@@ -58,25 +58,6 @@ except FileNotFoundError as fnfe:
     print("Chat to Karma dictionary not found. Creating one")
     with open(chat_to_karma_filename, "wb") as backupfile:
         pickle.dump(chat_to_karma_dictionary, backupfile)
-
-
-#dict of id: int -> User
-""" karma_dictionary = dict()
-karma_dictionary_filename = None
-if is_production:
-    karma_dictionary_filename = "karma_dictionary.p"
-else:
-    karma_dictionary_filename = "karma_dictionary_test.p"
-
-
-try:
-    with open(karma_dictionary_filename, "rb") as backupfile:
-        karma_dictionary = pickle.load(backupfile)
-except FileNotFoundError as fnfe:
-    print("Karma dictionary not found. Creating one")
-    karma_dictionary = dict()
-    with open(karma_dictionary_filename, "wb") as backupfile:
-        pickle.dump(karma_dictionary, backupfile) """
 
 def get_user_by_reply_user(reply_user: tg.User, chat_id: int):
     print("Chat id: " + str(chat_id))
