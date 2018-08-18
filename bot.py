@@ -7,19 +7,30 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 logger = logging.getLogger(__name__)
 
 
-token = '613654042:AAHnLhu4TFC-xJ4IylkXdczX9ihnIgtqnI8'
-updater = Updater(token=token)
+production_token = '613654042:AAHnLhu4TFC-xJ4IylkXdczX9ihnIgtqnI8'
+test_token = '650879477:AAFO_o2_nt2gmwA-h0TeIo4bSqI-WLxp6VM'
+is_production = False
+updater = None
+if is_production:
+    updater = Updater(token=production_token)
+else:
+    updater = Updater(token=test_token)
+
 dispatcher = updater.dispatcher
 #Karma Dictionary
 import pickle
 
 karma_dictionary = dict()
-karma_dictionary_filename = "karma_dictionary.p"
+karma_dictionary_filename = None
+if is_production:
+    karma_dictionary_filename = "karma_dictionary.p"
+else:
+    karma_dictionary_filename = "karma_dictionary_test.p"
+
+
 try:
-    #karma_dictionary = np.load(karma_dictionary_filename)
     with open(karma_dictionary_filename, "rb") as backupfile:
         karma_dictionary = pickle.load(backupfile)
-
 except FileNotFoundError as fnfe:
     print("Karma dictionary not found. Creating one")
     karma_dictionary = dict()
