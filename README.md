@@ -27,3 +27,4 @@ TODO:
 - [ ] reply to a message with /showpostkarma (or similar) to do a print out of -the karma of a post 
 - [x] Make a user unable to +1 or -1 themselves
 - [x] Don't show the bot on /showkarma
+- [ ] Fix bug: currently users without usernames cannot receive karma. 
