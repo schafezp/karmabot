@@ -43,8 +43,13 @@ dispatcher = updater.dispatcher
 import pickle
 
 
+from typing import Dict, NewType
+
+ChatToKarmaDict = NewType('ChatToKarmaDict', Dict[int,Dict[int,User]])
 #dict of chat_id: int -> Karma_dictionary (which is user_id: int -> user: User)
-chat_to_karma_dictionary = dict()
+chat_to_karma_dictionary : ChatToKarmaDict = dict()  
+
+
 chat_to_karma_filename = None
 if is_production:
     chat_to_karma_filename = "chat_to_karma_dictionary.p"
@@ -53,7 +58,7 @@ else:
 
 try:
     with open(chat_to_karma_filename, "rb") as backupfile:
-        chat_to_karma_dictionary = pickle.load(backupfile)
+        chat_to_karma_dictionary: ChatToKarmaDict = pickle.load(backupfile)        
 except FileNotFoundError as fnfe:
     print("Chat to Karma dictionary not found. Creating one")
     with open(chat_to_karma_filename, "wb") as backupfile:
@@ -82,6 +87,8 @@ def get_user_by_reply_user(reply_user: tg.User, chat_id: int):
 
 def save_user(user: User, chat_id: int):
     print(chat_id)
+    print("Chat to karma: ")
+    print(chat_to_karma_dictionary)
     karma_dictionary = chat_to_karma_dictionary[chat_id]
     karma_dictionary[user.id] = user
     with open(chat_to_karma_filename, "wb") as backupfile:
@@ -94,6 +101,7 @@ def reset_karma(chat_id: int):
         pickle.dump(chat_to_karma_dictionary, backupfile)
 
 def reply(bot: tg.Bot, update: tg.Update):
+    print("reply")
     reply_user = update.message.reply_to_message.from_user
 
     print(update.message.reply_to_message)
@@ -110,13 +118,14 @@ def reply(bot: tg.Bot, update: tg.Update):
     if len(reply_text) >= 2 and reply_text[:2] == "+1":
         #if user tried to +1 self themselves 
         if(reply_user.id == update.message.from_user.id):
-            responses = [" how could you +1 yourself?", " what do you think you're doing?", " is your post really worth +1ing yourself?", " you won't get any goodie points for that", " try +1ing someone else instead of yourself!", " who are you to +1 yourself?", " beware the Jabberwocky", " have a 🍪!"]
-            response = random.choice(responses)
+            witty_responses = [" how could you +1 yourself?", " what do you think you're doing?", " is your post really worth +1ing yourself?", " you won't get any goodie points for that", " try +1ing someone else instead of yourself!", " who are you to +1 yourself?", " beware the Jabberwocky", " have a 🍪!", " you must give praise. May he 🍔melt🍔! "]
+            response = random.choice(witty_responses)
             message = "" + reply_user.first_name + response
             bot.send_message(chat_id=chat_id, text=message)        
         else:
             user = get_user_by_reply_user(reply_user, chat_id)
             user.give_karma()
+            print("user")
             print(user)
             save_user(user, chat_id)
     elif len(reply_text) >= 2 and reply_text[:2] == "-1":
@@ -169,8 +178,9 @@ def show_karma(bot,update,args):
             users.append(user)   
 
     users.sort(key=lambda user: user.get_karma(), reverse=True)
+    message = message + "Username: Karma"
     for user in users:
-        message = message + str(user) + "\n"
+        message = message + user.get_username() + ": "+ str(user.get_karma()) + "\n"
 
     if message == "":
         message = "Oops I did not find any karma"
