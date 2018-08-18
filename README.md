@@ -28,3 +28,4 @@ TODO:
 - [x] Make a user unable to +1 or -1 themselves
 - [x] Don't show the bot on /showkarma
 - [ ] Fix bug: currently users without usernames cannot receive karma. 
+- [ ] Change deploy script to use rsync instead of zip/unzip every time
