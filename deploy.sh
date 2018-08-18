@@ -13,8 +13,8 @@ ssh droplet << EOF
 
     #restore the karma_dictionary
     if [ -d "txbot-prod-old" ]; then
-        cp ~/txbot-prod-old/karma_dictionary.p txbot-prod/karma_dictionary.p
-        cp ~/txbot-prod-old/karma_dictionary_test.p txbot-prod/karma_dictionary_test.p
+        cp ~/txbot-prod-old/chat_to_karma_dictionary.p txbot-prod/chat_to_karma_dictionary.p
+        cp ~/txbot-prod-old/chat_to_karma_dictionary_test.p txbot-prod/chat_to_karma_dictionary_test.p
     fi
     cd ~/txbot-prod
 
