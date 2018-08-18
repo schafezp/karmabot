@@ -6,6 +6,7 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
     level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+version = '1.00'
 
 production_token = '613654042:AAHnLhu4TFC-xJ4IylkXdczX9ihnIgtqnI8'
 test_token = '650879477:AAFO_o2_nt2gmwA-h0TeIo4bSqI-WLxp6VM'
@@ -36,8 +37,6 @@ except FileNotFoundError as fnfe:
     karma_dictionary = dict()
     with open(karma_dictionary_filename, "wb") as backupfile:
         pickle.dump(karma_dictionary, backupfile)
-
-
 
 def get_user_by_reply_user(reply_user: tg.User):
     if reply_user.id not in karma_dictionary:
@@ -98,6 +97,11 @@ def echo(bot, update):
 def caps(bot, update, args):
      text_caps = ' '.join(args).upper()
      bot.send_message(chat_id=update.message.chat_id, text=text_caps)
+def showversion(bot,update,args):
+    message = "Version: " + version + "\n" + "Bot powered by Python."
+    bot.send_message(chat_id=update.message.chat_id, text=message)
+
+
 
 def showkarma(bot,update,args):
     message = ""
@@ -148,6 +152,9 @@ def main():
 
     showkarma_handler = CommandHandler('showkarma', showkarma, pass_args=True)
     dispatcher.add_handler(showkarma_handler)
+
+    showversion_handler = CommandHandler('version', showversion, pass_args=True)
+    dispatcher.add_handler(showversion_handler)
 
     """ plus_karma_handler = CommandHandler('+1', pluskarma, pass_args=True)
     dispatcher.add_handler(plus_karma_handler)

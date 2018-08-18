@@ -1,3 +1,4 @@
 # Used for telegram BotFather instantiation
 
 showkarma - view how much karma users have
+version - shows the current bot version
