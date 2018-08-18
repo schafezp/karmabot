@@ -144,7 +144,7 @@ def show_version(bot,update,args):
 
 
 
-def showkarma(bot,update,args):
+def show_karma(bot,update,args):
     message = ""
     #(username, karma)
     print("bot dir")
@@ -208,7 +208,7 @@ def main():
     caps_handler = CommandHandler('caps', caps, pass_args=True)
     dispatcher.add_handler(caps_handler)
 
-    showkarma_handler = CommandHandler('showkarma', showkarma, pass_args=True)
+    showkarma_handler = CommandHandler('showkarma', show_karma, pass_args=True)
     dispatcher.add_handler(showkarma_handler)
 
     showversion_handler = CommandHandler('version', show_version, pass_args=True)
