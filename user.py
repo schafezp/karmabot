@@ -13,6 +13,8 @@ class User(object):
         self.username : Optional[str] = user.username
     def get_karma(self):
         return self.__karma
+    def get_username(self):
+        return self.username
     def give_karma(self):
         self.__karma = self.__karma + 1
     def remove_karma(self):
