@@ -9,3 +9,7 @@ This version allows telegram users to reply with "+1" or "-1" to messages to giv
 ## Version 1.01
 
 Users now cannot +1 themselves. Doing so gives them 0 points and a scolding.
+
+## Version 1.02
+
+Channel bot is no longer included in /showkarma report

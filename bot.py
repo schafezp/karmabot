@@ -9,7 +9,7 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
     level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-version = '1.01'
+version = '1.02'
 changelog_url = 'https://schafezp.com/schafezp/txkarmabot/blob/master/CHANGELOG.md'
 
 production_token = '613654042:AAHnLhu4TFC-xJ4IylkXdczX9ihnIgtqnI8'
@@ -19,11 +19,17 @@ is_production = False
 import os
 
 try:
-    if os.environ['PROD'] == "true":
-        print("PROD var found! running in production mode")
+    prodvar = os.environ['PROD']
+    if prodvar == "true":
+        print("PROD var found with value true! ")
+        print("running in production mode")
         is_production = True
+    else:
+        print("PROD var equal to: " + prodvar)
+        print("Running test mode")
 except KeyError as ke:
-    print("PROD var not found so running test")
+    print("PROD var not found")
+    print("Running test mode")
     is_production = False
 
 updater = None
@@ -125,9 +131,14 @@ def showversion(bot,update,args):
 def showkarma(bot,update,args):
     message = ""
     #(username, karma)
+    print("bot dir")
+    #print(dir(bot))
+    print(bot.get_me())
+    bot_id = bot.get_me().id
     users = []
     for id, user in karma_dictionary.items():
-        users.append(user)   
+        if id != bot_id:
+            users.append(user)   
 
     users.sort(key=lambda user: user.get_karma(), reverse=True)
     for user in users:
