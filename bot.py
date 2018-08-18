@@ -9,7 +9,7 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
     level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-version = '1.02'
+version = '1.03'
 changelog_url = 'https://schafezp.com/schafezp/txkarmabot/blob/master/CHANGELOG.md'
 
 production_token = '613654042:AAHnLhu4TFC-xJ4IylkXdczX9ihnIgtqnI8'
@@ -82,6 +82,8 @@ def reset_karma():
 def reply(bot: tg.Bot, update: tg.Update):
     reply_user = update.message.reply_to_message.from_user
 
+    print(update.message.reply_to_message)
+
     # might consume this info later down the line for metrics
     """ reply_to_message = update.message.reply_to_message
     message_id = reply_to_message.message_id
@@ -90,7 +92,7 @@ def reply(bot: tg.Bot, update: tg.Update):
     reply_text = update.message.text
 
     #TODO: check if +1 is first 2chars
-    if reply_text == "/plus1" or reply_text == "+1" :
+    if len(reply_text) >= 2 and reply_text[:2] == "+1":
         #if user tried to +1 self themselves 
         if(reply_user.id == update.message.from_user.id):
             responses = [" how could you +1 yourself?", " what do you think you're doing?", " is your post really worth +1ing yourself?", " you won't get any goodie points for that", " try +1ing someone else instead of yourself!", " who are you to +1 yourself?", " beware the Jabberwocky", " have a 🍪!"]
@@ -102,8 +104,7 @@ def reply(bot: tg.Bot, update: tg.Update):
             user.give_karma()
             print(user)
             save_user(user)
-        
-    elif reply_text == "/minus1" or reply_text == "-1":
+    elif len(reply_text) >= 2 and reply_text[:2] == "-1":
         user = get_user_by_reply_user(reply_user)
         user.remove_karma()
         print(user)
