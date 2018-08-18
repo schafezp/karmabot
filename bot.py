@@ -42,7 +42,26 @@ dispatcher = updater.dispatcher
 #Karma Dictionary
 import pickle
 
-karma_dictionary = dict()
+
+#dict of chat_id: int -> Karma_dictionary
+chat_to_karma_dictionary = dict()
+chat_to_karma_filename = None
+if is_production:
+    chat_to_karma_filename = "chat_to_karma_dictionary.p"
+else:
+    chat_to_karma_filename = "chat_to_karma_dictionary_test.p"
+
+try:
+    with open(chat_to_karma_filename, "rb") as backupfile:
+        chat_to_karma_dictionary = pickle.load(backupfile)
+except FileNotFoundError as fnfe:
+    print("Chat to Karma dictionary not found. Creating one")
+    with open(chat_to_karma_filename, "wb") as backupfile:
+        pickle.dump(chat_to_karma_dictionary, backupfile)
+
+
+#dict of id: int -> User
+""" karma_dictionary = dict()
 karma_dictionary_filename = None
 if is_production:
     karma_dictionary_filename = "karma_dictionary.p"
@@ -57,9 +76,18 @@ except FileNotFoundError as fnfe:
     print("Karma dictionary not found. Creating one")
     karma_dictionary = dict()
     with open(karma_dictionary_filename, "wb") as backupfile:
-        pickle.dump(karma_dictionary, backupfile)
+        pickle.dump(karma_dictionary, backupfile) """
 
-def get_user_by_reply_user(reply_user: tg.User):
+def get_user_by_reply_user(reply_user: tg.User, chat_id: int):
+    print("Chat id: " + str(chat_id))
+    chat_id
+    karma_dictionary = None
+
+    if chat_id not in chat_to_karma_dictionary:
+        karma_dictionary = dict()
+        chat_to_karma_dictionary[chat_id] = karma_dictionary
+    else:
+        karma_dictionary = chat_to_karma_dictionary[chat_id]
     if reply_user.id not in karma_dictionary:
         user = User(reply_user)
         karma_dictionary[reply_user.id] = user
@@ -68,16 +96,21 @@ def get_user_by_reply_user(reply_user: tg.User):
         user: User = karma_dictionary[reply_user.id]
         return user
 
-def save_user(user: User):
-    karma_dictionary[user.id] = user
-    with open(karma_dictionary_filename, "wb") as backupfile:
-        pickle.dump(karma_dictionary, backupfile)
 
-def reset_karma():
+    
+
+def save_user(user: User, chat_id: int):
+    print(chat_id)
+    karma_dictionary = chat_to_karma_dictionary[chat_id]
+    karma_dictionary[user.id] = user
+    with open(chat_to_karma_filename, "wb") as backupfile:
+        pickle.dump(chat_to_karma_dictionary, backupfile)
+
+def reset_karma(chat_id: int):
     print("Resetting Karma for all users: DANGEROUS")
-    karma_dictionary = dict()
-    with open(karma_dictionary_filename, "wb") as backupfile:
-        pickle.dump(karma_dictionary, backupfile)
+    chat_to_karma_dictionary = dict()
+    with open(chat_to_karma_filename, "wb") as backupfile:
+        pickle.dump(chat_to_karma_dictionary, backupfile)
 
 def reply(bot: tg.Bot, update: tg.Update):
     reply_user = update.message.reply_to_message.from_user
@@ -90,6 +123,7 @@ def reply(bot: tg.Bot, update: tg.Update):
     original_message_text = reply_to_message.text
      """
     reply_text = update.message.text
+    chat_id = update.message.chat_id
 
     #TODO: check if +1 is first 2chars
     if len(reply_text) >= 2 and reply_text[:2] == "+1":
@@ -98,17 +132,17 @@ def reply(bot: tg.Bot, update: tg.Update):
             responses = [" how could you +1 yourself?", " what do you think you're doing?", " is your post really worth +1ing yourself?", " you won't get any goodie points for that", " try +1ing someone else instead of yourself!", " who are you to +1 yourself?", " beware the Jabberwocky", " have a 🍪!"]
             response = random.choice(responses)
             message = "" + reply_user.first_name + response
-            bot.send_message(chat_id=update.message.chat_id, text=message)        
+            bot.send_message(chat_id=chat_id, text=message)        
         else:
-            user = get_user_by_reply_user(reply_user)
+            user = get_user_by_reply_user(reply_user, chat_id)
             user.give_karma()
             print(user)
-            save_user(user)
+            save_user(user, chat_id)
     elif len(reply_text) >= 2 and reply_text[:2] == "-1":
-        user = get_user_by_reply_user(reply_user)
+        user = get_user_by_reply_user(reply_user, chat_id)
         user.remove_karma()
         print(user)
-        save_user(user)
+        save_user(user, chat_id)
 
     
 
@@ -137,6 +171,18 @@ def showkarma(bot,update,args):
     print(bot.get_me())
     bot_id = bot.get_me().id
     users = []
+
+    karma_dictionary = None
+    try:
+        print("Chat id: " + str(update.message.chat_id))
+        karma_dictionary = chat_to_karma_dictionary[update.message.chat_id]
+    except KeyError as _:
+        message = "Oops I did not find any karma"
+        bot.send_message(chat_id=update.message.chat_id, text=message)
+        return
+    except IndexError as ie:
+        print(ie)
+    
     for id, user in karma_dictionary.items():
         if id != bot_id:
             users.append(user)   
