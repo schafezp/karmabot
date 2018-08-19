@@ -178,7 +178,7 @@ def show_karma(bot,update,args):
             users.append(user)   
 
     users.sort(key=lambda user: user.get_karma(), reverse=True)
-    message = message + "Username: Karma"
+    message = message + "Username: Karma\n"
     for user in users:
         message = message + user.get_username() + ": "+ str(user.get_karma()) + "\n"
 
