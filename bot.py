@@ -4,6 +4,7 @@ from user import User
 import logging
 
 import random
+import re
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     level=logging.INFO)
@@ -115,7 +116,7 @@ def reply(bot: tg.Bot, update: tg.Update):
     chat_id = update.message.chat_id
 
     #TODO: check if +1 is first 2chars
-    if len(reply_text) >= 2 and reply_text[:2] == "+1":
+    if re.match("^\+[1-9][0-9]*.*", reply_text) :
         #if user tried to +1 self themselves 
         if(reply_user.id == update.message.from_user.id):
             witty_responses = [" how could you +1 yourself?", " what do you think you're doing?", " is your post really worth +1ing yourself?", " you won't get any goodie points for that", " try +1ing someone else instead of yourself!", " who are you to +1 yourself?", " beware the Jabberwocky", " have a 🍪!", " you must give praise. May he 🍔melt🍔! "]
@@ -128,7 +129,7 @@ def reply(bot: tg.Bot, update: tg.Update):
             print("user")
             print(user)
             save_user(user, chat_id)
-    elif len(reply_text) >= 2 and reply_text[:2] == "-1":
+    elif re.match("^-[1-9][0-9]*.*", reply_text) :
         user = get_user_by_reply_user(reply_user, chat_id)
         user.remove_karma()
         print(user)
