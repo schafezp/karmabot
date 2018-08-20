@@ -1,9 +1,13 @@
-from telegram.ext import Updater
-import telegram as tg
-from user import User
 import logging
-
+import os
+import pickle
 import random
+
+from telegram.ext import Filters, CommandHandler, MessageHandler, Updater
+import telegram as tg
+from typing import Dict, NewType
+
+from user import User
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     level=logging.INFO)
@@ -16,7 +20,6 @@ production_token = '613654042:AAHnLhu4TFC-xJ4IylkXdczX9ihnIgtqnI8'
 test_token = '650879477:AAFO_o2_nt2gmwA-h0TeIo4bSqI-WLxp6VM'
 is_production = False
 
-import os
 
 try:
     prodvar = os.environ['PROD']
@@ -40,10 +43,8 @@ else:
 
 dispatcher = updater.dispatcher
 #Karma Dictionary
-import pickle
 
 
-from typing import Dict, NewType
 
 ChatToKarmaDict = NewType('ChatToKarmaDict', Dict[int,Dict[int,User]])
 #dict of chat_id: int -> Karma_dictionary (which is user_id: int -> user: User)
@@ -204,11 +205,9 @@ def unknown(bot, update):
 def main():
     """Start the bot """
 
-    from telegram.ext import CommandHandler
     start_handler = CommandHandler('start', start)
     dispatcher.add_handler(start_handler)
 
-    from telegram.ext import MessageHandler, Filters
     """ echo_handler = MessageHandler(Filters.text, echo)
     dispatcher.add_handler(echo_handler) """
 
