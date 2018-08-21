@@ -146,34 +146,19 @@ def show_version(bot,update,args):
 
 
 def show_karma(bot,update,args):
-    message = ""
-    logger.debug("bot dir")
-    logger.debug(bot.get_me())
-    bot_id = bot.get_me().id
-    users = []
-
-    karma_dictionary = None
-    try:
-        logger.debug("Chat id: " + str(update.message.chat_id))
-        karma_dictionary = chat_to_karma_dictionary[update.message.chat_id]
-    except KeyError as _:
-        message = "Oops I did not find any karma"
-        bot.send_message(chat_id=update.message.chat_id, text=message)
-        return
-    except IndexError as ie:
-        logger.error(ie)
-
-    for id, user in karma_dictionary.items():
-        if id != bot_id:
-            users.append(user)
+    logger.debug("Chat id: " + str(update.message.chat_id))
+    # Use the lower one if you find it more pythonic
+    users = chat_to_karma_dictionary[update.message.chat_id].items() if not KeyError else []
+    # users = chat_to_karma_dictionary.get(update.message.chat_id, dict()).items()
 
     users.sort(key=lambda user: user.get_karma(), reverse=True)
-    message = message + "Username: Karma\n"
-    for user in users:
-        message = message + user.get_username() + ": "+ str(user.get_karma()) + "\n"
+    message = "\n".join(["%s: %d" % (user.get_username(), user.get_karma()) for user in users])
 
-    if message == "":
-        message = "Oops I did not find any karma"
+    if message != ''
+        message = "Username: Karma\n" + message # TODO: figure out a better way to add this heading
+    else
+        message = "Oops I didn't find any karma"
+
     bot.send_message(chat_id=update.message.chat_id, text=message)
 
 
