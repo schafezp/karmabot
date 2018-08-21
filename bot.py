@@ -19,21 +19,9 @@ changelog_url = 'https://schafezp.com/schafezp/txkarmabot/blob/master/CHANGELOG.
 # TODO: obfuscate these
 production_token = '613654042:AAHnLhu4TFC-xJ4IylkXdczX9ihnIgtqnI8'
 test_token = '650879477:AAFO_o2_nt2gmwA-h0TeIo4bSqI-WLxp6VM'
-is_production = False
 
-try:
-    prodvar = os.environ['PROD']
-    if prodvar == "true":
-        logger.debug("PROD var found with value true! ")
-        logger.debug("running in production mode")
-        is_production = True
-    else:
-        logger.debug("PROD var equal to: " + prodvar)
-        logger.debug("Running test mode")
-except KeyError as ke:
-    logger.debug("PROD var not found")
-    logger.debug("Running test mode")
-    is_production = False
+is_production = os.environ.get('PROD') == "true"
+logger.debug("Production? %s" % is_production)
 
 updater = None
 if is_production:
