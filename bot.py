@@ -24,15 +24,15 @@ is_production = False
 try:
     prodvar = os.environ['PROD']
     if prodvar == "true":
-        print("PROD var found with value true! ")
-        print("running in production mode")
+        logger.debug("PROD var found with value true! ")
+        logger.debug("running in production mode")
         is_production = True
     else:
-        print("PROD var equal to: " + prodvar)
-        print("Running test mode")
+        logger.debug("PROD var equal to: " + prodvar)
+        logger.debug("Running test mode")
 except KeyError as ke:
-    print("PROD var not found")
-    print("Running test mode")
+    logger.debug("PROD var not found")
+    logger.debug("Running test mode")
     is_production = False
 
 updater = None
@@ -58,13 +58,13 @@ try:
     with open(chat_to_karma_filename, "rb") as backupfile:
         chat_to_karma_dictionary: ChatToKarmaDict = pickle.load(backupfile)
 except FileNotFoundError as fnfe:
-    print("Chat to Karma dictionary not found. Creating one")
+    logger.info("Chat to Karma dictionary not found. Creating one")
     with open(chat_to_karma_filename, "wb") as backupfile:
         pickle.dump(chat_to_karma_dictionary, backupfile)
 
 
 def get_user_by_reply_user(reply_user: tg.User, chat_id: int):
-    print("Chat id: " + str(chat_id))
+    logger.debug("Chat id: " + str(chat_id))
     chat_id
     karma_dictionary = None
 
@@ -83,9 +83,9 @@ def get_user_by_reply_user(reply_user: tg.User, chat_id: int):
 
 
 def save_user(user: User, chat_id: int):
-    print(chat_id)
-    print("Chat to karma: ")
-    print(chat_to_karma_dictionary)
+    logger.debug(chat_id)
+    logger.debug("Chat to karma: ")
+    logger.debug(chat_to_karma_dictionary)
     karma_dictionary = chat_to_karma_dictionary[chat_id]
     karma_dictionary[user.id] = user
     with open(chat_to_karma_filename, "wb") as backupfile:
@@ -93,17 +93,17 @@ def save_user(user: User, chat_id: int):
 
 
 def reset_karma(chat_id: int):
-    print("Resetting Karma for all users: DANGEROUS")
+    logger.info("Resetting Karma for all users: DANGEROUS")
     chat_to_karma_dictionary = dict()
     with open(chat_to_karma_filename, "wb") as backupfile:
         pickle.dump(chat_to_karma_dictionary, backupfile)
 
 
 def reply(bot: tg.Bot, update: tg.Update):
-    print("reply")
+    logger.debug("reply")
     reply_user = update.message.reply_to_message.from_user
 
-    print(update.message.reply_to_message)
+    logger.debug(update.message.reply_to_message)
 
     # might consume this info later down the line for metrics
     """
@@ -125,13 +125,13 @@ def reply(bot: tg.Bot, update: tg.Update):
         else:
             user = get_user_by_reply_user(reply_user, chat_id)
             user.give_karma()
-            print("user")
-            print(user)
+            logger.debug("user")
+            logger.debug(user)
             save_user(user, chat_id)
     elif len(reply_text) >= 2 and reply_text[:2] == "-1":
         user = get_user_by_reply_user(reply_user, chat_id)
         user.remove_karma()
-        print(user)
+        logger.debug(user)
         save_user(user, chat_id)
 
 
@@ -147,21 +147,21 @@ def show_version(bot,update,args):
 
 def show_karma(bot,update,args):
     message = ""
-    print("bot dir")
-    print(bot.get_me())
+    logger.debug("bot dir")
+    logger.debug(bot.get_me())
     bot_id = bot.get_me().id
     users = []
 
     karma_dictionary = None
     try:
-        print("Chat id: " + str(update.message.chat_id))
+        logger.debug("Chat id: " + str(update.message.chat_id))
         karma_dictionary = chat_to_karma_dictionary[update.message.chat_id]
     except KeyError as _:
         message = "Oops I did not find any karma"
         bot.send_message(chat_id=update.message.chat_id, text=message)
         return
     except IndexError as ie:
-        print(ie)
+        logger.error(ie)
 
     for id, user in karma_dictionary.items():
         if id != bot_id:
