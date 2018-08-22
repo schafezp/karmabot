@@ -139,8 +139,8 @@ def show_version(bot,update,args):
 def show_karma(bot,update,args):
     logger.debug("Chat id: " + str(update.message.chat_id))
     # Use the lower one if you find it more pythonic
-    users = chat_to_karma_dictionary[update.message.chat_id].items() if not KeyError else []
-    # users = chat_to_karma_dictionary.get(update.message.chat_id, dict()).items()
+    #users = chat_to_karma_dictionary[update.message.chat_id].items() if not KeyError else []
+    users = list(chat_to_karma_dictionary.get(update.message.chat_id, dict()).values())
 
     users.sort(key=lambda user: user.get_karma(), reverse=True)
     message = "\n".join(["%s: %d" % (user.get_username(), user.get_karma()) for user in users])
