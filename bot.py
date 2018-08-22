@@ -9,8 +9,17 @@ from typing import Dict, NewType
 
 from user import User
 
+log_level = os.environ.get('LOGLEVEL')
+level = None
+if log_level == "debug":
+    level=logging.DEBUG
+elif log_level == "info":
+    level=logging.INFO
+else:
+    levle=logging.INFO
+
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    level=logging.INFO)
+    level=level)
 logger = logging.getLogger(__name__)
 
 version = '1.03' # TODO: make this automatic
@@ -19,9 +28,6 @@ changelog_url = 'https://schafezp.com/schafezp/txkarmabot/blob/master/CHANGELOG.
 # TODO: obfuscate these
 production_token = '613654042:AAHnLhu4TFC-xJ4IylkXdczX9ihnIgtqnI8'
 test_token = '650879477:AAFO_o2_nt2gmwA-h0TeIo4bSqI-WLxp6VM'
-
-is_production = os.environ.get('PROD') == "true"
-logger.debug("Production? %s" % is_production)
 
 is_production = os.environ.get('PROD') == "true"
 logger.debug("Production? %s" % is_production)
@@ -143,6 +149,7 @@ def show_karma(bot,update,args):
     users = list(chat_to_karma_dictionary.get(update.message.chat_id, dict()).values())
 
     users.sort(key=lambda user: user.get_karma(), reverse=True)
+    logger.debug("users length: "+ str(len(users)))
     message = "\n".join(["%s: %d" % (user.get_username(), user.get_karma()) for user in users])
 
     if message != '':
