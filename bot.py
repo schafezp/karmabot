@@ -23,6 +23,9 @@ test_token = '650879477:AAFO_o2_nt2gmwA-h0TeIo4bSqI-WLxp6VM'
 is_production = os.environ.get('PROD') == "true"
 logger.debug("Production? %s" % is_production)
 
+is_production = os.environ.get('PROD') == "true"
+logger.debug("Production? %s" % is_production)
+
 updater = None
 if is_production:
     updater = Updater(token=production_token)
@@ -142,9 +145,9 @@ def show_karma(bot,update,args):
     users.sort(key=lambda user: user.get_karma(), reverse=True)
     message = "\n".join(["%s: %d" % (user.get_username(), user.get_karma()) for user in users])
 
-    if message != ''
+    if message != '':
         message = "Username: Karma\n" + message # TODO: figure out a better way to add this heading
-    else
+    else:
         message = "Oops I didn't find any karma"
 
     bot.send_message(chat_id=update.message.chat_id, text=message)
