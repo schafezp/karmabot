@@ -1,1 +1,1 @@
-python3 bot.py
+export LOGLEVEL="debug" && python3 bot.py

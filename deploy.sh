@@ -19,7 +19,7 @@ ssh droplet << EOF
     cd ~/txbot-prod
 
     tmux kill-session -t bot
-    tmux new-session -d -s "bot" "export PROD=true && sh run.sh"
+    tmux new-session -d -s "bot" "export PROD=true && sh python3 bot.py"
     echo "Run Tmux ls to see running sessions"
     echo ""
     tmux ls
