@@ -156,22 +156,46 @@ where message_id=17;
 
 --message_id is the id of the message the user is replying to
 --TODO: shouldnt be able to reply to a message you already replied to
-CREATE FUNCTION user_reply_to_message(user_id INTEGER, chat_id INTEGER, message_id INTEGER, score INTEGER, reply TEXT)
+--TODO: don't pass in author_id instead parse it from message id
+DROP FUNCTION IF EXISTS user_reply_to_message;
+CREATE FUNCTION user_reply_to_message
+(user_id INTEGER, chat_id INTEGER, message_id INTEGER, author_id INTEGER,
+ score INTEGER, reply TEXT, username TEXT, OUT user_in_chat_id INTEGER)
 RETURNS INTEGER as $$
     BEGIN
+    --DECLARE user_in_chat_id INTEGER;
     --todo convert user_id into user_in_chat
 
     --if there is not already a user_in_chat then create one
-    IF NOT EXISTS ( SELECT 1 from telegram_user tu where tu.id = user_id) THEN
-        INSERT INTO telegram_user (user_id) VALUES (user_id)
+    IF  NOT EXISTS ( SELECT 1 from telegram_user tu where tu.id = user_id) THEN
+        raise notice 'Create User: %', username;
+        INSERT INTO telegram_user (user_id,username) VALUES (user_id,username);
+
+    END IF;
+    --if there is not a user_in_chat then create one
+    IF  EXISTS ( SELECT 1 from user_in_chat uic where uic.user_id = user_id) THEN
+        -- have to find user_in_chat.id
+        SELECT * from user_in_chat uic
+        where uic.user_id=user_id
+        returning uic.id into user_in_chat_id;
+        /* INSERT INTO user_reacted_to_message
+        (user_in_chat_id, message_id, score, reply) VALUES (user_in_chat_id, message_id, score, reply); */
+        
+    ELSE    
+    
+    raise notice 'Create User in chat_id: %', chat_id;
+        INSERT INTO user_in_chat (user_id,username) VALUES (user_id,username)
+        RETURNING ID
+        INTO user_in_chat_id;
+
     END IF;
 
-    INSERT INTO user_reacted_to_message(user_in_chat_id, message_id, score, reply);
-
+    INSERT INTO user_reacted_to_message (user_in_chat_id, message_id, score, reply)
+         VALUES (user_in_chat_id, message_id, score, reply);
     END;
     
 $$
-Language 'plpgsql'
+Language 'plpgsql';
 
 DROP FUNCTION IF EXISTS change_karma_from_user_to_user;
 -- stored procedure to modify the karma of a particular user in a particular chat
