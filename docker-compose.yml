@@ -1,0 +1,27 @@
+version: '3'
+services:
+  bot:
+    build: .
+    command: python3 bot.py
+    ports:
+      - "5000:5000"
+    environment:
+      PROD: "false"
+    volumes:
+      - .:/code
+    depends_on:
+      - db
+  db:
+    build: 
+      context: ./postgresql
+      dockerfile: ./Dockerfile
+    environment:
+      - DB_USER=TEST_USER
+      - DB_PASS=TEST_PASS
+      - DB_NAME=database
+      - PG_TRUST_LOCALNET=true
+    #volumes:
+    #- ./srv/:/var/lib/postgresql
+
+volumes:
+  logvolume01: {}
