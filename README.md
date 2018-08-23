@@ -20,6 +20,23 @@ Then only that username's score is shown.
 It would be fun to add pretty html5 representations since that is supported by telegram api bot.
 
 
+## Setup guide
+
+A docker-compose.yml and Dockerfile are provided for this project. That means to run the project, install Docker and docker-compose and then run
+```
+docker-compose build
+docker-compose up
+```
+
+From there for debugging to attach to the postgresql use,
+
+```
+docker exec -it txbot_db_1 sudo -u postgres psql database
+```
+
+
+Docker credit goes to https://github.com/sameersbn/docker-postgresql
+
 TODO:
 
 - [ ] Seperate karma by chatid so bot can be run for seperate chats
@@ -29,3 +46,9 @@ TODO:
 - [x] Don't show the bot on /showkarma
 - [ ] Fix bug: currently users without usernames cannot receive karma. 
 - [ ] Change deploy script to use rsync instead of zip/unzip every time
+
+
+
+Database Functions:
+
+have one user give another user karma 
