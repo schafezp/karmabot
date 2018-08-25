@@ -18,7 +18,8 @@ services:
       POSTGRES_PASS: test_pass
       POSTGRES_DB: karmabot
     volumes:
-      - ./srv:/var/lib/postgresql
+      - data:/var/lib/postgresql/data
+      - ./start-schema.sql:/docker-entrypoint-initdb.d/1-schema.sql
     ports:
       - "5432:5432"
       
@@ -36,4 +37,4 @@ services:
     #- ./srv/:/var/lib/postgresql
 
 volumes:
-  logvolume01: {}
+  data: {}
