@@ -33,7 +33,7 @@ CREATE TABLE IF NOT EXISTS user_in_chat (
 CREATE TABLE IF NOT EXISTS telegram_message (
     message_id INTEGER PRIMARY KEY,
     chat_id INTEGER REFERENCES telegram_chat(chat_id),
-    author_user_id INTEGER REFERENCES telegram_user(user_id),
+    author_user_in_chat_id INTEGER REFERENCES user_in_chat(id),
     message_text TEXT
     
 );
@@ -65,8 +65,10 @@ VALUES (3042023, 23423, 10);
 INSERT INTO user_in_chat (user_id, chat_id, karma) 
 VALUES (6012310, 91235, 2);
 
-INSERT INTO telegram_message VALUES (17,23423, 9019282, 'hello this is a message from walt');
-INSERT INTO telegram_message VALUES (23,23423, 9019282, 'hello this is a different message from walt');
+INSERT INTO telegram_message VALUES (17,23423, 3, 'hello this is a message from walt');
+INSERT INTO telegram_message VALUES (23,23423, 3, 'hello this is a different message from walt');
+INSERT INTO telegram_message VALUES (25,23423, 1, 'zach: wolves are cool');
+
 
 INSERT INTO  user_reacted_to_message (user_in_chat_id,message_id, react_score, react_text)
  VALUES (1,17 ,1,'cool');
@@ -76,6 +78,9 @@ INSERT INTO  user_reacted_to_message (user_in_chat_id,message_id, react_score, r
  VALUES (1,23 ,1,'righton');
 INSERT INTO  user_reacted_to_message (user_in_chat_id,message_id, react_score, react_text)
  VALUES (2,23,1,'neat');
+
+ INSERT INTO  user_reacted_to_message (user_in_chat_id,message_id, react_score, react_text)
+ VALUES (2,25,1, 'i agree with zach');
 
 
 
@@ -139,19 +144,6 @@ Language 'plpgsql';
 select * from show_responses_to_message(17);
 
 
-select uic.user_id as uic_user_id, urtm.react_score, urtm.react_text, chat_id, urtm.message_id as message_id  from user_reacted_to_message urtm 
-            LEFT JOIN user_in_chat uic on uic.id=urtm.user_in_chat_id
-            where message_id=17
-
-
-
---select uic.user_id as user_id, react_score, chat_id  from user_reacted_to_message urtm 
-select * from user_reacted_to_message urtm 
-LEFT JOIN user_in_chat uic on uic.id=urtm.user_in_chat_id
-where message_id=17;
-
-
-
 -- stuff below this is to TODO
 
 --message_id is the id of the message the user is replying to
@@ -190,9 +182,10 @@ RETURNS INTEGER as $$
 
     END IF;
 
-    INSERT INTO user_reacted_to_message (user_in_chat_id, message_id, score, reply)
+    --TODO
+    /* INSERT INTO user_reacted_to_message (user_in_chat_id, message_id, score, reply)
          VALUES (user_in_chat_id, message_id, score, reply);
-    END;
+    END; */
     
 $$
 Language 'plpgsql';
@@ -226,7 +219,52 @@ $$
 LANGUAGE PLPGSQL;
 
 
-change_karma_from_user_to_user(6012310,3042023,23423,-1);
+DROP FUNCTION IF EXISTS get_user_in_chat_from_user_id;
+CREATE FUNCTION get_user_in_chat_from_user_id(user_id_arg INTEGER, chat_id_arg INTEGER)
+RETURNS SETOF user_in_chat AS $$
+    BEGIN 
+    RETURN QUERY
+    select * from user_in_chat uic where uic.user_id = user_id_arg AND uic.chat_id=chat_id_arg;
+    END
+$$
+LANGUAGE plpgsql;
+
+--select * from get_user_in_chat_from_user_id(6012310, 23423);
+
+/* Gets all karma upvotes or downvotes with the message sent alongside*/
+DROP FUNCTION get_message_responses_for_user_in_chat;
+CREATE OR REPLACE FUNCTION get_message_responses_for_user_in_chat(user_id_arg INTEGER, chat_id_arg INTEGER) 
+RETURNS TABLE(
+    user_id INTEGER,
+    message_id INTEGER,
+    message_text TEXT,
+    react_score INTEGER,
+    react_text TEXT
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT sub2.user_id, sub2.message_id, sub2.response_text as message_text, urtm.react_score, urtm.react_text FROM
+    (select sub.user_id, tm.message_id, tm.message_text as response_text,  uic_id from
+    (select id as uic_id, get_user_in_chat_from_user_id.user_id, chat_id, karma from get_user_in_chat_from_user_id(user_id_arg,chat_id_arg)) as sub
+    LEFT JOIN telegram_message tm ON uic_id=tm.author_user_in_chat_id) as sub2
+    LEFT JOIN user_reacted_to_message urtm on urtm.message_id = sub2.message_id;
+END
+$$ LANGUAGE plpgsql;
+
+select * from get_message_responses_for_user_in_chat(6012310, 23423);
+
+
+/* TODO: update get_message_responses_for_user_in_chat to also return username, lastname, firstname*/
+select  sub.user_id, tm.message_id, tm.message_text as response_text,  uic_id from (
+select uic_id, sub.user_id, sub.karma, tu.username, tu.first_name, tu.last_name from (
+    select id as uic_id, get_user_in_chat_from_user_id.user_id, chat_id, karma
+    from get_user_in_chat_from_user_id(6012310, 23423)
+) as sub
+LEFT JOIN telegram_user tu on tu.user_id=sub.user_id) as sub2
+LEFT JOIN telegram_message tm ON uic_id=tm.author_user_in_chat_id ;
+
+
+/* change_karma_from_user_to_user(6012310,3042023,23423,-1);
 
 val := change_karma_from_user_to_user(6012310,3042023,23423,1);
-raise notice 'Value: %', val;
+raise notice 'Value: %', val; */
