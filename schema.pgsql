@@ -239,29 +239,29 @@ RETURNS TABLE(
     message_id INTEGER,
     message_text TEXT,
     react_score INTEGER,
-    react_text TEXT
-) AS $$
+    react_text TEXT,
+    responder_username TEXT,
+    responder_first_name TEXT,
+    responder_last_name TEXT
+)
+AS $$
 BEGIN
     RETURN QUERY
-    SELECT sub2.user_id, sub2.message_id, sub2.response_text as message_text, urtm.react_score, urtm.react_text FROM
-    (select sub.user_id, tm.message_id, tm.message_text as response_text,  uic_id from
-    (select id as uic_id, get_user_in_chat_from_user_id.user_id, chat_id, karma from get_user_in_chat_from_user_id(user_id_arg,chat_id_arg)) as sub
-    LEFT JOIN telegram_message tm ON uic_id=tm.author_user_in_chat_id) as sub2
-    LEFT JOIN user_reacted_to_message urtm on urtm.message_id = sub2.message_id;
+    SELECT sub3.user_id, sub3.message_id, sub3.response_text AS message_text, urtm.react_score, 
+        urtm.react_text, sub3.username AS responder_username, sub3.first_name AS responder_first_name, sub3.last_name AS responder_last_name  FROM (
+        SELECT  sub2.user_id, tm.message_id, tm.message_text AS response_text,  uic_id ,
+            sub2.username, sub2.first_name, sub2.last_name FROM (
+            SELECT uic_id, sub.user_id, sub.karma, tu.username, tu.first_name, tu.last_name FROM (
+                SELECT id AS uic_id, get_user_in_chat_from_user_id.user_id, chat_id, karma FROM 
+                    get_user_in_chat_from_user_id(user_id_arg, chat_id_arg)
+            ) AS sub
+            LEFT JOIN telegram_user tu ON tu.user_id=sub.user_id) AS sub2
+        LEFT JOIN telegram_message tm ON uic_id=tm.author_user_in_chat_id) AS sub3
+    LEFT JOIN user_reacted_to_message urtm ON urtm.message_id = sub3.message_id;
 END
 $$ LANGUAGE plpgsql;
 
 select * from get_message_responses_for_user_in_chat(6012310, 23423);
-
-
-/* TODO: update get_message_responses_for_user_in_chat to also return username, lastname, firstname*/
-select  sub.user_id, tm.message_id, tm.message_text as response_text,  uic_id from (
-select uic_id, sub.user_id, sub.karma, tu.username, tu.first_name, tu.last_name from (
-    select id as uic_id, get_user_in_chat_from_user_id.user_id, chat_id, karma
-    from get_user_in_chat_from_user_id(6012310, 23423)
-) as sub
-LEFT JOIN telegram_user tu on tu.user_id=sub.user_id) as sub2
-LEFT JOIN telegram_message tm ON uic_id=tm.author_user_in_chat_id ;
 
 
 /* change_karma_from_user_to_user(6012310,3042023,23423,-1);
