@@ -28,14 +28,18 @@ docker-compose build
 docker-compose up
 ```
 
-From there for debugging to attach to the postgresql use,
-
+From there for debugging to propogate a change to running containers do,
 ```
-docker exec -it txbot_db_1 sudo -u postgres psql database
+docker-compose build && docker-compose up -d --no-deps && docker-compose logs bot
 ```
 
+Postgres exposes port 5432 to the localhost so to connect from your localhost you can do
+```
+psql -h localhost -p 5432 karmabot test_user
+```
 
-Docker credit goes to https://github.com/sameersbn/docker-postgresql
+original Docker build credit goes to https://github.com/sameersbn/docker-postgresql
+The solution being used now is with the postgres-alpine image.
 
 TODO:
 
