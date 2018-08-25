@@ -5,4 +5,3 @@
  ADD requirements.txt /code/
  RUN pip install -r requirements.txt
  ADD bot.py /code/
- ADD start-schema.pgsql /code/
