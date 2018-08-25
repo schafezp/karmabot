@@ -2,6 +2,7 @@ import logging
 import os
 import pickle
 import random
+import psycopg2 # postgresql python 
 
 from telegram.ext import Filters, CommandHandler, MessageHandler, Updater
 import telegram as tg
@@ -190,8 +191,38 @@ def main():
     unknown_handler = MessageHandler(Filters.command, unknown)
     dispatcher.add_handler(unknown_handler)
 
-    updater.start_polling()
-    updater.idle()
+    #updater.start_polling()
+    conn = None
+    while conn is None:
+        try:
+            conn = psycopg2.connect(host="postgres", database="karmabot", user="test_user", password="test_pass")
+        except psycopg2.OperationalError as oe:
+            print(oe)
+    
+    cursor = conn.cursor()
+    
+    cursor.execute("SELECT * FROM pg_catalog.pg_tables;")
+    many = cursor.fetchmany()
+    print("many: "+ str(many))
+    public_tables = list(filter(lambda x: x[0] == 'public', many))
+
+    with cursor as crs:
+        conn.set_session(autocommit=True)
+        schema = open("start-schema.pgsql","r").read()
+        print("schema: " + schema)
+        print(cursor.execute(schema))
+        conn.commit()
+
+    """ print(public_tables)
+    if len(public_tables) != 0:
+        print('Tables exist in database')
+    else:
+        schema = open("start-schema.pgsql","r").read()
+        print("schema: " + schema)
+        print(cursor.execute(schema))
+        conn.commit() """
+
+    #updater.idle()
 
 
 if __name__ == '__main__':

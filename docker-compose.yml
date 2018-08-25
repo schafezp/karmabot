@@ -10,16 +10,28 @@ services:
     volumes:
       - .:/code
     depends_on:
-      - db
-  db:
-    build: 
-      context: ./postgresql
-      dockerfile: ./Dockerfile
+      - postgres
+  postgres:
+    image: postgres:9.6.10-alpine
     environment:
-      - DB_USER=TEST_USER
-      - DB_PASS=TEST_PASS
-      - DB_NAME=database
-      - PG_TRUST_LOCALNET=true
+      POSTGRES_USER: test_user
+      POSTGRES_PASS: test_pass
+      POSTGRES_DB: karmabot
+    volumes:
+      - ./srv:/var/lib/postgresql
+    ports:
+      - "5432:5432"
+      
+    #build: 
+      #context: ./postgresql
+      #dockerfile: ./Dockerfile
+    #environment:
+      #- DB_USER=TEST_USER
+      #- DB_PASS=TEST_PASS
+      #- DB_NAME=database
+      #- PG_TRUST_LOCALNET=true
+    #ports:
+      #- "5432:5432"
     #volumes:
     #- ./srv/:/var/lib/postgresql
 
