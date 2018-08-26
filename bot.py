@@ -195,23 +195,27 @@ def show_user_messages(bot,update,args):
 
 def show_karma(bot,update,args):
     logger.debug("Chat id: " + str(update.message.chat_id))
-    # Use the lower one if you find it more pythonic
-    #users = chat_to_karma_dictionary[update.message.chat_id].items() if not KeyError else []
-    karma = get_karma_for_users_in_chat(update.message.chat_id,conn)
-    bot.send_message(chat_id=update.message.chat_id, text=str(karma))
 
-    """ users = list(chat_to_karma_dictionary.get(update.message.chat_id, dict()).values())
+    #TODO: have this return a type
+    rows = get_karma_for_users_in_chat(update.message.chat_id,conn)
+    rows.sort(key=lambda user: user[3], reverse=True)
 
-    users.sort(key=lambda user: user.get_karma(), reverse=True)
-    logger.debug("users length: "+ str(len(users)))
-    message = "\n".join(["%s: %d" % (user.get_username(), user.get_karma()) for user in users])
+    message = "\n".join(["%s: %d" % (user[0], user[3]) for user in rows])
 
     if message != '':
         message = "Username: Karma\n" + message # TODO: figure out a better way to add this heading
     else:
         message = "Oops I didn't find any karma"
 
-    bot.send_message(chat_id=update.message.chat_id, text=message) """
+    bot.send_message(chat_id=update.message.chat_id, text=message) 
+
+    #bot.send_message(chat_id=update.message.chat_id, text=str(karma))
+
+    """ users = list(chat_to_karma_dictionary.get(update.message.chat_id, dict()).values())
+
+    users.sort(key=lambda user: user.get_karma(), reverse=True)
+    logger.debug("users length: "+ str(len(users)))
+    """
 
 
 def error(bot, update, error):
