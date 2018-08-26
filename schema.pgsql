@@ -1,13 +1,12 @@
 /* script written in idempotent manner */
 
-
+--CREATE DATABASE karmabot;
 -- delete the tables if they already exist
 DROP TABLE IF EXISTS telegram_user CASCADE; -- CASCADE means delete rows if they exist
 DROP TABLE IF EXISTS telegram_chat CASCADE;
 DROP TABLE IF EXISTS user_in_chat CASCADE;
 DROP TABLE IF EXISTS telegram_message CASCADE;
 DROP TABLE IF EXISTS user_reacted_to_message CASCADE;
-
 
 -- create tables
 
@@ -30,6 +29,9 @@ CREATE TABLE IF NOT EXISTS user_in_chat (
     karma integer
 );
 
+-- this is a bandaid
+alter table user_in_chat add constraint uniq_uic UNIQUE(user_id,chat_id);
+
 CREATE TABLE IF NOT EXISTS telegram_message (
     message_id INTEGER PRIMARY KEY,
     chat_id INTEGER REFERENCES telegram_chat(chat_id),
@@ -45,7 +47,7 @@ CREATE TABLE IF NOT EXISTS user_reacted_to_message (
     user_in_chat_id INTEGER REFERENCES user_in_chat(id),
     message_id INTEGER REFERENCES telegram_message(message_id),
     react_score INTEGER, --"1" if +1, "-1" if -1,
-    react_text TEXT
+    react_message_id INTEGER
 );
 
 -- example data can be dumped in to the db when testing
@@ -69,7 +71,7 @@ INSERT INTO telegram_message VALUES (17,23423, 3, 'hello this is a message from 
 INSERT INTO telegram_message VALUES (23,23423, 3, 'hello this is a different message from walt');
 INSERT INTO telegram_message VALUES (25,23423, 1, 'zach: wolves are cool');
 
-
+--TODO: remove react_text and make them seperate message
 INSERT INTO  user_reacted_to_message (user_in_chat_id,message_id, react_score, react_text)
  VALUES (1,17 ,1,'cool');
 INSERT INTO  user_reacted_to_message (user_in_chat_id,message_id, react_score, react_text)
@@ -148,10 +150,9 @@ select * from show_responses_to_message(17);
 
 --message_id is the id of the message the user is replying to
 --TODO: shouldnt be able to reply to a message you already replied to
---TODO: don't pass in author_id instead parse it from message id
 DROP FUNCTION IF EXISTS user_reply_to_message;
 CREATE FUNCTION user_reply_to_message
-(user_id INTEGER, chat_id INTEGER, message_id INTEGER, author_id INTEGER,
+(user_id_arg INTEGER, chat_id INTEGER, message_id INTEGER,
  score INTEGER, reply TEXT, username TEXT, OUT user_in_chat_id INTEGER)
 RETURNS INTEGER as $$
     BEGIN
@@ -159,22 +160,28 @@ RETURNS INTEGER as $$
     --todo convert user_id into user_in_chat
 
     --if there is not already a user_in_chat then create one
-    IF  NOT EXISTS ( SELECT 1 from telegram_user tu where tu.id = user_id) THEN
+    IF  NOT EXISTS ( SELECT 1 from telegram_user tu where tu.id = user_id_arg) THEN
         raise notice 'Create User: %', username;
-        INSERT INTO telegram_user (user_id,username) VALUES (user_id,username);
+        INSERT INTO telegram_user (user_id_arg,username) VALUES (user_id,username);
 
     END IF;
-    --if there is not a user_in_chat then create one
+
+    --check if user_in_chat exists
     IF  EXISTS ( SELECT 1 from user_in_chat uic where uic.user_id = user_id) THEN
-        -- have to find user_in_chat.id
-        SELECT * from user_in_chat uic
+        -- if it does, get user_in_chat.id
+        SELECT uic.id from user_in_chat uic
         where uic.user_id=user_id
-        returning uic.id into user_in_chat_id;
-        /* INSERT INTO user_reacted_to_message
-        (user_in_chat_id, message_id, score, reply) VALUES (user_in_chat_id, message_id, score, reply); */
+        --returning uic.id into user_in_chat_id;
+
+        --I want to use the single value of uic below to insert into user_reacted_to_message
+        --TODO: how do I access the user_in_chat_id
+        INSERT INTO user_reacted_to_message
+        (user_in_chat_id, message_id, score, reply) VALUES (user_in_chat_id, message_id, score, reply);
         
     ELSE    
     
+    --if there is not a user_in_chat then create one
+    --serial keys can be obtained with RETURNING
     raise notice 'Create User in chat_id: %', chat_id;
         INSERT INTO user_in_chat (user_id,username) VALUES (user_id,username)
         RETURNING ID
@@ -189,6 +196,10 @@ RETURNS INTEGER as $$
     
 $$
 Language 'plpgsql';
+
+
+--0293123 is a new user
+user_reply_to_message(0293123, 23423, 23, 1, "here is a reply from new user", "@danny")
 
 DROP FUNCTION IF EXISTS change_karma_from_user_to_user;
 -- stored procedure to modify the karma of a particular user in a particular chat
@@ -239,7 +250,7 @@ RETURNS TABLE(
     message_id INTEGER,
     message_text TEXT,
     react_score INTEGER,
-    react_text TEXT,
+    react_message_id TEXT,
     responder_username TEXT,
     responder_first_name TEXT,
     responder_last_name TEXT
@@ -248,7 +259,8 @@ AS $$
 BEGIN
     RETURN QUERY
     SELECT sub3.user_id, sub3.message_id, sub3.response_text AS message_text, urtm.react_score, 
-        urtm.react_text, sub3.username AS responder_username, sub3.first_name AS responder_first_name, sub3.last_name AS responder_last_name  FROM (
+        urtm.react_message_id, sub3.username AS responder_username, sub3.first_name AS responder_first_name,
+         sub3.last_name AS responder_last_name  FROM (
         SELECT  sub2.user_id, tm.message_id, tm.message_text AS response_text,  uic_id ,
             sub2.username, sub2.first_name, sub2.last_name FROM (
             SELECT uic_id, sub.user_id, sub.karma, tu.username, tu.first_name, tu.last_name FROM (
@@ -261,10 +273,70 @@ BEGIN
 END
 $$ LANGUAGE plpgsql;
 
-select * from get_message_responses_for_user_in_chat(6012310, 23423);
+--select * from get_message_responses_for_user_in_chat(6012310, 23423);
+select * from get_message_responses_for_user_in_chat(560101, 23423);
+
+
+
+
+
+CREATE OR REPLACE get_message_responses_for_message_in_chat
+
+
+/* TODO: maybe capture all messages and then also track the ones replied to */
 
 
 /* change_karma_from_user_to_user(6012310,3042023,23423,-1);
 
 val := change_karma_from_user_to_user(6012310,3042023,23423,1);
 raise notice 'Value: %', val; */
+
+
+
+-----
+--test example of how to get selct into INESRT INTO
+--TODO:
+
+CREATE TABLE a_user(
+    id INTEGER PRIMARY KEY,
+    name TEXT,
+)
+
+CREATE TABLE a_user_in_a_chat(
+    id INTEGER PRIMARY KEY,
+    chat_id integer
+
+
+)
+
+
+DROP FUNCTION IF EXISTS user_reply_to_message;
+CREATE FUNCTION user_reply_to_message
+(user_id_arg INTEGER, chat_id_arg INTEGER)
+RETURNS INTEGER as $$
+    BEGIN
+
+    IF  NOT EXISTS ( SELECT 1 from telegram_user tu where tu.id = user_id_arg) THEN
+        raise notice 'Create User: %', username;
+        INSERT INTO telegram_user (user_id_arg,username) VALUES (user_id,username);
+
+    END IF;
+
+    --check if user_in_chat exists
+    IF  EXISTS ( SELECT 1 from user_in_chat uic where uic.user_id = user_id) THEN
+        -- if it does, get user_in_chat.id
+        SELECT uic.id from user_in_chat uic
+        where uic.user_id=user_id
+        --returning uic.id into user_in_chat_id;
+
+        --I want to use the single value of uic below to insert into user_reacted_to_message
+        --TODO: how do I access the user_in_chat_id
+        INSERT INTO user_reacted_to_message
+        (user_in_chat_id, message_id, score, reply) VALUES (user_in_chat_id, message_id, score, reply);
+        
+    ELSE    
+
+    END IF;
+
+$$
+Language 'plpgsql';

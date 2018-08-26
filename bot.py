@@ -253,6 +253,21 @@ def main():
     dispatcher.add_handler(unknown_handler)
 
     updater.start_polling()
+
+    
+    insert_chat = "INSERT INTO telegram_chat VALUES (%s,%s) ON CONFLICT (user_id) DO NOTHING"
+    insert_user = "INSERT INTO telegram_user (user_id, username, first_name, last_name) VALUES (%s,%s,%s,%s)"
+    #select first to see if a uic is set, in that case update those values
+    select_uic = ""
+    insert_uic = "INSERT INTO user_in_chat(user_id,chat_id, karma) VALUES (%s,%s,%s) ON CONFLICT (user_id,chat_id) SET karma=EXCLUDED.karma"
+    migrate = True
+    if migrate:
+        for chat_id, userdict in chat_to_karma_dictionary.items():
+            #cursor.execute(insert_chat,[chat_id, ''])
+            for id, user in userdict.items():
+                cursor.execute(insert_user,[user.id, user.username,user.first_name,user.last_name])
+                cursor.execute(insert_uic,[user.id, chat_id, user.karma])
+            
     
 
 
