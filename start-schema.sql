@@ -32,5 +32,5 @@ CREATE TABLE IF NOT EXISTS user_reacted_to_message (
     user_in_chat_id INTEGER REFERENCES user_in_chat(id),
     message_id INTEGER REFERENCES telegram_message(message_id),
     react_score INTEGER, --"1" if +1, "-1" if -1,
-    react_text TEXT
+    react_message_id TEXT
 );

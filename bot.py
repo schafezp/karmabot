@@ -8,7 +8,8 @@ from telegram.ext import Filters, CommandHandler, MessageHandler, Updater
 import telegram as tg
 from typing import Dict, NewType
 
-from user import User
+from user import User, User_in_chat, Telegram_chat, Telegram_message,user_from_tg_user
+from dbhelper import *
 
 log_level = os.environ.get('LOGLEVEL')
 level = None
@@ -17,7 +18,7 @@ if log_level == "debug":
 elif log_level == "info":
     level=logging.INFO
 else:
-    levle=logging.INFO
+    level=logging.INFO
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     level=level)
@@ -61,7 +62,24 @@ except FileNotFoundError as fnfe:
         pickle.dump(chat_to_karma_dictionary, backupfile)
 
 
-def get_user_by_reply_user(reply_user: tg.User, chat_id: int):
+
+
+conn = None
+import time
+while conn is None:
+    try:
+        conn = psycopg2.connect(host="postgres", database="karmabot", user="test_user", password="test_pass")
+    except psycopg2.OperationalError as oe:
+        print(oe)
+        time.sleep(1)
+
+cursor = conn.cursor()
+
+
+
+
+
+""" def get_user_by_reply_user(reply_user: tg.User, chat_id: int):
     logger.debug("Chat id: " + str(chat_id))
     chat_id
     karma_dictionary = None
@@ -78,7 +96,7 @@ def get_user_by_reply_user(reply_user: tg.User, chat_id: int):
     else:
         user: User = karma_dictionary[reply_user.id]
         return user
-
+ """
 
 def save_user(user: User, chat_id: int):
     logger.debug(chat_id)
@@ -99,7 +117,15 @@ def reset_karma(chat_id: int):
 
 def reply(bot: tg.Bot, update: tg.Update):
     logger.debug("reply")
-    reply_user = update.message.reply_to_message.from_user
+    reply_user = user_from_tg_user(update.message.reply_to_message.from_user) 
+    replying_user = user_from_tg_user(update.message.from_user)
+    chat = Telegram_chat(update.message.chat_id, update.message.chat.title)
+    original_message = Telegram_message(update.message.message_id, chat.chat_id, reply_user.id, update.message.text)
+    reply_message = Telegram_message(update.message.reply_to_message.message_id, chat.chat_id, replying_user.id, update.message.reply_to_message.text)
+    
+    save_or_create_user(user_from_tg_user(reply_user),conn)
+
+    
 
     logger.debug(update.message.reply_to_message)
 
@@ -121,17 +147,14 @@ def reply(bot: tg.Bot, update: tg.Update):
             message = "" + reply_user.first_name + response
             bot.send_message(chat_id=chat_id, text=message)
         else:
-            user = get_user_by_reply_user(reply_user, chat_id)
-            user.give_karma()
+            user_reply_to_message(replying_user, chat, original_message, reply_message, 1,conn)
+            """ user = save_or_create_user_in_chat(reply_user.id,chat_id, conn,change_karma=1) """
             logger.debug("user")
-            logger.debug(user)
-            save_user(user, chat_id)
+            logger.debug(replying_user)
     elif len(reply_text) >= 2 and reply_text[:2] == "-1":
-        user = get_user_by_reply_user(reply_user, chat_id)
-        user.remove_karma()
-        logger.debug(user)
-        save_user(user, chat_id)
-
+        #user = save_or_create_user_in_chat(user_from_tg_user(reply_user), chat_id, conn, change_karma=-1)
+        user_reply_to_message(replying_user, chat, original_message, reply_message, -1,conn)
+        logger.debug(replying_user)
 
 def start(bot, update):
     bot.send_message(chat_id=update.message.chat_id, text="I'm a bot, please talk to me!")
@@ -191,38 +214,61 @@ def main():
     unknown_handler = MessageHandler(Filters.command, unknown)
     dispatcher.add_handler(unknown_handler)
 
-    #updater.start_polling()
-    conn = None
-    while conn is None:
-        try:
-            conn = psycopg2.connect(host="postgres", database="karmabot", user="test_user", password="test_pass")
-        except psycopg2.OperationalError as oe:
-            print(oe)
+    updater.start_polling()
     
-    cursor = conn.cursor()
-    
+
+
+
     cursor.execute("SELECT * FROM pg_catalog.pg_tables;")
-    many = cursor.fetchmany()
-    print("many: "+ str(many))
+    many = cursor.fetchall()
     public_tables = list(filter(lambda x: x[0] == 'public', many))
+    print("public_tables: "+ str(public_tables))
 
-    with cursor as crs:
-        conn.set_session(autocommit=True)
-        schema = open("start-schema.pgsql","r").read()
-        print("schema: " + schema)
-        print(cursor.execute(schema))
-        conn.commit()
+    """ cursor.execute("SELECT * FROM pg_catalog.pg_tables;")
+    many = cursor.fetchall()
+    public_tables = list(filter(lambda x: x[0] == 'public', many))
+    print("public_tables: "+ str(public_tables))"""
 
-    """ print(public_tables)
-    if len(public_tables) != 0:
-        print('Tables exist in database')
-    else:
-        schema = open("start-schema.pgsql","r").read()
-        print("schema: " + schema)
-        print(cursor.execute(schema))
-        conn.commit() """
+    updater.idle()
 
-    #updater.idle()
+    cursor.close()
+    conn.close()    
+    
+    #TODO: create tests from this code
+    """ user_id= 560101
+    username="@username"
+    first_name = "firstname"
+    last_name = "lastname"
+    user = User(user_id, username, first_name, last_name)
+    user2 = User(43123, "@bob", "bob", "dude")
+    save_or_create_user(user, conn)
+    save_or_create_user(user2, conn) """
+    
+    """ print("run get or create user")
+    print(save_or_create_user(user, conn))
+    user.first_name = "another_first_name"
+    print("User: " + str(user))
+    updated_user: User = save_or_create_user(user,conn)
+    assert updated_user.get_first_name() == "another_first_name" """
+
+    """ chat_id=23432
+    chat = Telegram_chat(chat_id, "chat name 1")
+    save_or_create_chat(chat, conn)
+    uic = save_or_create_user_in_chat(user,chat_id,conn)
+    uic2 = save_or_create_user_in_chat(user2,chat_id, conn)
+    message1 = Telegram_message(31,chat_id,uic.id, "here is a message from @username")
+    message2 = Telegram_message(27,chat_id,uic2.id, "message from bob")
+    user_reply_to_message(user,chat, message1,message2, 1,conn)
+    print(get_karma_for_users_in_chat(chat.chat_id, conn))
+    print(get_message_responses_for_user_in_chat(user.id, chat.chat_id, conn)) """
+
+
+    """ with conn:
+            with conn.cursor() as curs:
+            # this block is now in a transaction: yay python with block magic
+
+             """
+    
 
 
 if __name__ == '__main__':
