@@ -6,7 +6,7 @@ import psycopg2 # postgresql python
 
 from telegram.ext import Filters, CommandHandler, MessageHandler, Updater
 import telegram as tg
-from typing import Dict, NewType
+from typing import Dict, NewType, Tuple
 
 from user import User, User_in_chat, Telegram_chat, Telegram_message,user_from_tg_user
 from dbhelper import *
@@ -129,8 +129,8 @@ def reply(bot: tg.Bot, update: tg.Update):
     reply_uic = save_or_create_user_in_chat(reply_user, chat.chat_id,conn)
     replying_uic = save_or_create_user_in_chat(replying_user, chat.chat_id,conn)
 
-    original_message = Telegram_message(update.message.message_id, chat.chat_id, reply_uic.id, update.message.text)
-    reply_message = Telegram_message(update.message.reply_to_message.message_id, chat.chat_id, replying_uic.id, update.message.reply_to_message.text)
+    original_message = Telegram_message(update.message.message_id, chat.chat_id, reply_uic.user_id, update.message.text)
+    reply_message = Telegram_message(update.message.reply_to_message.message_id, chat.chat_id, replying_uic.user_id, update.message.reply_to_message.text)
     
     
 
@@ -196,11 +196,11 @@ def show_user_messages(bot,update,args):
 def show_karma(bot,update,args):
     logger.debug("Chat id: " + str(update.message.chat_id))
 
-    #TODO: have this return a type
-    rows = get_karma_for_users_in_chat(update.message.chat_id,conn)
-    rows.sort(key=lambda user: user[3], reverse=True)
+    #returns username, karma
+    rows : Tuple[str,int] = get_karma_for_users_in_chat(update.message.chat_id,conn)
+    rows.sort(key=lambda user: user[1], reverse=True)
 
-    message = "\n".join(["%s: %d" % (user[0], user[3]) for user in rows])
+    message = "\n".join(["%s: %d" % (user[0], user[1]) for user in rows])
 
     if message != '':
         message = "Username: Karma\n" + message # TODO: figure out a better way to add this heading
@@ -255,18 +255,37 @@ def main():
     updater.start_polling()
 
     
-    insert_chat = "INSERT INTO telegram_chat VALUES (%s,%s) ON CONFLICT (user_id) DO NOTHING"
-    insert_user = "INSERT INTO telegram_user (user_id, username, first_name, last_name) VALUES (%s,%s,%s,%s)"
+    insert_chat = "INSERT INTO telegram_chat VALUES (%s,%s) ON CONFLICT (chat_id) DO UPDATE SET chat_name=EXCLUDED.chat_name"
+    insert_user = "INSERT INTO telegram_user (user_id, username, first_name, last_name) VALUES (%s,%s,%s,%s) ON CONFLICT DO NOTHING"
     #select first to see if a uic is set, in that case update those values
     select_uic = ""
-    insert_uic = "INSERT INTO user_in_chat(user_id,chat_id, karma) VALUES (%s,%s,%s) ON CONFLICT (user_id,chat_id) SET karma=EXCLUDED.karma"
+    insert_uic = "INSERT INTO user_in_chat(user_id,chat_id, karma) VALUES (%s,%s,%s) ON CONFLICT (user_id,chat_id) DO UPDATE SET karma=EXCLUDED.karma"
     migrate = True
     if migrate:
         for chat_id, userdict in chat_to_karma_dictionary.items():
             #cursor.execute(insert_chat,[chat_id, ''])
             for id, user in userdict.items():
                 cursor.execute(insert_user,[user.id, user.username,user.first_name,user.last_name])
-                cursor.execute(insert_uic,[user.id, chat_id, user.karma])
+                karma = None
+                try:
+                    karma = user.__karma
+                except AttributeError as ae:
+                    karma = 0
+
+                #doesn't work since __karma doesn't exist on user
+                """ if user.__karma is None:
+                    karma = 0
+                else:
+                    karma = user.__karma """
+                #stack dump
+                """ bot_1       |   File "bot.py", line 270, in main
+                    bot_1       |     if user.__karma is None:
+                    bot_1       | AttributeError: 'User' object has no attribute '__karma' """
+
+                
+                print("Karma: " + str(karma))
+                cursor.execute(insert_chat,[chat_id,'default_chat_name'])
+                cursor.execute(insert_uic,[user.id, chat_id, karma])
             
     
 

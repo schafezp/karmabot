@@ -2,7 +2,7 @@ import telegram as tg
 from typing import Optional
 
 def user_from_tg_user(user : tg.User):
-    return User(user.id, user.first_name, user.last_name, user.username)
+    return User(user.id,user.username, user.last_name, user.first_name)
 def message_from_tg_message(message :tg.Message):
     return Telegram_message(message.message_id, message.chat.id, message.from_user.id, message.text)
 
@@ -11,6 +11,7 @@ class User(object):
     A representation of a telegram user
     """
     id :int
+    __karma: int
     first_name: str
     last_name: Optional[str]
     username : Optional[str]
@@ -57,13 +58,11 @@ class User(object):
 
 
 class User_in_chat(object):
-    id :int
     user_id: int
     chat_id: int
     karma: int
 
-    def __init__(self, id : int, user_id : int, chat_id: int, karma: int):
-        self.id = id
+    def __init__(self, user_id : int, chat_id: int, karma: int):
         self.user_id = user_id
         self.chat_id = chat_id
         self.karma = karma
@@ -77,14 +76,13 @@ class Telegram_chat(object):
 class Telegram_message(object):
     message_id: int
     chat_id: int
-    author_user_in_chat_id: int
+    author_user_id: int
     message_text: str
-    def __init__(self, message_id: int, chat_id: int, author_user_in_chat_id: int, message_text: str):
+    def __init__(self, message_id: int, chat_id: int, author_user_id: int, message_text: str):
         self.message_id = message_id
         self.message_text = message_text
         self.chat_id = chat_id
-        self.author_user_in_chat_id = author_user_in_chat_id
-
+        self.author_user_id = author_user_id
 
 class User_reacted_to_message(object):
     id: int

@@ -50,7 +50,7 @@ TODO:
 - [x] Don't show the bot on /showkarma
 - [ ] Fix bug: currently users without usernames cannot receive karma. 
 - [ ] Change deploy script to use rsync instead of zip/unzip every time
-
+- [ ] Create database indexs for performance
 
 
 Database Functions:
