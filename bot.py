@@ -42,24 +42,7 @@ else:
 
 dispatcher = updater.dispatcher
 
-ChatToKarmaDict = NewType('ChatToKarmaDict', Dict[int, Dict[int, User]])
-#dict of chat_id: int -> Karma_dictionary (which is user_id: int -> user: User)
-chat_to_karma_dictionary : ChatToKarmaDict = dict()
 
-
-chat_to_karma_filename = None
-if is_production:
-    chat_to_karma_filename = "chat_to_karma_dictionary.p"
-else:
-    chat_to_karma_filename = "chat_to_karma_dictionary_test.p"
-
-try:
-    with open(chat_to_karma_filename, "rb") as backupfile:
-        chat_to_karma_dictionary: ChatToKarmaDict = pickle.load(backupfile)
-except FileNotFoundError as fnfe:
-    logger.info("Chat to Karma dictionary not found. Creating one")
-    with open(chat_to_karma_filename, "wb") as backupfile:
-        pickle.dump(chat_to_karma_dictionary, backupfile)
 
 
 
@@ -121,10 +104,8 @@ def reply(bot: tg.Bot, update: tg.Update):
     replying_user = user_from_tg_user(update.message.from_user)
     save_or_create_user(reply_user, conn)
     save_or_create_user(replying_user, conn)
-    chat = Telegram_chat(update.message.chat_id, update.message.chat.title)
+    chat = Telegram_chat(str(update.message.chat_id), update.message.chat.title)
     save_or_create_chat(chat,conn)
-
-    
 
     reply_uic = save_or_create_user_in_chat(reply_user, chat.chat_id,conn)
     replying_uic = save_or_create_user_in_chat(replying_user, chat.chat_id,conn)
@@ -197,7 +178,7 @@ def show_karma(bot,update,args):
     logger.debug("Chat id: " + str(update.message.chat_id))
 
     #returns username, karma
-    rows : Tuple[str,int] = get_karma_for_users_in_chat(update.message.chat_id,conn)
+    rows : Tuple[str,int] = get_karma_for_users_in_chat(str(update.message.chat_id),conn)
     rows.sort(key=lambda user: user[1], reverse=True)
 
     message = "\n".join(["%s: %d" % (user[0], user[1]) for user in rows])
@@ -254,6 +235,24 @@ def main():
 
     updater.start_polling()
 
+    from typing import Dict, NewType, Tuple
+    ChatToKarmaDict = NewType('ChatToKarmaDict', Dict[int, Dict[int, User]])
+    #dict of chat_id: int -> Karma_dictionary (which is user_id: int -> user: User)
+    chat_to_karma_dictionary : ChatToKarmaDict = dict()
+    chat_to_karma_filename = None
+    if is_production:
+        chat_to_karma_filename = "chat_to_karma_dictionary.p"
+    else:
+        chat_to_karma_filename = "chat_to_karma_dictionary_test.p"
+
+    try:
+        with open(chat_to_karma_filename, "rb") as backupfile:
+            chat_to_karma_dictionary: ChatToKarmaDict = pickle.load(backupfile)
+    except FileNotFoundError as fnfe:
+        logger.info("Chat to Karma dictionary not found. Creating one")
+        with open(chat_to_karma_filename, "wb") as backupfile:
+            pickle.dump(chat_to_karma_dictionary, backupfile)
+    
     
     insert_chat = "INSERT INTO telegram_chat VALUES (%s,%s) ON CONFLICT (chat_id) DO UPDATE SET chat_name=EXCLUDED.chat_name"
     insert_user = "INSERT INTO telegram_user (user_id, username, first_name, last_name) VALUES (%s,%s,%s,%s) ON CONFLICT DO NOTHING"
@@ -261,35 +260,35 @@ def main():
     select_uic = ""
     insert_uic = "INSERT INTO user_in_chat(user_id,chat_id, karma) VALUES (%s,%s,%s) ON CONFLICT (user_id,chat_id) DO UPDATE SET karma=EXCLUDED.karma"
     migrate = True
+    import pandas as pd
     if migrate:
-        for chat_id, userdict in chat_to_karma_dictionary.items():
-            #cursor.execute(insert_chat,[chat_id, ''])
-            for id, user in userdict.items():
-                cursor.execute(insert_user,[user.id, user.username,user.first_name,user.last_name])
-                karma = None
+        df = pd.read_csv("db.csv",sep='\t')
+        convert_cols = ['user_id','chat_id','karma']
+        for col in convert_cols:
+            df[col] = df[col].astype(int)
+        print(df)
+        for index, row in df.iterrows():
+                #set 3 variables all on one line in python by seperating with ','
+                user_id = row['user_id']
+                chat_id =row['chat_id']
+                username = row['username']
+                first_name = row['first_name']
+                last_name = row['last_name']
+                karma = row['karma']
+
+                #insert telegram_user
+                cursor.execute(insert_user,[user_id, username, first_name, last_name])
+                #insert telegram_chat
+                print(chat_id)
                 try:
-                    karma = user.__karma
-                except AttributeError as ae:
-                    karma = 0
-
-                #doesn't work since __karma doesn't exist on user
-                """ if user.__karma is None:
-                    karma = 0
-                else:
-                    karma = user.__karma """
-                #stack dump
-                """ bot_1       |   File "bot.py", line 270, in main
-                    bot_1       |     if user.__karma is None:
-                    bot_1       | AttributeError: 'User' object has no attribute '__karma' """
-
+                    cursor.execute(insert_chat,[chat_id,'default_chat_name'])
+                except psycopg2.DataError as de:
+                    print("DE: " + de)
                 
-                print("Karma: " + str(karma))
-                cursor.execute(insert_chat,[chat_id,'default_chat_name'])
-                cursor.execute(insert_uic,[user.id, chat_id, karma])
-            
-    
-
-
+                #insert telegram_user_in_chat
+                cursor.execute(insert_uic,[user_id, chat_id, karma])
+        conn.commit()
+        
 
     cursor.execute("SELECT * FROM pg_catalog.pg_tables;")
     many = cursor.fetchall()

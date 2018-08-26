@@ -51,7 +51,7 @@ class User(object):
         if self.username is not None:
             message = "Username: " + self.username + " karma: " + str(self.get_karma())
             #clean this logic up
-            message = message + " first: " + self.get_first_name() + " last: " + self.get_last_name()
+            message = message + " first: " + str(self.get_first_name()) + " last: " + str(self.get_last_name())
             return message
         else:
             return "First Name: " + self.first_name + " karma: " + str(self.get_karma())
@@ -68,9 +68,9 @@ class User_in_chat(object):
         self.karma = karma
 
 class Telegram_chat(object):
-    chat_id: int
+    chat_id: str
     chat_name: str
-    def __init__(self,chat_id: int, chat_name: str):
+    def __init__(self,chat_id: str, chat_name: str):
         self.chat_id = chat_id
         self.chat_name = chat_name
 class Telegram_message(object):

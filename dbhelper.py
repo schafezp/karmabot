@@ -26,7 +26,7 @@ def save_or_create_user(user : User,conn) -> User:
             crs.execute(selectcmd,[user.get_user_id()])
             (user_id, username, first_name, last_name) = crs.fetchone()
             return User(user_id,username,first_name,last_name)
-def does_chat_exist(chat_id: int, conn):
+def does_chat_exist(chat_id: str, conn):
     with conn:
         with conn.cursor() as crs: #I would love type hints here but psycopg2.cursor isn't a defined class
             selectcmd = "SELECT chat_id, chat_name FROM telegram_chat tc where tc.chat_id=%s"
@@ -48,7 +48,7 @@ def save_or_create_chat(chat: Telegram_chat, conn):
 
 
 #if user did not have a karma before, karma will be set to change_karma
-def save_or_create_user_in_chat(user: User, chat_id: int, conn, change_karma=0) -> User_in_chat:
+def save_or_create_user_in_chat(user: User, chat_id: str, conn, change_karma=0) -> User_in_chat:
     with conn:
         with conn.cursor() as crs: #I would love type hints here but psycopg2.cursor isn't a defined class
             #TODO: instead of select first, do insert and then trap exception if primary key exists
@@ -68,7 +68,6 @@ def save_or_create_user_in_chat(user: User, chat_id: int, conn, change_karma=0) 
             [user.get_user_id(),chat_id, change_karma,change_karma])
             
             row = crs.fetchone()
-            print(row)
             conn.commit()
             karma = row[0]
             return User_in_chat(user.id,chat_id,karma)
@@ -86,8 +85,8 @@ def user_reply_to_message(user: User,reply_user: User, chat: Telegram_chat , ori
     
     uic: User_in_chat = save_or_create_user_in_chat(user, chat.chat_id, conn)
     uic2: User_in_chat = save_or_create_user_in_chat(user2, chat.chat_id, conn)
-    print("uic user_id: "+ str(uic.user_id))
-    print("uic2 user_id: "+ str(uic2.user_id))
+    print("user replying to message:  "+ user.username)
+    print("user receiveing karma: "+ user2.username)
     #apply karma to message author
     if(karma == 1 or karma == -1):
         save_or_create_user_in_chat(user2,chat.chat_id, conn, change_karma=karma)
@@ -116,7 +115,7 @@ def user_reply_to_message(user: User,reply_user: User, chat: Telegram_chat , ori
                 argsurtm = [uic.user_id, original_message.message_id, karma, reply_message.message_id]
                 crs.execute(inserturtm,argsurtm)
             
-def get_karma_for_users_in_chat(chat_id: int,conn):
+def get_karma_for_users_in_chat(chat_id: str,conn):
     cmd = """select username, karma from user_in_chat uic
         LEFT JOIN telegram_user tu ON uic.user_id=tu.user_id
         where uic.chat_id=%s;"""
