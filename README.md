@@ -51,6 +51,8 @@ TODO:
 - [ ] Fix bug: currently users without usernames cannot receive karma. 
 - [ ] Change deploy script to use rsync instead of zip/unzip every time
 - [ ] Create database indexs for performance
+- [ ] Add table to track when users do /showkarma
+- [ ] Add time field to telegram_message
 
 
 Database Functions:
