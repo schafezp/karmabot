@@ -119,11 +119,20 @@ def reply(bot: tg.Bot, update: tg.Update):
     logger.debug("reply")
     reply_user = user_from_tg_user(update.message.reply_to_message.from_user) 
     replying_user = user_from_tg_user(update.message.from_user)
+    save_or_create_user(reply_user, conn)
+    save_or_create_user(replying_user, conn)
     chat = Telegram_chat(update.message.chat_id, update.message.chat.title)
-    original_message = Telegram_message(update.message.message_id, chat.chat_id, reply_user.id, update.message.text)
-    reply_message = Telegram_message(update.message.reply_to_message.message_id, chat.chat_id, replying_user.id, update.message.reply_to_message.text)
+    save_or_create_chat(chat,conn)
+
     
-    save_or_create_user(user_from_tg_user(reply_user),conn)
+
+    reply_uic = save_or_create_user_in_chat(reply_user, chat.chat_id,conn)
+    replying_uic = save_or_create_user_in_chat(replying_user, chat.chat_id,conn)
+
+    original_message = Telegram_message(update.message.message_id, chat.chat_id, reply_uic.id, update.message.text)
+    reply_message = Telegram_message(update.message.reply_to_message.message_id, chat.chat_id, replying_uic.id, update.message.reply_to_message.text)
+    
+    
 
     
 
@@ -147,13 +156,13 @@ def reply(bot: tg.Bot, update: tg.Update):
             message = "" + reply_user.first_name + response
             bot.send_message(chat_id=chat_id, text=message)
         else:
-            user_reply_to_message(replying_user, chat, original_message, reply_message, 1,conn)
+            user_reply_to_message(replying_user,reply_user, chat, original_message, reply_message, 1,conn)
             """ user = save_or_create_user_in_chat(reply_user.id,chat_id, conn,change_karma=1) """
             logger.debug("user")
             logger.debug(replying_user)
     elif len(reply_text) >= 2 and reply_text[:2] == "-1":
         #user = save_or_create_user_in_chat(user_from_tg_user(reply_user), chat_id, conn, change_karma=-1)
-        user_reply_to_message(replying_user, chat, original_message, reply_message, -1,conn)
+        user_reply_to_message(replying_user, reply_user, chat, original_message, reply_message, -1,conn)
         logger.debug(replying_user)
 
 def start(bot, update):
@@ -165,12 +174,33 @@ def show_version(bot,update,args):
     message = message + "\nChangelog found at: " + changelog_url
     bot.send_message(chat_id=update.message.chat_id, text=message)
 
+def show_user_messages(bot,update,args):
+    user_id = update.message.from_user.id
+    if len(args) != 1:
+        bot.send_message(chat_id=update.message.chat_id, text="send argument of username")
+        return
+    username = args[0]
+    selectcmd = "select user_id from telegram_user tu where tu.username=%s"
+    user_id = None
+    with conn:
+        with conn.cursor() as crs:
+            crs.execute(selectcmd, [username])
+            user_id = crs.fetchone()[0]
+    if user_id is None:
+        bot.send_message(chat_id=update.message.chat_id, text="No user with that username")
+        return
+    res = get_message_responses_for_user_in_chat(user_id, update.message.chat_id,conn)
+    bot.send_message(chat_id=update.message.chat_id, text=str(res))
+    
 
 def show_karma(bot,update,args):
     logger.debug("Chat id: " + str(update.message.chat_id))
     # Use the lower one if you find it more pythonic
     #users = chat_to_karma_dictionary[update.message.chat_id].items() if not KeyError else []
-    users = list(chat_to_karma_dictionary.get(update.message.chat_id, dict()).values())
+    karma = get_karma_for_users_in_chat(update.message.chat_id,conn)
+    bot.send_message(chat_id=update.message.chat_id, text=str(karma))
+
+    """ users = list(chat_to_karma_dictionary.get(update.message.chat_id, dict()).values())
 
     users.sort(key=lambda user: user.get_karma(), reverse=True)
     logger.debug("users length: "+ str(len(users)))
@@ -181,7 +211,7 @@ def show_karma(bot,update,args):
     else:
         message = "Oops I didn't find any karma"
 
-    bot.send_message(chat_id=update.message.chat_id, text=message)
+    bot.send_message(chat_id=update.message.chat_id, text=message) """
 
 
 def error(bot, update, error):
@@ -205,6 +235,10 @@ def main():
 
     showkarma_handler = CommandHandler('showkarma', show_karma, pass_args=True)
     dispatcher.add_handler(showkarma_handler)
+    
+    #TODO: finsih this
+    showusermessages_handler = CommandHandler('showusermessages', show_karma, pass_args=True)
+    """ dispatcher.add_handler(showusermessages_handler) """
 
     showversion_handler = CommandHandler('version', show_version, pass_args=True)
     dispatcher.add_handler(showversion_handler)

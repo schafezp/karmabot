@@ -91,14 +91,21 @@ def save_or_create_user_in_chat(user: User, chat_id: int, conn, change_karma=0) 
 
 
 #message tg.Message
-def user_reply_to_message(user: User, chat: Telegram_chat , original_message : Telegram_message, reply_message : Telegram_message, karma : int, conn):
+def user_reply_to_message(user: User,reply_user: User, chat: Telegram_chat , original_message : Telegram_message, reply_message : Telegram_message, karma : int, conn):
     user: User = save_or_create_user(user,conn)
+    user2: User = save_or_create_user(reply_user,conn)
     if not does_chat_exist(chat.chat_id,conn):
         save_or_create_chat(chat, conn)
+
+
+    
     uic: User_in_chat = save_or_create_user_in_chat(user, chat.chat_id, conn)
+    uic2: User_in_chat = save_or_create_user_in_chat(user2, chat.chat_id, conn)
+    print("uic id: "+ str(uic.id))
+    print("uic2 id: "+ str(uic2.id))
     #apply karma to message author
     if(karma == 1 or karma == -1):
-        save_or_create_user_in_chat(user,chat.chat_id, conn, change_karma=karma)
+        save_or_create_user_in_chat(user2,chat.chat_id, conn, change_karma=karma)
     else:
         print("invalid karma number")
     insert_message = """INSERT INTO telegram_message 
@@ -116,6 +123,7 @@ def user_reply_to_message(user: User, chat: Telegram_chat , original_message : T
             args_reply_message = [reply_message.message_id, chat.chat_id, uic.id, reply_message.message_text]
             args_original_message = [original_message.message_id, chat.chat_id, original_message.author_user_in_chat_id, original_message.message_text]
             crs.execute(insert_message,args_reply_message)
+
             crs.execute(insert_message,args_original_message)
             # check if urtm doesn't exist #(primary key should do this part...)
             args_select_urtm = [uic.id, original_message.message_id, reply_message.message_id]
