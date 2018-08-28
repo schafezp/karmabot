@@ -53,42 +53,6 @@ while conn is None:
 
 cursor = conn.cursor()
 
-""" def get_user_by_reply_user(reply_user: tg.User, chat_id: int):
-    logger.debug("Chat id: " + str(chat_id))
-    chat_id
-    karma_dictionary = None
-
-    if chat_id not in chat_to_karma_dictionary:
-        karma_dictionary = dict()
-        chat_to_karma_dictionary[chat_id] = karma_dictionary
-    else:
-        karma_dictionary = chat_to_karma_dictionary[chat_id]
-    if reply_user.id not in karma_dictionary:
-        user = User(reply_user)
-        karma_dictionary[reply_user.id] = user
-        return user
-    else:
-        user: User = karma_dictionary[reply_user.id]
-        return user
- """
-
-""" def save_user(user: User, chat_id: int):
-    logger.debug(chat_id)
-    logger.debug("Chat to karma: ")
-    logger.debug(chat_to_karma_dictionary)
-    karma_dictionary = chat_to_karma_dictionary[chat_id]
-    karma_dictionary[user.id] = user
-    with open(chat_to_karma_filename, "wb") as backupfile:
-        pickle.dump(chat_to_karma_dictionary, backupfile)
-
-
-def reset_karma(chat_id: int):
-    logger.info("Resetting Karma for all users: DANGEROUS")
-    chat_to_karma_dictionary = dict()
-    with open(chat_to_karma_filename, "wb") as backupfile:
-        pickle.dump(chat_to_karma_dictionary, backupfile) """
-
-
 def reply(bot: tg.Bot, update: tg.Update):
     logger.debug("reply")
     reply_user = user_from_tg_user(update.message.reply_to_message.from_user) 
@@ -104,10 +68,10 @@ def reply(bot: tg.Bot, update: tg.Update):
     original_message_tg = update.message.reply_to_message
     reply_message_tg = update.message
 
-    print("original_message_text: " + original_message_tg.text)
-    print("original_message_user: " + reply_user.username)
-    print("reply_message_text: " + reply_message_tg.text)
-    print("replying_user: " + replying_user.username)
+    logger.debug("original_message_text: " + str(original_message_tg.text))
+    logger.debug("original_message_user: " + reply_user.username)
+    logger.debug("reply_message_text: " + reply_message_tg.text)
+    logger.debug("replying_user: " + replying_user.username)
     
     original_message = Telegram_message(update.message.reply_to_message.message_id, chat.chat_id, reply_uic.user_id, update.message.reply_to_message.text)
     reply_message = Telegram_message(update.message.message_id, chat.chat_id, replying_uic.user_id, update.message.text)
@@ -274,15 +238,6 @@ def show_karma(bot,update,args):
 
     bot.send_message(chat_id=update.message.chat_id, text=message) 
 
-    #bot.send_message(chat_id=update.message.chat_id, text=str(karma))
-
-    """ users = list(chat_to_karma_dictionary.get(update.message.chat_id, dict()).values())
-
-    users.sort(key=lambda user: user.get_karma(), reverse=True)
-    logger.debug("users length: "+ str(len(users)))
-    """
-
-
 def error(bot, update, error):
     """Log Errors caused by Updates."""
     logger.warning('Update "%s" caused error "%s"', update, error)
@@ -308,7 +263,7 @@ def main():
     show_user_handler = CommandHandler('userinfo', show_user_stats, pass_args=True)
     dispatcher.add_handler(show_user_handler)
 
-    #TODO: finsih this
+    #TODO: finish this
     showusermessages_handler = CommandHandler('showusermessages', show_karma, pass_args=True)
     """ dispatcher.add_handler(showusermessages_handler) """
 
@@ -322,31 +277,12 @@ def main():
 
     updater.start_polling()
 
-    """ from typing import Dict, NewType, Tuple
-    ChatToKarmaDict = NewType('ChatToKarmaDict', Dict[int, Dict[int, User]])
-    #dict of chat_id: int -> Karma_dictionary (which is user_id: int -> user: User)
-    chat_to_karma_dictionary : ChatToKarmaDict = dict()
-    chat_to_karma_filename = None
-    if is_production:
-        chat_to_karma_filename = "chat_to_karma_dictionary.p"
-    else:
-        chat_to_karma_filename = "chat_to_karma_dictionary_test.p"
-
-    try:
-        with open(chat_to_karma_filename, "rb") as backupfile:
-            chat_to_karma_dictionary: ChatToKarmaDict = pickle.load(backupfile)
-    except FileNotFoundError as fnfe:
-        logger.info("Chat to Karma dictionary not found. Creating one")
-        with open(chat_to_karma_filename, "wb") as backupfile:
-            pickle.dump(chat_to_karma_dictionary, backupfile) """
-    
-    
     insert_chat = "INSERT INTO telegram_chat VALUES (%s,%s) ON CONFLICT (chat_id) DO UPDATE SET chat_name=EXCLUDED.chat_name"
     insert_user = "INSERT INTO telegram_user (user_id, username, first_name, last_name) VALUES (%s,%s,%s,%s) ON CONFLICT DO NOTHING"
     #select first to see if a uic is set, in that case update those values
     select_uic = ""
-    insert_uic = "INSERT INTO user_in_chat(user_id,chat_id, karma) VALUES (%s,%s,%s) ON CONFLICT (user_id,chat_id) DO UPDATE SET karma=EXCLUDED.karma"
-    migrate = True
+    insert_uic = "INSERT INTO user_in_chat(user_id,chat_id, karma) VALUES (%s,%s,%s) ON CONFLICT DO NOTHING"
+    migrate = False
     import pandas as pd
     if migrate:
         df = pd.read_csv("db.csv",sep='\t')
@@ -375,58 +311,16 @@ def main():
                 cursor.execute(insert_uic,[user_id, chat_id, karma])
         conn.commit()
         
-
     cursor.execute("SELECT * FROM pg_catalog.pg_tables;")
     many = cursor.fetchall()
     public_tables = list(filter(lambda x: x[0] == 'public', many))
     print("public_tables: "+ str(public_tables))
-
-    """ cursor.execute("SELECT * FROM pg_catalog.pg_tables;")
-    many = cursor.fetchall()
-    public_tables = list(filter(lambda x: x[0] == 'public', many))
-    print("public_tables: "+ str(public_tables))"""
 
     updater.idle()
 
     cursor.close()
     conn.close()    
     
-    #TODO: create tests from this code
-    """ user_id= 560101
-    username="@username"
-    first_name = "firstname"
-    last_name = "lastname"
-    user = User(user_id, username, first_name, last_name)
-    user2 = User(43123, "@bob", "bob", "dude")
-    save_or_create_user(user, conn)
-    save_or_create_user(user2, conn) """
-    
-    """ print("run get or create user")
-    print(save_or_create_user(user, conn))
-    user.first_name = "another_first_name"
-    print("User: " + str(user))
-    updated_user: User = save_or_create_user(user,conn)
-    assert updated_user.get_first_name() == "another_first_name" """
-
-    """ chat_id=23432
-    chat = Telegram_chat(chat_id, "chat name 1")
-    save_or_create_chat(chat, conn)
-    uic = save_or_create_user_in_chat(user,chat_id,conn)
-    uic2 = save_or_create_user_in_chat(user2,chat_id, conn)
-    message1 = Telegram_message(31,chat_id,uic.id, "here is a message from @username")
-    message2 = Telegram_message(27,chat_id,uic2.id, "message from bob")
-    user_reply_to_message(user,chat, message1,message2, 1,conn)
-    print(get_karma_for_users_in_chat(chat.chat_id, conn))
-    print(get_message_responses_for_user_in_chat(user.id, chat.chat_id, conn)) """
-
-
-    """ with conn:
-            with conn.cursor() as curs:
-            # this block is now in a transaction: yay python with block magic
-
-             """
-    
-
 
 if __name__ == '__main__':
     main()
