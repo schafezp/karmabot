@@ -63,6 +63,7 @@ TODO:
 - [ ] Add table to track when users do /showkarma
 - [ ] Add time field to telegram_message
 - [ ] Add icon for the karmabot bot
+- [ ] Fix users without username being reported as "NaN" 
 
 Database Functions:
 
