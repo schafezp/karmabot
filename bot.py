@@ -70,7 +70,7 @@ def reply(bot: tg.Bot, update: tg.Update):
 
     logger.debug("original_message_text: " + str(original_message_tg.text))
     logger.debug("original_message_user: " + str(reply_user.username))
-    logger.debug("reply_message_text: " + reply_message_tg.text)
+    logger.debug("reply_message_text: " + str(reply_message_tg.text))
     logger.debug("replying_user: " + str(replying_user.username))
     
     original_message = Telegram_message(update.message.reply_to_message.message_id, chat.chat_id, reply_uic.user_id, update.message.reply_to_message.text)
@@ -112,15 +112,16 @@ def show_user_stats(bot,update,args):
     #without this if this is the first command run alone with the bot it will fail due to psycopg2.IntegrityError: insert or update on table "command_used" violates foreign key constraint "command_used_chat_id_fkey"
     chat = Telegram_chat(str(update.message.chat_id), update.message.chat.title)
     save_or_create_chat(chat,conn)
-    use_command('userinfo',update.message.from_user.id, str(update.message.chat_id))
+    
     user_id = update.message.from_user.id
     chat_id = str(update.message.chat_id)
     if len(args) != 1:
-        bot.send_message(chat_id=update.message.chat_id, text="send argument of username")
+        bot.send_message(chat_id=update.message.chat_id, text="use command like: \\userinfo username")
         return
     username = args[0]
     if username[0] == "@":
         username = username[1:]
+    use_command('userinfo',update.message.from_user.id, str(update.message.chat_id), arguments=username)
 
     selectuser = "select * from telegram_user tu where tu.username=%s"
     result = None
