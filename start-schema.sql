@@ -1,3 +1,4 @@
+
 CREATE TABLE IF NOT EXISTS telegram_user ( -- use IF NOT EXISTS to not error if they table does exist
     user_id INTEGER PRIMARY KEY,
     username TEXT,
@@ -21,7 +22,8 @@ CREATE TABLE IF NOT EXISTS telegram_message (
     message_id INTEGER PRIMARY KEY,
     chat_id TEXT REFERENCES telegram_chat(chat_id),
     author_user_id INTEGER REFERENCES telegram_user(user_id),
-    message_text TEXT  
+    message_text TEXT,
+    message_time TIMESTAMP default current_timestamp
 );
 
 CREATE TABLE IF NOT EXISTS user_reacted_to_message (
@@ -31,3 +33,11 @@ CREATE TABLE IF NOT EXISTS user_reacted_to_message (
     react_score INTEGER, --"1" if +1, "-1" if -1,
     react_message_id INTEGER
 );
+
+-- use trigger to check banned used before allowing user_in_chat to be modified
+-- soon maybe sum should be used for all karma
+CREATE TABLE banned_users (
+
+)
+
+ALTER TABLE telegram_message ALTER message_time set default current_timestamp

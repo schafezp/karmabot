@@ -15,6 +15,8 @@ ssh droplet << EOF
 
     #tmux kill-session -t bottest
     #tmux new-session -d -s "bottest" ""
+    mv docker-compose.yml docker-compose.yml.backup
+    mv docker-compose-prod.yml docker-compose.yml
     export PROD=false && docker-compose build && docker-compose up -d --no-deps && docker-compose logs bot
     
     echo "Run Tmux ls to see running sessions"
