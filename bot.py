@@ -241,22 +241,46 @@ def show_karma(bot,update,args):
 def show_chat_info(bot,update,args):
     chat_id = str(update.message.chat_id)
     title = update.message.chat.title
-    selectcmd = """
-select count(tm.message_id) from user_reacted_to_message urtm 
+    selectcmd = """select count(tm.message_id) from user_reacted_to_message urtm 
 left join telegram_message tm ON tm.message_id = urtm.message_id
 where tm.chat_id=%s"""
+    select_user_with_karma_count = """ 
+    select count(*) from telegram_chat tc 
+    left join user_in_chat uic on uic.chat_id = tc.chat_id
+    where tc.chat_id=%s
+    """
     with conn:
         with conn.cursor() as crs:
             crs.execute(selectcmd,[chat_id])
             result = crs.fetchone()
+            
             message = ""
+            reply_count = None
             if result is not None:
-                message = "Chat: {:s}.\n Total Reply Count: {:d}".format(title,result[0])
+                reply_count = result[0]
             else:
-                message = "Chat: {:s}.\n Total Reply Count: {:d}".format(title,0)
-                
+                reply_count = 0
+
+            crs.execute(select_user_with_karma_count,[chat_id])
+            result = crs.fetchone()
+            user_with_karma_count = None
+            if result is not None: 
+                user_with_karma_count = result[0]
+            else:
+                user_with_karma_count = 0
+
+            message = "Chat: {:s}.\n Number of Users with Karma: {:d}\n Total Reply Count: {:d}".format(title,user_with_karma_count, reply_count)
             bot.send_message(chat_id=update.message.chat_id, text=message)
 
+def show_karma_personally(bot,update,args):
+    #TODO:check if this is a 1 on 1 message
+
+    #might be best to use a different handler:
+    #offer choice to user of which chat they want to see the karma totals of
+
+    #user clicks on button to choose chat (similar to BotFather) then bot responds with karma for that chat
+
+    print()
 
 
 def error(bot, update, error):
