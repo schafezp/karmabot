@@ -69,9 +69,9 @@ def reply(bot: tg.Bot, update: tg.Update):
     reply_message_tg = update.message
 
     logger.debug("original_message_text: " + str(original_message_tg.text))
-    logger.debug("original_message_user: " + reply_user.username)
+    logger.debug("original_message_user: " + str(reply_user.username))
     logger.debug("reply_message_text: " + reply_message_tg.text)
-    logger.debug("replying_user: " + replying_user.username)
+    logger.debug("replying_user: " + str(replying_user.username))
     
     original_message = Telegram_message(update.message.reply_to_message.message_id, chat.chat_id, reply_uic.user_id, update.message.reply_to_message.text)
     reply_message = Telegram_message(update.message.message_id, chat.chat_id, replying_uic.user_id, update.message.text)
@@ -108,6 +108,7 @@ def show_version(bot,update,args):
     #message = message + "\nChangelog found at: " + changelog_url
     bot.send_message(chat_id=update.message.chat_id, text=message)
 def show_user_stats(bot,update,args):
+    use_command('userinfo',update.message.from_user.id, str(update.message.chat_id))
     user_id = update.message.from_user.id
     chat_id = str(update.message.chat_id)
     if len(args) != 1:
@@ -221,8 +222,16 @@ def show_user_messages(bot,update,args):
     res = get_message_responses_for_user_in_chat(user_id, update.message.chat_id,conn)
     bot.send_message(chat_id=update.message.chat_id, text=str(res))
     
+#TODO: replace this with an annotation maybe?
+def use_command(command: str,user_id: int, chat_id: str, arguments=""):
+    insertcmd = """INSERT INTO command_used (command,arguments,user_id,chat_id) VALUES (%s,%s,%s,%s)"""
+    with conn:
+        with conn.cursor() as crs:
+            crs.execute(insertcmd,[command,arguments,user_id,chat_id])
+
 
 def show_karma(bot,update,args):
+    use_command('showkarma',update.message.from_user.id, str(update.message.chat_id))
     logger.debug("Chat id: " + str(update.message.chat_id))
 
     #returns username, karma
@@ -239,6 +248,7 @@ def show_karma(bot,update,args):
     bot.send_message(chat_id=update.message.chat_id, text=message) 
 
 def show_chat_info(bot,update,args):
+    use_command('chatinfo',update.message.from_user.id, str(update.message.chat_id))
     chat_id = str(update.message.chat_id)
     title = update.message.chat.title
     selectcmd = """select count(tm.message_id) from user_reacted_to_message urtm 
