@@ -17,3 +17,17 @@ Channel bot is no longer included in /showkarma report
 ## Version 1.03
 
 As long as reply starts with a +1 or -1 it triggers the karma change.
+
+## Version 1.04
+
+Now the project is backed by a postgresql database! The /userinfo feature has been added to show statistics on a particular user. Invoke it using
+
+```
+\userinfo username
+```
+
+or,
+```
+\userinfo @username
+```
+

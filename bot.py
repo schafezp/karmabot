@@ -24,7 +24,7 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
     level=level)
 logger = logging.getLogger(__name__)
 
-version = '1.03' # TODO: make this automatic
+version = '1.04' # TODO: make this automatic
 changelog_url = 'https://schafezp.com/schafezp/txkarmabot/blob/master/CHANGELOG.md'
 
 # TODO: obfuscate these
