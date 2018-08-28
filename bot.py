@@ -42,11 +42,6 @@ else:
 
 dispatcher = updater.dispatcher
 
-
-
-
-
-
 conn = None
 import time
 while conn is None:
@@ -57,10 +52,6 @@ while conn is None:
         time.sleep(1)
 
 cursor = conn.cursor()
-
-
-
-
 
 """ def get_user_by_reply_user(reply_user: tg.User, chat_id: int):
     logger.debug("Chat id: " + str(chat_id))
@@ -149,7 +140,8 @@ def start(bot, update):
 
 def show_version(bot,update,args):
     message = "Version: " + version + "\n" + "Bot powered by Python."
-    message = message + "\nChangelog found at: " + changelog_url
+    #harder to hack the bot if source code is obfuscated :p
+    #message = message + "\nChangelog found at: " + changelog_url
     bot.send_message(chat_id=update.message.chat_id, text=message)
 def show_user_stats(bot,update,args):
     user_id = update.message.from_user.id
