@@ -64,6 +64,7 @@ TODO:
 - [ ] Add time field to telegram_message
 - [ ] Add icon for the karmabot bot
 - [ ] Fix users without username being reported as "NaN" 
+- [ ] Make sure transactions are used properly throughout to rollback faulty partial data
 
 Database Functions:
 
