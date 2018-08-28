@@ -1,3 +1,5 @@
+
+
 #################
 ####### This file contains two functions to support migrating from pickled objects to a database backend
 #################
@@ -107,3 +109,11 @@ def load_database(csv_filename: str):
                 crs.execute(insert_chat,[chat_id,'default_chat_name'])
                 #insert telegram_user_in_chat
                 crs.execute(insert_uic,[user_id, chat_id, karma])
+
+def main():
+    dump_database('out.csv')
+
+
+if __name__ == '__main__':
+    main()
+

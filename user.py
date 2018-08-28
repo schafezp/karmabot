@@ -2,7 +2,7 @@ import telegram as tg
 from typing import Optional
 
 def user_from_tg_user(user : tg.User):
-    return User(user.id,user.username, user.last_name, user.first_name)
+    return User(user.id,user.username, user.first_name, user.last_name)
 def message_from_tg_message(message :tg.Message):
     return Telegram_message(message.message_id, message.chat.id, message.from_user.id, message.text)
 

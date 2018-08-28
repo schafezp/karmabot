@@ -1,4 +1,5 @@
 from user import User, User_in_chat, Telegram_chat, Telegram_message
+from typing import Optional
 
 def get_user_by_user_id(user_id: int, conn) -> User:
     with conn:
@@ -53,7 +54,7 @@ def save_or_create_user_in_chat(user: User, chat_id: str, conn, change_karma=0) 
         with conn.cursor() as crs: #I would love type hints here but psycopg2.cursor isn't a defined class
             #TODO: instead of select first, do insert and then trap exception if primary key exists
             selectcmd = "SELECT user_id, chat_id, karma FROM user_in_chat uic where uic.user_id=%s AND uic.chat_id=%s"
-            crs.execute(selectcmd,[user.get_user_id(), chat_id,])
+            crs.execute(selectcmd,[user.id, chat_id,])
 
             result = crs.fetchone()
 
@@ -75,21 +76,22 @@ def save_or_create_user_in_chat(user: User, chat_id: str, conn, change_karma=0) 
 
 
 #message tg.Message
-def user_reply_to_message(user: User,reply_user: User, chat: Telegram_chat , original_message : Telegram_message, reply_message : Telegram_message, karma : int, conn):
+#reply_message comes after and is the reply
+def user_reply_to_message(user: User,reply_to_user: User, chat: Telegram_chat , original_message : Telegram_message, reply_message : Telegram_message, karma : int, conn):
     user: User = save_or_create_user(user,conn)
-    user2: User = save_or_create_user(reply_user,conn)
+    reply_to_user: User = save_or_create_user(reply_to_user,conn)
     if not does_chat_exist(chat.chat_id,conn):
         save_or_create_chat(chat, conn)
 
 
     
     uic: User_in_chat = save_or_create_user_in_chat(user, chat.chat_id, conn)
-    uic2: User_in_chat = save_or_create_user_in_chat(user2, chat.chat_id, conn)
+    reply_to_uic: User_in_chat = save_or_create_user_in_chat(reply_to_user, chat.chat_id, conn)
     print("user replying to message:  "+ user.username)
-    print("user receiveing karma: "+ user2.username)
+    print("user receiveing karma: "+ reply_to_user.username)
     #apply karma to message author
     if(karma == 1 or karma == -1):
-        save_or_create_user_in_chat(user2,chat.chat_id, conn, change_karma=karma)
+        save_or_create_user_in_chat(reply_to_user,chat.chat_id, conn, change_karma=karma)
     else:
         print("invalid karma number")
     insert_message = """INSERT INTO telegram_message 
@@ -110,10 +112,27 @@ def user_reply_to_message(user: User,reply_user: User, chat: Telegram_chat , ori
             crs.execute(insert_message,args_original_message)
             # check if urtm doesn't exist #(primary key should do this part...)
             args_select_urtm = [uic.user_id, original_message.message_id, reply_message.message_id]
+            print("React_message_id")
             crs.execute(selecturtm,args_select_urtm)
             if crs.fetchone() is None:
                 argsurtm = [uic.user_id, original_message.message_id, karma, reply_message.message_id]
                 crs.execute(inserturtm,argsurtm)
+            else:
+                #TODO: replace with logger
+                print("urtm not inserted since already exists")
+
+def get_karma_for_user_in_chat(username: str, chat_id: str,conn) -> Optional[int]:
+    cmd = """select karma from telegram_user tu
+        LEFT JOIN user_in_chat uic ON uic.user_id=tu.user_id
+        where tu.username=%s AND uic.chat_id=%s"""
+    with conn:
+        with conn.cursor() as crs:
+            #TODO: handle | psycopg2.ProgrammingError: relation "user_in_chat" does not exist
+            crs.execute(cmd,[username,chat_id])
+            result = crs.fetchone()
+            if result is not None:
+                return result[0]
+            return result
             
 def get_karma_for_users_in_chat(chat_id: str,conn):
     cmd = """select username, karma from user_in_chat uic
@@ -121,6 +140,7 @@ def get_karma_for_users_in_chat(chat_id: str,conn):
         where uic.chat_id=%s;"""
     with conn:
         with conn.cursor() as crs:
+            #TODO: handle | psycopg2.ProgrammingError: relation "user_in_chat" does not exist
             crs.execute(cmd,[chat_id])
             return crs.fetchall()
 

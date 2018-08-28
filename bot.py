@@ -81,7 +81,7 @@ cursor = conn.cursor()
         return user
  """
 
-def save_user(user: User, chat_id: int):
+""" def save_user(user: User, chat_id: int):
     logger.debug(chat_id)
     logger.debug("Chat to karma: ")
     logger.debug(chat_to_karma_dictionary)
@@ -95,7 +95,7 @@ def reset_karma(chat_id: int):
     logger.info("Resetting Karma for all users: DANGEROUS")
     chat_to_karma_dictionary = dict()
     with open(chat_to_karma_filename, "wb") as backupfile:
-        pickle.dump(chat_to_karma_dictionary, backupfile)
+        pickle.dump(chat_to_karma_dictionary, backupfile) """
 
 
 def reply(bot: tg.Bot, update: tg.Update):
@@ -110,37 +110,34 @@ def reply(bot: tg.Bot, update: tg.Update):
     reply_uic = save_or_create_user_in_chat(reply_user, chat.chat_id,conn)
     replying_uic = save_or_create_user_in_chat(replying_user, chat.chat_id,conn)
 
-    original_message = Telegram_message(update.message.message_id, chat.chat_id, reply_uic.user_id, update.message.text)
-    reply_message = Telegram_message(update.message.reply_to_message.message_id, chat.chat_id, replying_uic.user_id, update.message.reply_to_message.text)
-    
-    
+    original_message_tg = update.message.reply_to_message
+    reply_message_tg = update.message
 
+    print("original_message_text: " + original_message_tg.text)
+    print("original_message_user: " + reply_user.username)
+    print("reply_message_text: " + reply_message_tg.text)
+    print("replying_user: " + replying_user.username)
     
+    original_message = Telegram_message(update.message.reply_to_message.message_id, chat.chat_id, reply_uic.user_id, update.message.reply_to_message.text)
+    reply_message = Telegram_message(update.message.message_id, chat.chat_id, replying_uic.user_id, update.message.text)
+    reply_text = reply_message.message_text
+    chat_id = update.message.chat_id
 
     logger.debug(update.message.reply_to_message)
 
-    # might consume this info later down the line for metrics
-    """
-    reply_to_message = update.message.reply_to_message
-    message_id = reply_to_message.message_id
-    original_message_text = reply_to_message.text
-    """
-    reply_text = update.message.text
-    chat_id = update.message.chat_id
-
-    #TODO: check if +1 is first 2chars
     if len(reply_text) >= 2 and reply_text[:2] == "+1":
         #if user tried to +1 self themselves
-        if(reply_user.id == update.message.from_user.id):
+        if(replying_user.id == update.message.reply_to_message.from_user.id):
             witty_responses = [" how could you +1 yourself?", " what do you think you're doing?", " is your post really worth +1ing yourself?", " you won't get any goodie points for that", " try +1ing someone else instead of yourself!", " who are you to +1 yourself?", " beware the Jabberwocky", " have a 🍪!", " you must give praise. May he 🍔melt🍔! "]
             response = random.choice(witty_responses)
-            message = "" + reply_user.first_name + response
+            message = "" + replying_user.first_name + response
             bot.send_message(chat_id=chat_id, text=message)
         else:
             user_reply_to_message(replying_user,reply_user, chat, original_message, reply_message, 1,conn)
             """ user = save_or_create_user_in_chat(reply_user.id,chat_id, conn,change_karma=1) """
-            logger.debug("user")
+            logger.debug("user replying other user")
             logger.debug(replying_user)
+            logger.debug(reply_user)
     elif len(reply_text) >= 2 and reply_text[:2] == "-1":
         #user = save_or_create_user_in_chat(user_from_tg_user(reply_user), chat_id, conn, change_karma=-1)
         user_reply_to_message(replying_user, reply_user, chat, original_message, reply_message, -1,conn)
@@ -154,6 +151,89 @@ def show_version(bot,update,args):
     message = "Version: " + version + "\n" + "Bot powered by Python."
     message = message + "\nChangelog found at: " + changelog_url
     bot.send_message(chat_id=update.message.chat_id, text=message)
+def show_user_stats(bot,update,args):
+    user_id = update.message.from_user.id
+    chat_id = str(update.message.chat_id)
+    if len(args) != 1:
+        bot.send_message(chat_id=update.message.chat_id, text="send argument of username")
+        return
+    username = args[0]
+    if username[0] == "@":
+        username = username[1:]
+
+    selectuser = "select * from telegram_user tu where tu.username=%s"
+    result = None
+    with conn:
+        with conn.cursor() as crs:
+            crs.execute(selectuser,[username])
+            result = crs.fetchone()
+    if result is not None:
+        select_user_replies = """select username, message_id, react_score, react_message_id  from telegram_user tu 
+            left join user_reacted_to_message urtm on urtm.user_id=tu.user_id
+            where tu.username = %s"""
+        reacted_messages_result = None
+        with conn:
+            with conn.cursor() as crs:
+                crs.execute(select_user_replies,[username])
+                reacted_messages_result = crs.fetchone()
+        if reacted_messages_result is not None:
+            #this cmd shows react given to other
+            stats_cmd = """select sum(react_score), count(react_score) from 
+                (select username, message_id, react_score, react_message_id  from telegram_user tu 
+                left join user_reacted_to_message urtm on urtm.user_id=tu.user_id
+                where tu.username = %s
+                ) as sub
+                left join telegram_message tm on  tm.message_id= sub.message_id
+                where tm.chat_id=%s;"""
+            how_many_of_react_stats = """select react_score, count(react_score)from 
+            (select username, message_id, react_score, react_message_id  from telegram_user tu 
+            left join user_reacted_to_message urtm on urtm.user_id=tu.user_id
+            where tu.username = %s
+            ) as sub left join telegram_message tm on  tm.message_id= sub.message_id
+            where tm.chat_id=%s
+            group by react_score;"""
+            negative_karma_given = 0
+            positive_karma_given = 0
+
+            result = None
+            
+            with conn:
+                with conn.cursor() as crs:
+                    crs.execute(stats_cmd,[username,chat_id])
+                    result = crs.fetchone()
+                    print(result)
+                    crs.execute(how_many_of_react_stats,[username,chat_id])
+                    rows = crs.fetchall()
+                    print("rows: " + str(rows))
+                    for row in rows:
+                        if row[0] == -1:
+                            negative_karma_given = int(row[1])
+                        if row[0] == 1:
+                            positive_karma_given = int(row[1])
+                    result = crs.fetchone()
+
+            
+            karma = get_karma_for_user_in_chat(username,chat_id,conn)
+            print(negative_karma_given)
+            print(type(negative_karma_given))
+            print(type(positive_karma_given))
+            print(type(positive_karma_given-negative_karma_given))
+            message = """Username: {:s} Karma: {:d}
+Karma given out of score:
+    Upvotes, Downvotes, Total Votes, Net Karma
+    {:d}, {:d}, {:d}, {:d}"""
+            message = message.format(username, karma,
+            positive_karma_given, negative_karma_given,
+            positive_karma_given + negative_karma_given,
+            positive_karma_given - negative_karma_given)
+            bot.send_message(chat_id=update.message.chat_id, text=message)    
+            
+        else:
+            bot.send_message(chat_id=update.message.chat_id, text="User: " + username + " did not respond to any messages")    
+        
+    else:
+        bot.send_message(chat_id=update.message.chat_id, text="No user with that username")
+
 
 def show_user_messages(bot,update,args):
     user_id = update.message.from_user.id
@@ -161,12 +241,24 @@ def show_user_messages(bot,update,args):
         bot.send_message(chat_id=update.message.chat_id, text="send argument of username")
         return
     username = args[0]
-    selectcmd = "select user_id from telegram_user tu where tu.username=%s"
+    chat_id = str(update.message.chat_id)
+    selectcmd = """select * from 
+            (select react_score, react_message_id, user_id as reply_user_id from
+            ((select message_id,chat_id, message_text from 
+                    (select user_id as custom_user_id from telegram_user tu where tu.username = %s) as sub
+                        left join telegram_message tm on tm.author_user_id=sub.custom_user_id
+                        where tm.chat_id=%s
+                ) as messages_by_customer_user
+            left join user_reacted_to_message urtm on urtm.message_id=messages_by_customer_user.message_id
+            ) as sub2) as sub3
+            left join telegram_user tu on tu.user_id = reply_user_id;
+            """
     user_id = None
     with conn:
         with conn.cursor() as crs:
-            crs.execute(selectcmd, [username])
-            user_id = crs.fetchone()[0]
+            crs.execute(selectcmd, [username, chat_id])
+            """ crs.execute(selectcmd, [username])
+            user_id = crs.fetchone()[0] """
     if user_id is None:
         bot.send_message(chat_id=update.message.chat_id, text="No user with that username")
         return
@@ -221,6 +313,9 @@ def main():
     showkarma_handler = CommandHandler('showkarma', show_karma, pass_args=True)
     dispatcher.add_handler(showkarma_handler)
     
+    show_user_handler = CommandHandler('userinfo', show_user_stats, pass_args=True)
+    dispatcher.add_handler(show_user_handler)
+
     #TODO: finsih this
     showusermessages_handler = CommandHandler('showusermessages', show_karma, pass_args=True)
     """ dispatcher.add_handler(showusermessages_handler) """
@@ -235,7 +330,7 @@ def main():
 
     updater.start_polling()
 
-    from typing import Dict, NewType, Tuple
+    """ from typing import Dict, NewType, Tuple
     ChatToKarmaDict = NewType('ChatToKarmaDict', Dict[int, Dict[int, User]])
     #dict of chat_id: int -> Karma_dictionary (which is user_id: int -> user: User)
     chat_to_karma_dictionary : ChatToKarmaDict = dict()
@@ -251,7 +346,7 @@ def main():
     except FileNotFoundError as fnfe:
         logger.info("Chat to Karma dictionary not found. Creating one")
         with open(chat_to_karma_filename, "wb") as backupfile:
-            pickle.dump(chat_to_karma_dictionary, backupfile)
+            pickle.dump(chat_to_karma_dictionary, backupfile) """
     
     
     insert_chat = "INSERT INTO telegram_chat VALUES (%s,%s) ON CONFLICT (chat_id) DO UPDATE SET chat_name=EXCLUDED.chat_name"
@@ -270,7 +365,7 @@ def main():
         for index, row in df.iterrows():
                 #set 3 variables all on one line in python by seperating with ','
                 user_id = row['user_id']
-                chat_id =row['chat_id']
+                chat_id = row['chat_id']
                 username = row['username']
                 first_name = row['first_name']
                 last_name = row['last_name']
@@ -279,7 +374,6 @@ def main():
                 #insert telegram_user
                 cursor.execute(insert_user,[user_id, username, first_name, last_name])
                 #insert telegram_chat
-                print(chat_id)
                 try:
                     cursor.execute(insert_chat,[chat_id,'default_chat_name'])
                 except psycopg2.DataError as de:
