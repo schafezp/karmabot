@@ -112,7 +112,6 @@ def user_reply_to_message(user: User,reply_to_user: User, chat: Telegram_chat , 
             crs.execute(insert_message,args_original_message)
             # check if urtm doesn't exist #(primary key should do this part...)
             args_select_urtm = [uic.user_id, original_message.message_id, reply_message.message_id]
-            print("React_message_id")
             crs.execute(selecturtm,args_select_urtm)
             if crs.fetchone() is None:
                 argsurtm = [uic.user_id, original_message.message_id, karma, reply_message.message_id]
