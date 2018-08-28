@@ -87,8 +87,8 @@ def user_reply_to_message(user: User,reply_to_user: User, chat: Telegram_chat , 
     
     uic: User_in_chat = save_or_create_user_in_chat(user, chat.chat_id, conn)
     reply_to_uic: User_in_chat = save_or_create_user_in_chat(reply_to_user, chat.chat_id, conn)
-    print("user replying to message:  "+ user.username)
-    print("user receiveing karma: "+ reply_to_user.username)
+    #print("user replying to message:  "+ user.username)
+    #print("user receiveing karma: "+ reply_to_user.username)
     #apply karma to message author
     if(karma == 1 or karma == -1):
         save_or_create_user_in_chat(reply_to_user,chat.chat_id, conn, change_karma=karma)
