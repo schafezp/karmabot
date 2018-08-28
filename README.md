@@ -2,7 +2,16 @@
 The goal is to make a bot which is able to track user karma 
 
 For architecture I was imaging using some type of database server to correlate usernames to karma; perhaps sqlite or redis. I want persistance in case it shuts down.
+## Install guide
+Install docker, set up a user with docker so you don't use "root" to run docker-compose
+When developing run
+```
+docker-compose build && docker-compose up -d --no-deps && docker-compose logs bot
+```
 
+to rebuild the python bot source code and run it
+
+Change token value as applicable to each bot.
 
 ## Actions
 The Karma bot will track each user in the telegram group it is a member of and keep track of a score for that individual. Anyone in the chat can use the command /plus1 to add one total score to that user/post or /minus1 to remove a score point.
@@ -53,7 +62,7 @@ TODO:
 - [ ] Create database indexs for performance
 - [ ] Add table to track when users do /showkarma
 - [ ] Add time field to telegram_message
-
+- [ ] Add icon for the karmabot bot
 
 Database Functions:
 
