@@ -108,6 +108,10 @@ def show_version(bot,update,args):
     #message = message + "\nChangelog found at: " + changelog_url
     bot.send_message(chat_id=update.message.chat_id, text=message)
 def show_user_stats(bot,update,args):
+    #TODO: remove this boiler plate code somehow
+    #without this if this is the first command run alone with the bot it will fail due to psycopg2.IntegrityError: insert or update on table "command_used" violates foreign key constraint "command_used_chat_id_fkey"
+    chat = Telegram_chat(str(update.message.chat_id), update.message.chat.title)
+    save_or_create_chat(chat,conn)
     use_command('userinfo',update.message.from_user.id, str(update.message.chat_id))
     user_id = update.message.from_user.id
     chat_id = str(update.message.chat_id)
@@ -171,12 +175,13 @@ def show_user_stats(bot,update,args):
 
             
             karma = get_karma_for_user_in_chat(username,chat_id,conn)
+            if karma is None: karma = 0
             print(negative_karma_given)
             print(type(negative_karma_given))
             print(type(positive_karma_given))
             print(type(positive_karma_given-negative_karma_given))
             message = """Username: {:s} Karma: {:d}
-Karma given out of score:
+Karma given out stats:
     Upvotes, Downvotes, Total Votes, Net Karma
     {:d}, {:d}, {:d}, {:d}"""
             message = message.format(username, karma,
