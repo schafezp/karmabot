@@ -1,5 +1,7 @@
 # Used for telegram BotFather instantiation
 
+
 showkarma - view how much karma users have
 userinfo - Args: (username) show stats about a user
+replycount - Shows the chat name and how many messages have been replied to
 version - shows the current bot version
