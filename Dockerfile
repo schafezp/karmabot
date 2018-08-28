@@ -6,4 +6,5 @@
  RUN pip install -r requirements.txt
  ADD bot.py /code/
  ADD dbhelper.py /code/
+ ADD db.csv /code/
  ADD user.py /code/
