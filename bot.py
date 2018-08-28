@@ -172,14 +172,9 @@ def show_user_stats(bot,update,args):
                         if row[0] == 1:
                             positive_karma_given = int(row[1])
                     result = crs.fetchone()
-
             
             karma = get_karma_for_user_in_chat(username,chat_id,conn)
             if karma is None: karma = 0
-            print(negative_karma_given)
-            print(type(negative_karma_given))
-            print(type(positive_karma_given))
-            print(type(positive_karma_given-negative_karma_given))
             message = """Username: {:s} Karma: {:d}
 Karma given out stats:
     Upvotes, Downvotes, Total Votes, Net Karma
