@@ -238,7 +238,7 @@ def show_karma(bot,update,args):
 
     bot.send_message(chat_id=update.message.chat_id, text=message) 
 
-def show_message_count(bot,update,args):
+def show_chat_info(bot,update,args):
     chat_id = str(update.message.chat_id)
     title = update.message.chat.title
     selectcmd = """
@@ -251,9 +251,10 @@ where tm.chat_id=%s"""
             result = crs.fetchone()
             message = ""
             if result is not None:
-                message = "Chat: {:s}. Reply Count: {:d}".format(title,result[0])
+                message = "Chat: {:s}.\n Total Reply Count: {:d}".format(title,result[0])
             else:
-                message = "Chat: {:s}. Reply Count: {:d}".format(title,0)
+                message = "Chat: {:s}.\n Total Reply Count: {:d}".format(title,0)
+                
             bot.send_message(chat_id=update.message.chat_id, text=message)
 
 
@@ -283,7 +284,7 @@ def main():
     show_user_handler = CommandHandler('userinfo', show_user_stats, pass_args=True)
     dispatcher.add_handler(show_user_handler)
 
-    message_count_handler = CommandHandler('replycount', show_message_count, pass_args=True)
+    message_count_handler = CommandHandler('chatinfo', show_chat_info, pass_args=True)
     dispatcher.add_handler(message_count_handler)
 
     #TODO: finish this
