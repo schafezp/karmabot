@@ -248,11 +248,17 @@ def show_karma(bot,update,args):
     use_command('showkarma',update.message.from_user.id, str(update.message.chat_id))
     logger.debug("Chat id: " + str(update.message.chat_id))
 
-    #returns username, karma
+    #returns username, first_name, karma
     rows : Tuple[str,int] = get_karma_for_users_in_chat(str(update.message.chat_id),conn)
-    rows.sort(key=lambda user: user[1], reverse=True)
+    rows.sort(key=lambda user: user[2], reverse=True)
+    #use firstname if username not set
+    def cleanrow(user):
+        if user[0] is None:
+            return (user[1],user[2])
+        else:
+            return (user[0],user[2])
 
-    message = "\n".join(["%s: %d" % (user[0], user[1]) for user in rows])
+    message = "\n".join(["%s: %d" % (user[0], user[1]) for user in  map(cleanrow,rows)])
 
     if message != '':
         message = "Username: Karma\n" + message # TODO: figure out a better way to add this heading
