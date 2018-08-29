@@ -1,5 +1,5 @@
 from user import User, User_in_chat, Telegram_chat, Telegram_message
-from typing import Optional
+from typing import Optional, Tuple, List
 
 def get_user_by_user_id(user_id: int, conn) -> User:
     with conn:
@@ -133,8 +133,8 @@ def get_karma_for_user_in_chat(username: str, chat_id: str,conn) -> Optional[int
                 return result[0]
             return result
             
-def get_karma_for_users_in_chat(chat_id: str,conn):
-    cmd = """select username, karma from user_in_chat uic
+def get_karma_for_users_in_chat(chat_id: str,conn) -> List[Tuple[str,str,int]]:
+    cmd = """select username, first_name, karma from user_in_chat uic
         LEFT JOIN telegram_user tu ON uic.user_id=tu.user_id
         where uic.chat_id=%s;"""
     with conn:
