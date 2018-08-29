@@ -132,7 +132,10 @@ def get_karma_for_user_in_chat(username: str, chat_id: str,conn) -> Optional[int
             if result is not None:
                 return result[0]
             return result
-            
+#def is_user_admin(user_id: int):
+
+#def make_user_admin(user_id: int):
+
 def get_karma_for_users_in_chat(chat_id: str,conn) -> List[Tuple[str,str,int]]:
     cmd = """select username, first_name, karma from user_in_chat uic
         LEFT JOIN telegram_user tu ON uic.user_id=tu.user_id
