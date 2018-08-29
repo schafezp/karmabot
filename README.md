@@ -52,7 +52,6 @@ Postgres exposes port 5432 to the localhost so to connect from your localhost yo
 psql -h localhost -p 5432 karmabot test_user
 ```
 
-
 ## TODO: These are tasks to be accomplished. Feel free to submit pull requests.
 
 ### Server (python):
@@ -65,13 +64,11 @@ psql -h localhost -p 5432 karmabot test_user
 
 
 *Bug fixes*
-- [ ] Fix users without username being reported as "NaN"  or "None" (in showkarma or userinfo)
-
+- [ ] add bug fixes here
 
 ### Databases:
 - [ ] Create database indexs for performance
 - [ ] Make sure transactions are used properly throughout to rollback faulty partial data (bot.py, dbhelper.py)
-
 
 ### Devops (CI/CD):
 - [ ] Change deploy script to use rsync instead of zip/unzip every time
@@ -88,3 +85,4 @@ psql -h localhost -p 5432 karmabot test_user
 - [x] Add time field to telegram_message (also time field added to command_used)
 - [x] Fix bug: currently users without usernames cannot receive karma. (users get karma but /showkarma still does not display properly)
 - [x] Handle bot tokens being passed in as environment variables (including with docker-compose support)
+- [x] Fix users without username being reported as "NaN"  or "None" (in showkarma or userinfo)
