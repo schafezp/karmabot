@@ -369,8 +369,8 @@ def main():
 
     cursor.execute("SELECT * FROM pg_catalog.pg_tables;")
     many = cursor.fetchall()
-    public_tables = list(filter(lambda x: x[0] == 'public', many))
-    print("public_tables: "+ str(public_tables))
+    public_tables = list(map(lambda x: x[1], filter(lambda x: x[0] == 'public', many)))
+    logger.info("public_tables: "+ str(public_tables))
 
     updater.idle()
 
