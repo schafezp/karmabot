@@ -52,8 +52,6 @@ Postgres exposes port 5432 to the localhost so to connect from your localhost yo
 psql -h localhost -p 5432 karmabot test_user
 ```
 
-original Docker build credit goes to https://github.com/sameersbn/docker-postgresql
-The solution being used now is with the postgres-alpine image.
 
 ## TODO: These are tasks to be accomplished. Feel free to submit pull requests.
 
