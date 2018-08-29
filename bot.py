@@ -35,12 +35,15 @@ import time
 #Returns false if any of the required environment variables are not set
 def check_env_vars_all_loaded() -> Tuple[bool,str]:
     env_vars = ['BOT_TOKEN','LOG_LEVEL','POSTGRES_USER','POSTGRES_PASS','POSTGRES_DB', ]
+    logger.info("Environment Variables:")
     for var in env_vars:
-        e = os.environ.get(var) 
-        if e is None or e == '':
+        val = os.environ.get(var) 
+        if val is None or val == '':
+            logger.info('Variable: {} Value: {}'.format(var," VALUE MISSING. EXITING"))
             return (False,var)
         else:
-            print(e)
+            logger.info('Variable: {} Value: {}'.format(var,val))
+            
     return (True,var)
 
 
