@@ -4,3 +4,4 @@ txbot-prod.zip
 txbot-test.zip
 db.csv
 prodenvvar.sh
+test_env_vars.sh
