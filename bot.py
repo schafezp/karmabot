@@ -325,13 +325,7 @@ def main():
         sys.exit(1)
 
     # Setup bot token from environment variables
-    test_token = '650879477:AAFO_o2_nt2gmwA-h0TeIo4bSqI-WLxp6VM'
     bot_token = os.environ.get('BOT_TOKEN') 
-
-    #dockerk defaults this to blank string
-    if bot_token is '':
-        logger.info("Set $BOT_TOKEN environment variable")
-        bot_token = test_token
 
     updater = Updater(token=bot_token)
     dispatcher = updater.dispatcher
