@@ -57,7 +57,7 @@ The solution being used now is with the postgres-alpine image.
 
 ## TODO: These are tasks to be accomplished. Feel free to submit pull requests.
 
-###Server (python):
+### Server (python):
 *Features*
 - [ ] add /plus1 and /minus1 (or similar) commands as alternative to +1 or -1 for faster mobile usage
 - [ ] reply to a message with /showpostkarma (or similar) to do a print out of -the karma of a post
@@ -70,12 +70,12 @@ The solution being used now is with the postgres-alpine image.
 - [ ] Fix users without username being reported as "NaN"  or "None" (in showkarma or userinfo)
 
 
-###Databases:
+### Databases:
 - [ ] Create database indexs for performance
 - [ ] Make sure transactions are used properly throughout to rollback faulty partial data (bot.py, dbhelper.py)
 
 
-###Devops:
+### Devops (CI/CD):
 - [ ] Change deploy script to use rsync instead of zip/unzip every time
 - [ ] Create ansible script as alternative to the current janky build system.
 - [ ] Clean up project folder structure (mkdir src) and verify that it still works.
