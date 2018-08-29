@@ -1,9 +1,6 @@
 .vscode
 __pycache__
-karma_dictionary_test.p
-karma_dictionary.p
-chat_to_karma_dictionary.p
-chat_to_karma_dictionary_test.p
 txbot-prod.zip
+txbot-test.zip
 db.csv
 prodenvvar.sh
