@@ -36,8 +36,15 @@ CREATE TABLE IF NOT EXISTS user_reacted_to_message (
 
 -- use trigger to check banned used before allowing user_in_chat to be modified
 -- soon maybe sum should be used for all karma
-CREATE TABLE banned_users (
+/* CREATE TABLE banned_users (
+) */
 
-)
-
-ALTER TABLE telegram_message ALTER message_time set default current_timestamp
+create table IF NOT EXISTS command_used(
+    id SERIAL PRIMARY KEY,
+    command TEXT, --actual command used
+    arguments TEXT,
+    chat_id TEXT REFERENCES Telegram_chat(chat_id), -- chat used in
+    user_id int REFERENCES Telegram_user(user_id), --user who used the command
+    used_time TIMESTAMP default current_timestamp, --time they used the command
+    program_version TEXT
+);
