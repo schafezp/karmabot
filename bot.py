@@ -1,5 +1,6 @@
 import logging
 import os
+import sys
 import pickle
 import random
 import psycopg2 # postgresql python 
@@ -29,15 +30,35 @@ changelog_url = 'https://schafezp.com/schafezp/txkarmabot/blob/master/CHANGELOG.
 
 conn = None
 import time
+
+#TODO: move this function
+#Returns false if any of the required environment variables are not set
+def check_env_vars_all_loaded() -> Tuple[bool,str]:
+    env_vars = ['BOT_TOKEN','LOG_LEVEL','POSTGRES_USER','POSTGRES_PASS','POSTGRES_DB', ]
+    for var in env_vars:
+        e = os.environ.get(var) 
+        if e is None or e == '':
+            return (False,var)
+        else:
+            print(e)
+    return (True,var)
+
+
+
+#TODO:move this logic elsewhere and handle singleton connection in different way
 while conn is None:
     try:
-        #TODO: load these with environment variables
-        conn = psycopg2.connect(host="postgres", database="karmabot", user="test_user", password="test_pass")
+        host = os.environ.get("POSTGRES_HOSTNAME")
+        database = os.environ.get("POSTGRES_DB")
+        user = os.environ.get("POSTGRES_USER")
+        password = os.environ.get("POSTGRES_PASS")
+        conn = psycopg2.connect(host=host, database=database, user=user, password=password)
     except psycopg2.OperationalError as oe:
         print(oe)
         time.sleep(1)
 
 cursor = conn.cursor()
+
 
 def reply(bot: tg.Bot, update: tg.Update):
     logger.debug("reply")
@@ -295,6 +316,11 @@ def unknown(bot, update):
 
 def main():
     """Start the bot """
+    (is_loaded, var) = check_env_vars_all_loaded()
+    if not is_loaded:
+        logger.info("Env vars not set that are required: " + str(var))
+        sys.exit(1)
+
     # Setup bot token from environment variables
     test_token = '650879477:AAFO_o2_nt2gmwA-h0TeIo4bSqI-WLxp6VM'
     bot_token = os.environ.get('BOT_TOKEN') 

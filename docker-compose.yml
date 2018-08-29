@@ -1,3 +1,4 @@
+
 version: '3'
 services:
   bot:
@@ -9,6 +10,10 @@ services:
       PROD: "true"
       BOT_TOKEN : "${BOT_TOKEN}"
       LOG_LEVEL: "${LOG_LEVEL}"
+      POSTGRES_HOSTNAME : "postgres" # this is based on the service name
+      POSTGRES_USER: "${POSTGRES_USER}"
+      POSTGRES_PASS: "${POSTGRES_PASS}"
+      POSTGRES_DB: "${POSTGRES_DB}"
     volumes:
       - .:/code
     depends_on:
@@ -16,9 +21,9 @@ services:
   postgres:
     image: postgres:9.6.10-alpine
     environment:
-      POSTGRES_USER: test_user
-      POSTGRES_PASS: test_pass
-      POSTGRES_DB: karmabot
+      POSTGRES_USER: "${POSTGRES_USER}"
+      POSTGRES_PASS: "${POSTGRES_PASS}"
+      POSTGRES_DB: "${POSTGRES_DB}"
     volumes:
       - data:/var/lib/postgresql/data
       - ./start-schema.sql:/docker-entrypoint-initdb.d/1-schema.sql
