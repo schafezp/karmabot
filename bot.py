@@ -332,8 +332,6 @@ def main():
     if bot_token is '':
         logger.info("Set $BOT_TOKEN environment variable")
         bot_token = test_token
-    logger.debug("Bot_token %s" % bot_token)
-    print("Bot token: " + bot_token)
 
     updater = Updater(token=bot_token)
     dispatcher = updater.dispatcher
