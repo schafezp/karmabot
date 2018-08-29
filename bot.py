@@ -7,7 +7,7 @@ import psycopg2 # postgresql python
 
 from telegram.ext import Filters, CommandHandler, MessageHandler, Updater
 import telegram as tg
-from typing import Dict, NewType, Tuple
+from typing import Dict, NewType, Tuple, List
 
 from user import User, User_in_chat, Telegram_chat, Telegram_message,user_from_tg_user
 from dbhelper import *
@@ -27,6 +27,19 @@ logger = logging.getLogger(__name__)
 
 version = '1.04' # TODO: make this automatic
 changelog_url = 'https://schafezp.com/schafezp/txkarmabot/blob/master/CHANGELOG.md'
+
+from functools import wraps
+LIST_OF_ADMINS = [65278791]
+def restricted(func):
+    @wraps(func)
+    def wrapped(bot, update, *args, **kwargs):
+        user_id = update.effective_user.id
+        if user_id not in LIST_OF_ADMINS:
+            print("Unauthorized access denied for {}.".format(user_id))
+            return
+        return func(bot, update, *args, **kwargs)
+    return wrapped
+
 
 conn = None
 import time
@@ -302,6 +315,11 @@ where tm.chat_id=%s"""
             message = "Chat: {:s}.\n Number of Users with Karma: {:d}\n Total Reply Count: {:d}".format(title,user_with_karma_count, reply_count)
             bot.send_message(chat_id=update.message.chat_id, text=message)
 
+@restricted
+def am_I_admin(bot,update,args):
+    message = "yes you are an admin"
+    bot.send_message(chat_id=update.message.chat_id, text=message)
+
 def show_karma_personally(bot,update,args):
     #TODO:check if this is a 1 on 1 message
 
@@ -348,8 +366,13 @@ def main():
     show_user_handler = CommandHandler('userinfo', show_user_stats, pass_args=True)
     dispatcher.add_handler(show_user_handler)
 
-    message_count_handler = CommandHandler('chatinfo', show_chat_info, pass_args=True)
-    dispatcher.add_handler(message_count_handler)
+    chat_info_handler = CommandHandler('chatinfo', show_chat_info, pass_args=True)
+    dispatcher.add_handler(chat_info_handler)
+
+    
+    am_I_admin_handler = CommandHandler('amiadmin', am_I_admin, pass_args=True)
+    dispatcher.add_handler(am_I_admin_handler)
+
 
     #TODO: finish this
     showusermessages_handler = CommandHandler('showusermessages', show_karma, pass_args=True)
