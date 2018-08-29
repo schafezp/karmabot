@@ -249,7 +249,7 @@ def show_karma(bot,update,args):
     logger.debug("Chat id: " + str(update.message.chat_id))
 
     #returns username, first_name, karma
-    rows : Tuple[str,int] = get_karma_for_users_in_chat(str(update.message.chat_id),conn)
+    rows : List[Tuple[str,str,int]] = get_karma_for_users_in_chat(str(update.message.chat_id),conn)
     rows.sort(key=lambda user: user[2], reverse=True)
     #use firstname if username not set
     def cleanrow(user):
