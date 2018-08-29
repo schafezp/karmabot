@@ -27,12 +27,12 @@ sudo server_setup.sh
 To run the actual code the docker-compose tool is used to start two containers, one that runs a python server for the telegram bot and the other that 
 When developing run the following command in the git project 
 ```
-docker-compose build && docker-compose up -d --no-deps && docker-compose logs bot
+sh run.sh ENV_VAR_FILENAME
 ```
+where ENV_VAR_FILENAME is a file in the format of test_env_vars.sh. Change the parameters are applicable to modify the run.
 
-to rebuild the python bot source code and run it.
 
-Change token value as applicable to each bot. If you want to play around with this code then please use BotFather to create a seperate bot to use when testing.
+Change token value environment variable as applicable to each bot. If you want to play around with this code then please use BotFather to create a seperate bot to use when testing.
 
 ## Setup guide
 
@@ -64,7 +64,7 @@ The solution being used now is with the postgres-alpine image.
 - [ ] Create icon for the karmabot bot and add it through the BotFather
 - [ ] Allow you to +1 yourself only in your chat 1 on 1 with the bot. Useful for testing.
 - [ ] Create integrated testing environment (possibly using telegram client api?) for making sure the bot works
-- [ ] Handle bot tokens being passed in as environment variables (including with docker-compose support)
+
 
 *Bug fixes*
 - [ ] Fix users without username being reported as "NaN"  or "None" (in showkarma or userinfo)
@@ -89,3 +89,4 @@ The solution being used now is with the postgres-alpine image.
 - [x] Add table to track when users do /showkarma (command_used added )
 - [x] Add time field to telegram_message (also time field added to command_used)
 - [x] Fix bug: currently users without usernames cannot receive karma. (users get karma but /showkarma still does not display properly)
+- [x] Handle bot tokens being passed in as environment variables (including with docker-compose support)

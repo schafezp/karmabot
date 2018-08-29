@@ -5,3 +5,5 @@ karma_dictionary.p
 chat_to_karma_dictionary.p
 chat_to_karma_dictionary_test.p
 txbot-prod.zip
+db.csv
+prodenvvar.sh

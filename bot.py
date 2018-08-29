@@ -11,7 +11,7 @@ from typing import Dict, NewType, Tuple
 from user import User, User_in_chat, Telegram_chat, Telegram_message,user_from_tg_user
 from dbhelper import *
 
-log_level = os.environ.get('LOGLEVEL')
+log_level = os.environ.get('LOG_LEVEL')
 level = None
 if log_level == "debug":
     level=logging.DEBUG
@@ -27,25 +27,11 @@ logger = logging.getLogger(__name__)
 version = '1.04' # TODO: make this automatic
 changelog_url = 'https://schafezp.com/schafezp/txkarmabot/blob/master/CHANGELOG.md'
 
-# TODO: obfuscate these
-production_token = '613654042:AAHnLhu4TFC-xJ4IylkXdczX9ihnIgtqnI8'
-test_token = '650879477:AAFO_o2_nt2gmwA-h0TeIo4bSqI-WLxp6VM'
-
-is_production = os.environ.get('PROD') == "true"
-logger.debug("Production? %s" % is_production)
-
-updater = None
-if is_production:
-    updater = Updater(token=production_token)
-else:
-    updater = Updater(token=test_token)
-
-dispatcher = updater.dispatcher
-
 conn = None
 import time
 while conn is None:
     try:
+        #TODO: load these with environment variables
         conn = psycopg2.connect(host="postgres", database="karmabot", user="test_user", password="test_pass")
     except psycopg2.OperationalError as oe:
         print(oe)
@@ -154,6 +140,9 @@ def show_user_stats(bot,update,args):
             ) as sub left join telegram_message tm on  tm.message_id= sub.message_id
             where tm.chat_id=%s
             group by react_score;"""
+            how_many_reacted_to_user_stats = """
+            
+            """
             negative_karma_given = 0
             positive_karma_given = 0
 
@@ -306,6 +295,19 @@ def unknown(bot, update):
 
 def main():
     """Start the bot """
+    # Setup bot token from environment variables
+    test_token = '650879477:AAFO_o2_nt2gmwA-h0TeIo4bSqI-WLxp6VM'
+    bot_token = os.environ.get('BOT_TOKEN') 
+
+    #dockerk defaults this to blank string
+    if bot_token is '':
+        logger.info("Set $BOT_TOKEN environment variable")
+        bot_token = test_token
+    logger.debug("Bot_token %s" % bot_token)
+    print("Bot token: " + bot_token)
+
+    updater = Updater(token=bot_token)
+    dispatcher = updater.dispatcher
 
     start_handler = CommandHandler('start', start)
     dispatcher.add_handler(start_handler)
@@ -336,40 +338,6 @@ def main():
 
     updater.start_polling()
 
-    insert_chat = "INSERT INTO telegram_chat VALUES (%s,%s) ON CONFLICT (chat_id) DO UPDATE SET chat_name=EXCLUDED.chat_name"
-    insert_user = "INSERT INTO telegram_user (user_id, username, first_name, last_name) VALUES (%s,%s,%s,%s) ON CONFLICT DO NOTHING"
-    #select first to see if a uic is set, in that case update those values
-    select_uic = ""
-    insert_uic = "INSERT INTO user_in_chat(user_id,chat_id, karma) VALUES (%s,%s,%s) ON CONFLICT DO NOTHING"
-    migrate = False
-    import pandas as pd
-    if migrate:
-        df = pd.read_csv("db.csv",sep='\t')
-        convert_cols = ['user_id','chat_id','karma']
-        for col in convert_cols:
-            df[col] = df[col].astype(int)
-        print(df)
-        for index, row in df.iterrows():
-                #set 3 variables all on one line in python by seperating with ','
-                user_id = row['user_id']
-                chat_id = row['chat_id']
-                username = row['username']
-                first_name = row['first_name']
-                last_name = row['last_name']
-                karma = row['karma']
-
-                #insert telegram_user
-                cursor.execute(insert_user,[user_id, username, first_name, last_name])
-                #insert telegram_chat
-                try:
-                    cursor.execute(insert_chat,[chat_id,'default_chat_name'])
-                except psycopg2.DataError as de:
-                    print("DE: " + de)
-                
-                #insert telegram_user_in_chat
-                cursor.execute(insert_uic,[user_id, chat_id, karma])
-        conn.commit()
-        
     cursor.execute("SELECT * FROM pg_catalog.pg_tables;")
     many = cursor.fetchall()
     public_tables = list(filter(lambda x: x[0] == 'public', many))

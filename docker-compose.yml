@@ -7,6 +7,8 @@ services:
       - "5000:5000"
     environment:
       PROD: "true"
+      BOT_TOKEN : "${BOT_TOKEN}"
+      LOG_LEVEL: "${LOG_LEVEL}"
     volumes:
       - .:/code
     depends_on:
@@ -22,19 +24,5 @@ services:
       - ./start-schema.sql:/docker-entrypoint-initdb.d/1-schema.sql
     ports:
       - "5432:5432"
-      
-    #build: 
-      #context: ./postgresql
-      #dockerfile: ./Dockerfile
-    #environment:
-      #- DB_USER=TEST_USER
-      #- DB_PASS=TEST_PASS
-      #- DB_NAME=database
-      #- PG_TRUST_LOCALNET=true
-    #ports:
-      #- "5432:5432"
-    #volumes:
-    #- ./srv/:/var/lib/postgresql
-
 volumes:
   data: {}
