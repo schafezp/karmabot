@@ -4,6 +4,7 @@ import sys
 import pickle
 import random
 import psycopg2 # postgresql python 
+import re
 
 from telegram.ext import Filters, CommandHandler, MessageHandler, Updater
 import telegram as tg
@@ -101,9 +102,7 @@ def reply(bot: tg.Bot, update: tg.Update):
     reply_text = reply_message.message_text
     chat_id = update.message.chat_id
 
-    logger.debug(update.message.reply_to_message)
-
-    if len(reply_text) >= 2 and reply_text[:2] == "+1":
+    if re.match("^\+[1-9][0-9]*.*", reply_text):
         #if user tried to +1 self themselves
         if(replying_user.id == update.message.reply_to_message.from_user.id):
             witty_responses = [" how could you +1 yourself?", " what do you think you're doing?", " is your post really worth +1ing yourself?", " you won't get any goodie points for that", " try +1ing someone else instead of yourself!", " who are you to +1 yourself?", " beware the Jabberwocky", " have a 🍪!", " you must give praise. May he 🍔melt🍔! "]
@@ -112,12 +111,10 @@ def reply(bot: tg.Bot, update: tg.Update):
             bot.send_message(chat_id=chat_id, text=message)
         else:
             user_reply_to_message(replying_user,reply_user, chat, original_message, reply_message, 1,conn)
-            """ user = save_or_create_user_in_chat(reply_user.id,chat_id, conn,change_karma=1) """
             logger.debug("user replying other user")
             logger.debug(replying_user)
             logger.debug(reply_user)
-    elif len(reply_text) >= 2 and reply_text[:2] == "-1":
-        #user = save_or_create_user_in_chat(user_from_tg_user(reply_user), chat_id, conn, change_karma=-1)
+    elif re.match("^-[1-9][0-9]*.*", reply_text) :
         user_reply_to_message(replying_user, reply_user, chat, original_message, reply_message, -1,conn)
         logger.debug(replying_user)
 
