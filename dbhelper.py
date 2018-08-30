@@ -15,10 +15,10 @@ def save_or_create_user(user : User,conn) -> User:
             selectcmd = "SELECT user_id, username, first_name, last_name from telegram_user tu where tu.user_id=%s"
             #TODO: upsert to update values otherwise username, firstname, lastname wont ever change
             #print("user with id: " + str(user_id) + "  not found: creating user")
-            insertcmd = """INSERT into telegram_user 
+            insertcmd = """INSERT into telegram_user
             (user_id, username, first_name, last_name) VALUES (%s,%s,%s,%s)
-            ON CONFLICT (user_id) DO UPDATE 
-            SET username = EXCLUDED.username, 
+            ON CONFLICT (user_id) DO UPDATE
+            SET username = EXCLUDED.username,
             first_name = EXCLUDED.first_name,
             last_name = EXCLUDED.last_name
             """
@@ -33,20 +33,20 @@ def does_chat_exist(chat_id: str, conn):
             selectcmd = "SELECT chat_id, chat_name FROM telegram_chat tc where tc.chat_id=%s"
             crs.execute(selectcmd,[chat_id])
             return crs.fetchone() is not None
+
 def save_or_create_chat(chat: Telegram_chat, conn):
     with conn:
         with conn.cursor() as crs: #I would love type hints here but psycopg2.cursor isn't a defined class
-            """ selectcmd = "SELECT chat_id, chat_name FROM telegram_chat tc where tc.chat_id=%s"
+            selectcmd = "SELECT chat_id, chat_name FROM telegram_chat tc where tc.chat_id=%s"
             crs.execute(selectcmd, [chat_id, chat_name])
-            result = crs.fetchone() """
-            insertcmd = """INSERT into telegram_chat 
+            result = crs.fetchone()
+            insertcmd = """INSERT into telegram_chat
             (chat_id, chat_name) VALUES (%s,%s)
-            ON CONFLICT (chat_id) DO UPDATE 
+            ON CONFLICT (chat_id) DO UPDATE
             SET chat_name = EXCLUDED.chat_name
             """
             crs.execute(insertcmd, [chat.chat_id, chat.chat_name])
             conn.commit()
-
 
 #if user did not have a karma before, karma will be set to change_karma
 def save_or_create_user_in_chat(user: User, chat_id: str, conn, change_karma=0) -> User_in_chat:
@@ -58,22 +58,20 @@ def save_or_create_user_in_chat(user: User, chat_id: str, conn, change_karma=0) 
 
             result = crs.fetchone()
 
-            insertcmd_karma = """INSERT into user_in_chat 
+            insertcmd_karma = """INSERT into user_in_chat
                 (user_id, chat_id, karma) VALUES (%s,%s,%s)
                 ON CONFLICT (user_id,chat_id) DO UPDATE SET karma = user_in_chat.karma + %s
-                RETURNING karma 
+                RETURNING karma
                 """
-            
+
             #TODO: used named parameters instead of %s to not have to repeat these params
             crs.execute(insertcmd_karma,
             [user.get_user_id(),chat_id, change_karma,change_karma])
-            
+
             row = crs.fetchone()
             conn.commit()
             karma = row[0]
             return User_in_chat(user.id,chat_id,karma)
-
-
 
 #message tg.Message
 #reply_message comes after and is the reply
@@ -84,7 +82,7 @@ def user_reply_to_message(user: User,reply_to_user: User, chat: Telegram_chat , 
         save_or_create_chat(chat, conn)
 
 
-    
+
     uic: User_in_chat = save_or_create_user_in_chat(user, chat.chat_id, conn)
     reply_to_uic: User_in_chat = save_or_create_user_in_chat(reply_to_user, chat.chat_id, conn)
     #print("user replying to message:  "+ user.username)
@@ -94,14 +92,14 @@ def user_reply_to_message(user: User,reply_to_user: User, chat: Telegram_chat , 
         save_or_create_user_in_chat(reply_to_user,chat.chat_id, conn, change_karma=karma)
     else:
         print("invalid karma number")
-    insert_message = """INSERT INTO telegram_message 
-    (message_id,chat_id, author_user_id, message_text) 
+    insert_message = """INSERT INTO telegram_message
+    (message_id,chat_id, author_user_id, message_text)
     VALUES (%s,%s,%s,%s)
     ON CONFLICT (message_id) DO UPDATE
     SET message_text = EXCLUDED.message_text;
     """
     selecturtm = """SELECT * from user_reacted_to_message urtm where urtm.user_id=%s and urtm.message_id=%s and urtm.react_message_id=%s"""
-    inserturtm = """INSERT INTO user_reacted_to_message 
+    inserturtm = """INSERT INTO user_reacted_to_message
     (user_id,message_id,react_score,react_message_id)
     VALUES (%s,%s,%s,%s)"""
     with conn:
@@ -132,7 +130,7 @@ def get_karma_for_user_in_chat(username: str, chat_id: str,conn) -> Optional[int
             if result is not None:
                 return result[0]
             return result
-            
+
 def get_karma_for_users_in_chat(chat_id: str,conn):
     cmd = """select username, karma from user_in_chat uic
         LEFT JOIN telegram_user tu ON uic.user_id=tu.user_id
@@ -143,9 +141,8 @@ def get_karma_for_users_in_chat(chat_id: str,conn):
             crs.execute(cmd,[chat_id])
             return crs.fetchall()
 
-
 def get_message_responses_for_user_in_chat(user_id: int, chat_id: int,conn):
-    cmd = """    SELECT sub3.user_id, sub3.message_id, sub3.response_text AS message_text, urtm.react_score, 
+    cmd = """    SELECT sub3.user_id, sub3.message_id, sub3.response_text AS message_text, urtm.react_score,
         urtm.react_message_id, sub3.username AS responder_username, sub3.first_name AS responder_first_name,
          sub3.last_name AS responder_last_name  FROM (
         SELECT  sub2.user_id, tm.message_id, tm.message_text AS response_text,  uic_id ,
