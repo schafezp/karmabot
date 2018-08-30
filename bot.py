@@ -139,7 +139,7 @@ def show_user_stats(bot,update,args):
     user_id = update.message.from_user.id
     chat_id = str(update.message.chat_id)
     if len(args) != 1:
-        bot.send_message(chat_id=update.message.chat_id, text="use command like: \\userinfo username")
+        bot.send_message(chat_id=update.message.chat_id, text="use command like: /userinfo username")
         return
     username = args[0]
     if username[0] == "@":
@@ -369,7 +369,6 @@ def main():
     chat_info_handler = CommandHandler('chatinfo', show_chat_info, pass_args=True)
     dispatcher.add_handler(chat_info_handler)
 
-    
     am_I_admin_handler = CommandHandler('amiadmin', am_I_admin, pass_args=True)
     dispatcher.add_handler(am_I_admin_handler)
 
