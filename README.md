@@ -67,7 +67,7 @@ psql -h localhost -p 5432 karmabot test_user
 - [ ] Create decorator to update chatname, username, etc
 - [ ] Add firstname and lastname (maybe even id?) to /userinfo 
 - [ ] Use ON CONFLICT UPDATE SET to not allow users to +1 a single post multiple times
-- [ ] Create scripts to test performance of calls (perhaps using decorators)
+- [ ] Create support for testing performance of calls (perhaps using decorators)
 
 *Bug fixes*
 - [ ] add bug fixes here
