@@ -68,6 +68,7 @@ psql -h localhost -p 5432 karmabot test_user
 - [ ] Add firstname and lastname (maybe even id?) to /userinfo 
 - [ ] Use ON CONFLICT UPDATE SET to not allow users to +1 a single post multiple times
 - [ ] Create support for testing performance of calls (perhaps using decorators)
+- [ ] Create menu for 1 on 1 interaction with karma bot to allow users to check the karma of chars they are in https://github.com/python-telegram-bot/python-telegram-bot/wiki/Code-snippets#build-a-menu-with-buttons
 
 *Bug fixes*
 - [ ] add bug fixes here
