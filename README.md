@@ -61,7 +61,10 @@ psql -h localhost -p 5432 karmabot test_user
 - [ ] Create icon for the karmabot bot and add it through the BotFather
 - [ ] Allow you to +1 yourself only in your chat 1 on 1 with the bot. Useful for testing.
 - [ ] Create integrated testing environment (possibly using telegram client api?) for making sure the bot works
-
+- [ ] Offer support for users to set a personal flag associated with themselves.
+- [ ] Have /userinfo show the rank of a user relative to others
+- [ ] Show deltas on /showkarma from most recent /showkarma
+- [ ] Create decorator to update chatname, username, etc
 
 *Bug fixes*
 - [ ] add bug fixes here
@@ -76,6 +79,7 @@ psql -h localhost -p 5432 karmabot test_user
 - [ ] Clean up project folder structure (mkdir src) and verify that it still works.
 - [ ] Create a mechanism to regularly make incremental backups of the database.
 - [ ] Verify that docker volume is never accidentally destroyed
+- [ ] Create network proxy https://github.com/python-telegram-bot/python-telegram-bot/wiki/Working-Behind-a-Proxy
 
 ## DONE: These tasks are finished
 - [x] Make a user unable to +1 or -1 themselves
