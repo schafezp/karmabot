@@ -3,13 +3,13 @@ import os
 import sys
 import pickle
 import random
-import psycopg2 # postgresql python 
+import psycopg2 # postgresql python
 
 from telegram.ext import Filters, CommandHandler, MessageHandler, Updater
 import telegram as tg
 from typing import Dict, NewType, Tuple
 
-from user import User, User_in_chat, Telegram_chat, Telegram_message,user_from_tg_user
+from models import User, User_in_chat, Telegram_chat, Telegram_message,user_from_tg_user
 from dbhelper import *
 
 log_level = os.environ.get('LOG_LEVEL')
@@ -36,7 +36,7 @@ import time
 def check_env_vars_all_loaded() -> Tuple[bool,str]:
     env_vars = ['BOT_TOKEN','LOG_LEVEL','POSTGRES_USER','POSTGRES_PASS','POSTGRES_DB', ]
     for var in env_vars:
-        e = os.environ.get(var) 
+        e = os.environ.get(var)
         if e is None or e == '':
             return (False,var)
         else:
@@ -62,7 +62,7 @@ cursor = conn.cursor()
 
 def reply(bot: tg.Bot, update: tg.Update):
     logger.debug("reply")
-    reply_user = user_from_tg_user(update.message.reply_to_message.from_user) 
+    reply_user = user_from_tg_user(update.message.reply_to_message.from_user)
     replying_user = user_from_tg_user(update.message.from_user)
     save_or_create_user(reply_user, conn)
     save_or_create_user(replying_user, conn)
@@ -79,7 +79,7 @@ def reply(bot: tg.Bot, update: tg.Update):
     logger.debug("original_message_user: " + str(reply_user.username))
     logger.debug("reply_message_text: " + str(reply_message_tg.text))
     logger.debug("replying_user: " + str(replying_user.username))
-    
+
     original_message = Telegram_message(update.message.reply_to_message.message_id, chat.chat_id, reply_uic.user_id, update.message.reply_to_message.text)
     reply_message = Telegram_message(update.message.message_id, chat.chat_id, replying_uic.user_id, update.message.text)
     reply_text = reply_message.message_text
@@ -119,7 +119,7 @@ def show_user_stats(bot,update,args):
     #without this if this is the first command run alone with the bot it will fail due to psycopg2.IntegrityError: insert or update on table "command_used" violates foreign key constraint "command_used_chat_id_fkey"
     chat = Telegram_chat(str(update.message.chat_id), update.message.chat.title)
     save_or_create_chat(chat,conn)
-    
+
     user_id = update.message.from_user.id
     chat_id = str(update.message.chat_id)
     if len(args) != 1:
@@ -137,7 +137,7 @@ def show_user_stats(bot,update,args):
             crs.execute(selectuser,[username])
             result = crs.fetchone()
     if result is not None:
-        select_user_replies = """select username, message_id, react_score, react_message_id  from telegram_user tu 
+        select_user_replies = """select username, message_id, react_score, react_message_id  from telegram_user tu
             left join user_reacted_to_message urtm on urtm.user_id=tu.user_id
             where tu.username = %s"""
         reacted_messages_result = None
@@ -147,28 +147,28 @@ def show_user_stats(bot,update,args):
                 reacted_messages_result = crs.fetchone()
         if reacted_messages_result is not None:
             #this cmd shows react given to other
-            stats_cmd = """select sum(react_score), count(react_score) from 
-                (select username, message_id, react_score, react_message_id  from telegram_user tu 
+            stats_cmd = """select sum(react_score), count(react_score) from
+                (select username, message_id, react_score, react_message_id  from telegram_user tu
                 left join user_reacted_to_message urtm on urtm.user_id=tu.user_id
                 where tu.username = %s
                 ) as sub
                 left join telegram_message tm on  tm.message_id= sub.message_id
                 where tm.chat_id=%s;"""
-            how_many_of_react_stats = """select react_score, count(react_score)from 
-            (select username, message_id, react_score, react_message_id  from telegram_user tu 
+            how_many_of_react_stats = """select react_score, count(react_score)from
+            (select username, message_id, react_score, react_message_id  from telegram_user tu
             left join user_reacted_to_message urtm on urtm.user_id=tu.user_id
             where tu.username = %s
             ) as sub left join telegram_message tm on  tm.message_id= sub.message_id
             where tm.chat_id=%s
             group by react_score;"""
             how_many_reacted_to_user_stats = """
-            
+
             """
             negative_karma_given = 0
             positive_karma_given = 0
 
             result = None
-            
+
             with conn:
                 with conn.cursor() as crs:
                     crs.execute(stats_cmd,[username,chat_id])
@@ -183,7 +183,7 @@ def show_user_stats(bot,update,args):
                         if row[0] == 1:
                             positive_karma_given = int(row[1])
                     result = crs.fetchone()
-            
+
             karma = get_karma_for_user_in_chat(username,chat_id,conn)
             if karma is None: karma = 0
             message = """Username: {:s} Karma: {:d}
@@ -194,11 +194,11 @@ Karma given out stats:
             positive_karma_given, negative_karma_given,
             positive_karma_given + negative_karma_given,
             positive_karma_given - negative_karma_given)
-            bot.send_message(chat_id=update.message.chat_id, text=message)    
-            
+            bot.send_message(chat_id=update.message.chat_id, text=message)
+
         else:
-            bot.send_message(chat_id=update.message.chat_id, text="User: " + username + " did not respond to any messages")    
-        
+            bot.send_message(chat_id=update.message.chat_id, text="User: " + username + " did not respond to any messages")
+
     else:
         bot.send_message(chat_id=update.message.chat_id, text="No user with that username")
 
@@ -210,9 +210,9 @@ def show_user_messages(bot,update,args):
         return
     username = args[0]
     chat_id = str(update.message.chat_id)
-    selectcmd = """select * from 
+    selectcmd = """select * from
             (select react_score, react_message_id, user_id as reply_user_id from
-            ((select message_id,chat_id, message_text from 
+            ((select message_id,chat_id, message_text from
                     (select user_id as custom_user_id from telegram_user tu where tu.username = %s) as sub
                         left join telegram_message tm on tm.author_user_id=sub.custom_user_id
                         where tm.chat_id=%s
@@ -232,7 +232,7 @@ def show_user_messages(bot,update,args):
         return
     res = get_message_responses_for_user_in_chat(user_id, update.message.chat_id,conn)
     bot.send_message(chat_id=update.message.chat_id, text=str(res))
-    
+
 #TODO: replace this with an annotation maybe?
 def use_command(command: str,user_id: int, chat_id: str, arguments=""):
     insertcmd = """INSERT INTO command_used (command,arguments,user_id,chat_id) VALUES (%s,%s,%s,%s)"""
@@ -256,17 +256,17 @@ def show_karma(bot,update,args):
     else:
         message = "Oops I didn't find any karma"
 
-    bot.send_message(chat_id=update.message.chat_id, text=message) 
+    bot.send_message(chat_id=update.message.chat_id, text=message)
 
 def show_chat_info(bot,update,args):
     use_command('chatinfo',update.message.from_user.id, str(update.message.chat_id))
     chat_id = str(update.message.chat_id)
     title = update.message.chat.title
-    selectcmd = """select count(tm.message_id) from user_reacted_to_message urtm 
+    selectcmd = """select count(tm.message_id) from user_reacted_to_message urtm
 left join telegram_message tm ON tm.message_id = urtm.message_id
 where tm.chat_id=%s"""
-    select_user_with_karma_count = """ 
-    select count(*) from telegram_chat tc 
+    select_user_with_karma_count = """
+    select count(*) from telegram_chat tc
     left join user_in_chat uic on uic.chat_id = tc.chat_id
     where tc.chat_id=%s
     """
@@ -274,7 +274,7 @@ where tm.chat_id=%s"""
         with conn.cursor() as crs:
             crs.execute(selectcmd,[chat_id])
             result = crs.fetchone()
-            
+
             message = ""
             reply_count = None
             if result is not None:
@@ -285,7 +285,7 @@ where tm.chat_id=%s"""
             crs.execute(select_user_with_karma_count,[chat_id])
             result = crs.fetchone()
             user_with_karma_count = None
-            if result is not None: 
+            if result is not None:
                 user_with_karma_count = result[0]
             else:
                 user_with_karma_count = 0
@@ -323,7 +323,7 @@ def main():
 
     # Setup bot token from environment variables
     test_token = '650879477:AAFO_o2_nt2gmwA-h0TeIo4bSqI-WLxp6VM'
-    bot_token = os.environ.get('BOT_TOKEN') 
+    bot_token = os.environ.get('BOT_TOKEN')
 
     #dockerk defaults this to blank string
     if bot_token is '':
@@ -343,7 +343,7 @@ def main():
 
     showkarma_handler = CommandHandler('showkarma', show_karma, pass_args=True)
     dispatcher.add_handler(showkarma_handler)
-    
+
     show_user_handler = CommandHandler('userinfo', show_user_stats, pass_args=True)
     dispatcher.add_handler(show_user_handler)
 
@@ -372,8 +372,8 @@ def main():
     updater.idle()
 
     cursor.close()
-    conn.close()    
-    
+    conn.close()
+
 
 if __name__ == '__main__':
     main()

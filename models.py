@@ -73,6 +73,7 @@ class Telegram_chat(object):
     def __init__(self,chat_id: str, chat_name: str):
         self.chat_id = chat_id
         self.chat_name = chat_name
+        
 class Telegram_message(object):
     message_id: int
     chat_id: int
@@ -96,7 +97,3 @@ class User_reacted_to_message(object):
         self.message_id = message_id
         self.react_score = react_score
         self.react_message_id = react_message_id
-
-
-
-
