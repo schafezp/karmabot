@@ -66,6 +66,7 @@ psql -h localhost -p 5432 karmabot test_user
 - [ ] Show deltas on /showkarma from most recent /showkarma
 - [ ] Create decorator to update chatname, username, etc
 - [ ] Add firstname and lastname (maybe even id?) to /userinfo 
+- [ ] Use ON CONFLICT UPDATE SET to not allow users to +1 a single post multiple times
 
 *Bug fixes*
 - [ ] add bug fixes here
