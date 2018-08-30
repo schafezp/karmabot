@@ -65,6 +65,7 @@ psql -h localhost -p 5432 karmabot test_user
 - [ ] Have /userinfo show the rank of a user relative to others
 - [ ] Show deltas on /showkarma from most recent /showkarma
 - [ ] Create decorator to update chatname, username, etc
+- [ ] Add firstname and lastname (maybe even id?) to /userinfo 
 
 *Bug fixes*
 - [ ] add bug fixes here
