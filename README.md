@@ -67,6 +67,7 @@ psql -h localhost -p 5432 karmabot test_user
 - [ ] Create decorator to update chatname, username, etc
 - [ ] Add firstname and lastname (maybe even id?) to /userinfo 
 - [ ] Use ON CONFLICT UPDATE SET to not allow users to +1 a single post multiple times
+- [ ] Create scripts to test performance of calls (perhaps using decorators)
 
 *Bug fixes*
 - [ ] add bug fixes here
@@ -82,6 +83,7 @@ psql -h localhost -p 5432 karmabot test_user
 - [ ] Create a mechanism to regularly make incremental backups of the database.
 - [ ] Verify that docker volume is never accidentally destroyed
 - [ ] Create network proxy https://github.com/python-telegram-bot/python-telegram-bot/wiki/Working-Behind-a-Proxy
+
 
 ## DONE: These tasks are finished
 - [x] Make a user unable to +1 or -1 themselves
