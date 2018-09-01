@@ -274,12 +274,12 @@ def show_karma(bot,update,args):
     for user in map(cleanrow,rows):
         row = f"{user[0]}: {user[1]}"
         if idx == 0:
-            row = row + '🥇'
+            row = '🥇' + row 
         elif idx == 1:
-            row = row + '🥈'
+            row = '🥈' + row 
         elif idx == 2:
-            row = row + '🥉';
-
+            row = '🥉' + row 
+        idx = idx + 1
         message_rows.append(row)
     message = "\n".join(message_rows)
 
