@@ -140,7 +140,8 @@ def show_user_stats(bot,update,args):
     username = args[0]
     if username[0] == "@":
         username = username[1:]
-    use_command('userinfo',update.message.from_user.id, str(update.message.chat_id), arguments=username)
+        
+    use_command('userinfo',user_from_tg_user(update.message.from_user), str(update.message.chat_id), arguments=username)
 
     selectuser = "select * from telegram_user tu where tu.username=%s"
     result = None
@@ -246,15 +247,17 @@ def show_user_messages(bot,update,args):
     bot.send_message(chat_id=update.message.chat_id, text=str(res))
     
 #TODO: replace this with an annotation maybe?
-def use_command(command: str,user_id: int, chat_id: str, arguments=""):
+def use_command(command: str,user: User, chat_id: str, arguments=""):
+    create_chat_if_not_exists(chat_id,conn)
+    save_or_create_user(user,conn)
     insertcmd = """INSERT INTO command_used (command,arguments,user_id,chat_id) VALUES (%s,%s,%s,%s)"""
     with conn:
         with conn.cursor() as crs:
-            crs.execute(insertcmd,[command,arguments,user_id,chat_id])
+            crs.execute(insertcmd,[command,arguments,user.id,chat_id])
 
 
 def show_karma(bot,update,args):
-    use_command('showkarma',update.message.from_user.id, str(update.message.chat_id))
+    use_command('showkarma',user_from_tg_user(update.message.from_user), str(update.message.chat_id))
     logger.debug("Chat id: " + str(update.message.chat_id))
 
     #returns username, first_name, karma
@@ -266,8 +269,19 @@ def show_karma(bot,update,args):
             return (user[1],user[2])
         else:
             return (user[0],user[2])
+    message_rows = []
+    idx = 0
+    for user in map(cleanrow,rows):
+        row = f"{user[0]}: {user[1]}"
+        if idx == 0:
+            row = row + '🥇'
+        elif idx == 1:
+            row = row + '🥈'
+        elif idx == 2:
+            row = row + '🥉';
 
-    message = "\n".join(["%s: %d" % (user[0], user[1]) for user in  map(cleanrow,rows)])
+        message_rows.append(row)
+    message = "\n".join(message_rows)
 
     if message != '':
         message = "Username: Karma\n" + message # TODO: figure out a better way to add this heading
@@ -277,7 +291,7 @@ def show_karma(bot,update,args):
     bot.send_message(chat_id=update.message.chat_id, text=message) 
 
 def show_chat_info(bot,update,args):
-    use_command('chatinfo',update.message.from_user.id, str(update.message.chat_id))
+    use_command('chatinfo',user_from_tg_user(update.message.from_user.id), str(update.message.chat_id))
     chat_id = str(update.message.chat_id)
     title = update.message.chat.title
     selectcmd = """select count(tm.message_id) from user_reacted_to_message urtm 

@@ -36,17 +36,20 @@ def does_chat_exist(chat_id: str, conn):
 def save_or_create_chat(chat: Telegram_chat, conn):
     with conn:
         with conn.cursor() as crs: #I would love type hints here but psycopg2.cursor isn't a defined class
-            """ selectcmd = "SELECT chat_id, chat_name FROM telegram_chat tc where tc.chat_id=%s"
-            crs.execute(selectcmd, [chat_id, chat_name])
-            result = crs.fetchone() """
             insertcmd = """INSERT into telegram_chat 
             (chat_id, chat_name) VALUES (%s,%s)
             ON CONFLICT (chat_id) DO UPDATE 
-            SET chat_name = EXCLUDED.chat_name
-            """
+            SET chat_name = EXCLUDED.chat_name"""
             crs.execute(insertcmd, [chat.chat_id, chat.chat_name])
             conn.commit()
-
+def create_chat_if_not_exists(chat_id: int,conn):
+    with conn:
+        with conn.cursor() as crs: #I would love type hints here but psycopg2.cursor isn't a defined class
+            insertcmd = """INSERT into telegram_chat 
+            (chat_id) VALUES (%s)
+            ON CONFLICT (chat_id) DO NOTHING"""
+            crs.execute(insertcmd, [chat_id])
+            conn.commit()
 
 #if user did not have a karma before, karma will be set to change_karma
 def save_or_create_user_in_chat(user: User, chat_id: str, conn, change_karma=0) -> User_in_chat:
