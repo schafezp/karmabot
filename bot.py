@@ -3,11 +3,12 @@ import os
 import sys
 import pickle
 import random
-import psycopg2 # postgresql python
+import psycopg2 # postgresql python 
+import re
 
 from telegram.ext import Filters, CommandHandler, MessageHandler, Updater
 import telegram as tg
-from typing import Dict, NewType, Tuple
+from typing import Dict, NewType, Tuple, List
 
 from models import User, User_in_chat, Telegram_chat, Telegram_message,user_from_tg_user
 from dbhelper import *
@@ -28,6 +29,19 @@ logger = logging.getLogger(__name__)
 version = '1.04' # TODO: make this automatic
 changelog_url = 'https://schafezp.com/schafezp/txkarmabot/blob/master/CHANGELOG.md'
 
+from functools import wraps
+LIST_OF_ADMINS = [65278791]
+def restricted(func):
+    @wraps(func)
+    def wrapped(bot, update, *args, **kwargs):
+        user_id = update.effective_user.id
+        if user_id not in LIST_OF_ADMINS:
+            print("Unauthorized access denied for {}.".format(user_id))
+            return
+        return func(bot, update, *args, **kwargs)
+    return wrapped
+
+
 conn = None
 import time
 
@@ -35,12 +49,15 @@ import time
 #Returns false if any of the required environment variables are not set
 def check_env_vars_all_loaded() -> Tuple[bool,str]:
     env_vars = ['BOT_TOKEN','LOG_LEVEL','POSTGRES_USER','POSTGRES_PASS','POSTGRES_DB', ]
+    logger.info("Environment Variables:")
     for var in env_vars:
-        e = os.environ.get(var)
-        if e is None or e == '':
+        val = os.environ.get(var)
+        if val is None or val == '':
+            logger.info('Variable: {} Value: {}'.format(var," VALUE MISSING. EXITING"))
             return (False,var)
         else:
-            print(e)
+            logger.info('Variable: {} Value: {}'.format(var,val))
+
     return (True,var)
 
 
@@ -85,9 +102,7 @@ def reply(bot: tg.Bot, update: tg.Update):
     reply_text = reply_message.message_text
     chat_id = update.message.chat_id
 
-    logger.debug(update.message.reply_to_message)
-
-    if len(reply_text) >= 2 and reply_text[:2] == "+1":
+    if re.match("^\+[1-9][0-9]*.*", reply_text):
         #if user tried to +1 self themselves
         if(replying_user.id == update.message.reply_to_message.from_user.id):
             witty_responses = [" how could you +1 yourself?", " what do you think you're doing?", " is your post really worth +1ing yourself?", " you won't get any goodie points for that", " try +1ing someone else instead of yourself!", " who are you to +1 yourself?", " beware the Jabberwocky", " have a 🍪!", " you must give praise. May he 🍔melt🍔! "]
@@ -96,12 +111,10 @@ def reply(bot: tg.Bot, update: tg.Update):
             bot.send_message(chat_id=chat_id, text=message)
         else:
             user_reply_to_message(replying_user,reply_user, chat, original_message, reply_message, 1,conn)
-            """ user = save_or_create_user_in_chat(reply_user.id,chat_id, conn,change_karma=1) """
             logger.debug("user replying other user")
             logger.debug(replying_user)
             logger.debug(reply_user)
-    elif len(reply_text) >= 2 and reply_text[:2] == "-1":
-        #user = save_or_create_user_in_chat(user_from_tg_user(reply_user), chat_id, conn, change_karma=-1)
+    elif re.match("^-[1-9][0-9]*.*", reply_text) :
         user_reply_to_message(replying_user, reply_user, chat, original_message, reply_message, -1,conn)
         logger.debug(replying_user)
 
@@ -123,7 +136,7 @@ def show_user_stats(bot,update,args):
     user_id = update.message.from_user.id
     chat_id = str(update.message.chat_id)
     if len(args) != 1:
-        bot.send_message(chat_id=update.message.chat_id, text="use command like: \\userinfo username")
+        bot.send_message(chat_id=update.message.chat_id, text="use command like: /userinfo username")
         return
     username = args[0]
     if username[0] == "@":
@@ -245,11 +258,17 @@ def show_karma(bot,update,args):
     use_command('showkarma',update.message.from_user.id, str(update.message.chat_id))
     logger.debug("Chat id: " + str(update.message.chat_id))
 
-    #returns username, karma
-    rows : Tuple[str,int] = get_karma_for_users_in_chat(str(update.message.chat_id),conn)
-    rows.sort(key=lambda user: user[1], reverse=True)
+    #returns username, first_name, karma
+    rows : List[Tuple[str,str,int]] = get_karma_for_users_in_chat(str(update.message.chat_id),conn)
+    rows.sort(key=lambda user: user[2], reverse=True)
+    #use firstname if username not set
+    def cleanrow(user):
+        if user[0] is None:
+            return (user[1],user[2])
+        else:
+            return (user[0],user[2])
 
-    message = "\n".join(["%s: %d" % (user[0], user[1]) for user in rows])
+    message = "\n".join(["%s: %d" % (user[0], user[1]) for user in  map(cleanrow,rows)])
 
     if message != '':
         message = "Username: Karma\n" + message # TODO: figure out a better way to add this heading
@@ -293,6 +312,11 @@ where tm.chat_id=%s"""
             message = "Chat: {:s}.\n Number of Users with Karma: {:d}\n Total Reply Count: {:d}".format(title,user_with_karma_count, reply_count)
             bot.send_message(chat_id=update.message.chat_id, text=message)
 
+@restricted
+def am_I_admin(bot,update,args):
+    message = "yes you are an admin"
+    bot.send_message(chat_id=update.message.chat_id, text=message)
+
 def show_karma_personally(bot,update,args):
     #TODO:check if this is a 1 on 1 message
 
@@ -322,15 +346,7 @@ def main():
         sys.exit(1)
 
     # Setup bot token from environment variables
-    test_token = '650879477:AAFO_o2_nt2gmwA-h0TeIo4bSqI-WLxp6VM'
     bot_token = os.environ.get('BOT_TOKEN')
-
-    #dockerk defaults this to blank string
-    if bot_token is '':
-        logger.info("Set $BOT_TOKEN environment variable")
-        bot_token = test_token
-    logger.debug("Bot_token %s" % bot_token)
-    print("Bot token: " + bot_token)
 
     updater = Updater(token=bot_token)
     dispatcher = updater.dispatcher
@@ -347,8 +363,12 @@ def main():
     show_user_handler = CommandHandler('userinfo', show_user_stats, pass_args=True)
     dispatcher.add_handler(show_user_handler)
 
-    message_count_handler = CommandHandler('chatinfo', show_chat_info, pass_args=True)
-    dispatcher.add_handler(message_count_handler)
+    chat_info_handler = CommandHandler('chatinfo', show_chat_info, pass_args=True)
+    dispatcher.add_handler(chat_info_handler)
+
+    am_I_admin_handler = CommandHandler('amiadmin', am_I_admin, pass_args=True)
+    dispatcher.add_handler(am_I_admin_handler)
+
 
     #TODO: finish this
     showusermessages_handler = CommandHandler('showusermessages', show_karma, pass_args=True)
@@ -366,8 +386,8 @@ def main():
 
     cursor.execute("SELECT * FROM pg_catalog.pg_tables;")
     many = cursor.fetchall()
-    public_tables = list(filter(lambda x: x[0] == 'public', many))
-    print("public_tables: "+ str(public_tables))
+    public_tables = list(map(lambda x: x[1], filter(lambda x: x[0] == 'public', many)))
+    logger.info("public_tables: "+ str(public_tables))
 
     updater.idle()
 

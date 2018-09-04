@@ -1,5 +1,5 @@
 from user import User, User_in_chat, Telegram_chat, Telegram_message
-from typing import Optional
+from typing import Optional, Tuple, List
 
 def get_user_by_user_id(user_id: int, conn) -> User:
     with conn:
@@ -81,17 +81,9 @@ def user_reply_to_message(user: User,reply_to_user: User, chat: Telegram_chat , 
     if not does_chat_exist(chat.chat_id,conn):
         save_or_create_chat(chat, conn)
 
-
-
     uic: User_in_chat = save_or_create_user_in_chat(user, chat.chat_id, conn)
     reply_to_uic: User_in_chat = save_or_create_user_in_chat(reply_to_user, chat.chat_id, conn)
-    #print("user replying to message:  "+ user.username)
-    #print("user receiveing karma: "+ reply_to_user.username)
-    #apply karma to message author
-    if(karma == 1 or karma == -1):
-        save_or_create_user_in_chat(reply_to_user,chat.chat_id, conn, change_karma=karma)
-    else:
-        print("invalid karma number")
+
     insert_message = """INSERT INTO telegram_message
     (message_id,chat_id, author_user_id, message_text)
     VALUES (%s,%s,%s,%s)
@@ -102,21 +94,30 @@ def user_reply_to_message(user: User,reply_to_user: User, chat: Telegram_chat , 
     inserturtm = """INSERT INTO user_reacted_to_message
     (user_id,message_id,react_score,react_message_id)
     VALUES (%s,%s,%s,%s)"""
+
+    #TODO: manage this with a constraint rather than having to select
+    selecturtmunique = """SELECT * from user_reacted_to_message urtm where urtm.user_id=%s and urtm.message_id=%s"""
+    user_already_reacted_to_message = None
     with conn:
         with conn.cursor() as crs:
-            args_reply_message = [reply_message.message_id, chat.chat_id, uic.user_id, reply_message.message_text]
-            args_original_message = [original_message.message_id, chat.chat_id, original_message.author_user_id, original_message.message_text]
-            crs.execute(insert_message,args_reply_message)
-            crs.execute(insert_message,args_original_message)
-            # check if urtm doesn't exist #(primary key should do this part...)
-            args_select_urtm = [uic.user_id, original_message.message_id, reply_message.message_id]
-            crs.execute(selecturtm,args_select_urtm)
-            if crs.fetchone() is None:
+            args_select_urtm = [uic.user_id, original_message.message_id]
+            crs.execute(selecturtmunique,args_select_urtm)
+            user_already_reacted_to_message = crs.fetchone() is not None
+
+    if not user_already_reacted_to_message:
+        if(karma == 1 or karma == -1):
+            save_or_create_user_in_chat(reply_to_user,chat.chat_id, conn, change_karma=karma)
+        else:
+            print("invalid karma passed to user_reply_to_message")
+        with conn:
+            with conn.cursor() as crs:
+                args_reply_message = [reply_message.message_id, chat.chat_id, uic.user_id, reply_message.message_text]
+                args_original_message = [original_message.message_id, chat.chat_id, original_message.author_user_id, original_message.message_text]
+                crs.execute(insert_message,args_reply_message)
+                crs.execute(insert_message,args_original_message)
                 argsurtm = [uic.user_id, original_message.message_id, karma, reply_message.message_id]
                 crs.execute(inserturtm,argsurtm)
-            else:
-                #TODO: replace with logger
-                print("urtm not inserted since already exists")
+
 
 def get_karma_for_user_in_chat(username: str, chat_id: str,conn) -> Optional[int]:
     cmd = """select karma from telegram_user tu
@@ -130,9 +131,6 @@ def get_karma_for_user_in_chat(username: str, chat_id: str,conn) -> Optional[int
             if result is not None:
                 return result[0]
             return result
-
-def get_karma_for_users_in_chat(chat_id: str,conn):
-    cmd = """select username, karma from user_in_chat uic
         LEFT JOIN telegram_user tu ON uic.user_id=tu.user_id
         where uic.chat_id=%s;"""
     with conn:
