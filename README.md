@@ -24,7 +24,8 @@ The server_setup.sh file includes commands for installing docker and docker-comp
 sudo server_setup.sh
 ```
 
-To run the actual code the docker-compose tool is used to start two containers, one that runs a python server for the telegram bot and the other that 
+To run the actual code the docker-compose tool is used to start two containers, one that runs a python server for the telegram bot and the other that runs a postgresql database instance.
+
 When developing run the following command in the git project 
 ```
 sh run.sh ENV_VAR_FILENAME
