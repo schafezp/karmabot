@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS telegram_user ( 
+CREATE TABLE IF NOT EXISTS telegram_user (
     user_id INTEGER PRIMARY KEY,
     username TEXT,
     first_name TEXT,
@@ -7,11 +7,11 @@ CREATE TABLE IF NOT EXISTS telegram_user (
 
 CREATE TABLE IF NOT EXISTS telegram_chat (
     chat_id INTEGER PRIMARY KEY,
-    chat_name TEXT 
+    chat_name TEXT
 );
 
 CREATE TABLE IF NOT EXISTS user_in_chat (
-    id SERIAL PRIMARY KEY, -- TODO: should user_id, chat_id be the primary keys instead?
+    id SERIAL PRIMARY KEY, -- TODO: should user_id, chat_id be the primary keys instead?  -- No
     user_id INTEGER REFERENCES telegram_user(user_id),
     chat_id INTEGER REFERENCES telegram_chat(chat_id),
     karma integer
@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS telegram_message (
     chat_id INTEGER REFERENCES telegram_chat(chat_id),
     author_user_in_chat_id INTEGER REFERENCES user_in_chat(id),
     message_text TEXT
-    
+
 );
 
 CREATE TABLE IF NOT EXISTS user_reacted_to_message (
