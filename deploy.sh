@@ -1,3 +1,4 @@
+cp ../configs/prodenvvar.sh .
 zip -r txbot-prod.zip *
 
 scp txbot-prod.zip droplet:~/txbot-prod.zip
@@ -10,18 +11,8 @@ ssh droplet << EOF
         mv txbot-prod txbot-prod-old
     fi
     unzip txbot-prod.zip -d txbot-prod
-
-    #restore the karma_dictionary
-    if [ -d "txbot-prod-old" ]; then
-        cp ~/txbot-prod-old/chat_to_karma_dictionary.p txbot-prod/chat_to_karma_dictionary.p
-        cp ~/txbot-prod-old/chat_to_karma_dictionary_test.p txbot-prod/chat_to_karma_dictionary_test.p
-    fi
     cd ~/txbot-prod
+    sh run.sh prodenvvar.sh
 
-    tmux kill-session -t bot
-    tmux new-session -d -s "bot" "export PROD=true &&  docker-compose build && docker-compose up -d --no-deps && docker-compose logs bot"
-    echo "Run Tmux ls to see running sessions"
-    echo ""
-    tmux ls
     echo "Script completed. Server should be running"
 EOF
