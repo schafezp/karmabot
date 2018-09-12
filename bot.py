@@ -11,7 +11,7 @@ import telegram as tg
 from typing import Dict, NewType, Tuple, List
 
 from models import User, User_in_chat, Telegram_chat, Telegram_message,user_from_tg_user
-from dbhelper import *
+from postgres_funcs import *
 
 log_level = os.environ.get('LOG_LEVEL')
 level = None
@@ -78,48 +78,35 @@ cursor = conn.cursor()
 
 
 def reply(bot: tg.Bot, update: tg.Update):
-    logger.debug("reply")
     reply_user = user_from_tg_user(update.message.reply_to_message.from_user)
     replying_user = user_from_tg_user(update.message.from_user)
-    save_or_create_user(reply_user, conn)
-    save_or_create_user(replying_user, conn)
-    chat = Telegram_chat(str(update.message.chat_id), update.message.chat.title)
-    save_or_create_chat(chat,conn)
-
-    reply_uic = save_or_create_user_in_chat(reply_user, chat.chat_id,conn)
-    replying_uic = save_or_create_user_in_chat(replying_user, chat.chat_id,conn)
-
-    original_message_tg = update.message.reply_to_message
-    reply_message_tg = update.message
-
-    logger.debug("original_message_text: " + str(original_message_tg.text))
-    logger.debug("original_message_user: " + str(reply_user.username))
-    logger.debug("reply_message_text: " + str(reply_message_tg.text))
-    logger.debug("replying_user: " + str(replying_user.username))
-
-    original_message = Telegram_message(update.message.reply_to_message.message_id, chat.chat_id, reply_uic.user_id, update.message.reply_to_message.text)
-    reply_message = Telegram_message(update.message.message_id, chat.chat_id, replying_uic.user_id, update.message.text)
+    chat_id = str(update.message.chat_id)
+    chat = Telegram_chat(chat_id, update.message.chat.title)
+    original_message = Telegram_message(update.message.reply_to_message.message_id, chat.chat_id, reply_user.id, update.message.reply_to_message.text)
+    reply_message = Telegram_message(update.message.message_id, chat.chat_id, replying_user.id, update.message.text)
     reply_text = reply_message.message_text
-    chat_id = update.message.chat_id
+
     if re.match("^([\+pP][1-9][0-9]*|[Pp]{2}).*", reply_text):
         #if user tried to +1 self themselves
         if(replying_user.id == update.message.reply_to_message.from_user.id):
             witty_responses = [" how could you +1 yourself?", " what do you think you're doing?", " is your post really worth +1ing yourself?", " you won't get any goodie points for that", " try +1ing someone else instead of yourself!", " who are you to +1 yourself?", " beware the Jabberwocky", " have a 🍪!", " you must give praise. May he 🍔melt🍔! "]
             response = random.choice(witty_responses)
-            message = "" + replying_user.first_name + response
+            message = f"{replying_user.first_name}{response}"
             bot.send_message(chat_id=chat_id, text=message)
-        else:
+        else: # user +1 someone else
             user_reply_to_message(replying_user,reply_user, chat, original_message, reply_message, 1,conn)
             logger.debug("user replying other user")
             logger.debug(replying_user)
             logger.debug(reply_user)
-    elif re.match("^([\+pP][1-9][0-9]*|[Dd]{2}).*", reply_text) :
+    elif re.match("^([\+pP][1-9][0-9]*|[Dd]{2}).*", reply_text) : #user -1 someone else
         user_reply_to_message(replying_user, reply_user, chat, original_message, reply_message, -1,conn)
+        logger.debug("user replying other user")
         logger.debug(replying_user)
+        logger.debug(reply_user)
+        
 
 def start(bot, update):
     bot.send_message(chat_id=update.message.chat_id, text="I'm a bot, please talk to me!")
-
 
 def show_version(bot,update,args):
     message = "Version: " + version + "\n" + "Bot powered by Python."
@@ -143,109 +130,21 @@ def show_user_stats(bot,update,args):
         
     use_command('userinfo',user_from_tg_user(update.message.from_user), str(update.message.chat_id), arguments=username)
 
-    selectuser = "select * from telegram_user tu where tu.username=%s"
-    result = None
-    with conn:
-        with conn.cursor() as crs:
-            crs.execute(selectuser,[username])
-            result = crs.fetchone()
-    if result is not None:
-        select_user_replies = """select username, message_id, react_score, react_message_id  from telegram_user tu
-            left join user_reacted_to_message urtm on urtm.user_id=tu.user_id
-            where tu.username = %s"""
-        reacted_messages_result = None
-        with conn:
-            with conn.cursor() as crs:
-                crs.execute(select_user_replies,[username])
-                reacted_messages_result = crs.fetchone()
-        if reacted_messages_result is not None:
-            #this cmd shows react given to other
-            stats_cmd = """select sum(react_score), count(react_score) from
-                (select username, message_id, react_score, react_message_id  from telegram_user tu
-                left join user_reacted_to_message urtm on urtm.user_id=tu.user_id
-                where tu.username = %s
-                ) as sub
-                left join telegram_message tm on  tm.message_id= sub.message_id
-                where tm.chat_id=%s;"""
-            how_many_of_react_stats = """select react_score, count(react_score)from
-            (select username, message_id, react_score, react_message_id  from telegram_user tu
-            left join user_reacted_to_message urtm on urtm.user_id=tu.user_id
-            where tu.username = %s
-            ) as sub left join telegram_message tm on  tm.message_id= sub.message_id
-            where tm.chat_id=%s
-            group by react_score;"""
-            how_many_reacted_to_user_stats = """
-
-            """
-            negative_karma_given = 0
-            positive_karma_given = 0
-
-            result = None
-
-            with conn:
-                with conn.cursor() as crs:
-                    crs.execute(stats_cmd,[username,chat_id])
-                    result = crs.fetchone()
-                    print(result)
-                    crs.execute(how_many_of_react_stats,[username,chat_id])
-                    rows = crs.fetchall()
-                    print("rows: " + str(rows))
-                    for row in rows:
-                        if row[0] == -1:
-                            negative_karma_given = int(row[1])
-                        if row[0] == 1:
-                            positive_karma_given = int(row[1])
-                    result = crs.fetchone()
-
-            karma = get_karma_for_user_in_chat(username,chat_id,conn)
-            if karma is None: karma = 0
-            message = """Username: {:s} Karma: {:d}
-Karma given out stats:
-    Upvotes, Downvotes, Total Votes, Net Karma
-    {:d}, {:d}, {:d}, {:d}"""
-            message = message.format(username, karma,
-            positive_karma_given, negative_karma_given,
-            positive_karma_given + negative_karma_given,
-            positive_karma_given - negative_karma_given)
-            bot.send_message(chat_id=update.message.chat_id, text=message)
-
-        else:
-            bot.send_message(chat_id=update.message.chat_id, text="User: " + username + " did not respond to any messages")
-
-    else:
-        bot.send_message(chat_id=update.message.chat_id, text="No user with that username")
-
-
-def show_user_messages(bot,update,args):
-    user_id = update.message.from_user.id
-    if len(args) != 1:
-        bot.send_message(chat_id=update.message.chat_id, text="send argument of username")
-        return
-    username = args[0]
-    chat_id = str(update.message.chat_id)
-    selectcmd = """select * from
-            (select react_score, react_message_id, user_id as reply_user_id from
-            ((select message_id,chat_id, message_text from
-                    (select user_id as custom_user_id from telegram_user tu where tu.username = %s) as sub
-                        left join telegram_message tm on tm.author_user_id=sub.custom_user_id
-                        where tm.chat_id=%s
-                ) as messages_by_customer_user
-            left join user_reacted_to_message urtm on urtm.message_id=messages_by_customer_user.message_id
-            ) as sub2) as sub3
-            left join telegram_user tu on tu.user_id = reply_user_id;
-            """
-    user_id = None
-    with conn:
-        with conn.cursor() as crs:
-            crs.execute(selectcmd, [username, chat_id])
-            """ crs.execute(selectcmd, [username])
-            user_id = crs.fetchone()[0] """
-    if user_id is None:
-        bot.send_message(chat_id=update.message.chat_id, text="No user with that username")
-        return
-    res = get_message_responses_for_user_in_chat(user_id, update.message.chat_id,conn)
-    bot.send_message(chat_id=update.message.chat_id, text=str(res))
-
+    message = None
+    try:
+        result = get_user_stats(username,chat_id, conn)
+        message = """Username: {:s} Karma: {:d}
+        Karma given out stats:
+        Upvotes, Downvotes, Total Votes, Net Karma
+        {:d}, {:d}, {:d}, {:d}"""
+        message = message.format(result['username'], result['karma'],
+        result['upvotes_given'], result['downvotes_given'],
+        result['total_votes_given'], result['net_karma_given'])
+    except UserNotFound as _:
+        message = f"No user with username: {username}"
+    
+    bot.send_message(chat_id=update.message.chat_id, text=message)
+    
 #TODO: replace this with an annotation maybe?
 def use_command(command: str,user: User, chat_id: str, arguments=""):
     create_chat_if_not_exists(chat_id,conn)
@@ -291,54 +190,27 @@ def show_karma(bot,update,args):
     bot.send_message(chat_id=update.message.chat_id, text=message)
 
 def show_chat_info(bot,update,args):
-    use_command('chatinfo',user_from_tg_user(update.message.from_user.id), str(update.message.chat_id))
+    use_command('chatinfo',user_from_tg_user(update.message.from_user), str(update.message.chat_id))
     chat_id = str(update.message.chat_id)
     title = update.message.chat.title
-    selectcmd = """select count(tm.message_id) from user_reacted_to_message urtm
-left join telegram_message tm ON tm.message_id = urtm.message_id
-where tm.chat_id=%s"""
-    select_user_with_karma_count = """
-    select count(*) from telegram_chat tc
-    left join user_in_chat uic on uic.chat_id = tc.chat_id
-    where tc.chat_id=%s
-    """
-    with conn:
-        with conn.cursor() as crs:
-            crs.execute(selectcmd,[chat_id])
-            result = crs.fetchone()
-
-            message = ""
-            reply_count = None
-            if result is not None:
-                reply_count = result[0]
-            else:
-                reply_count = 0
-
-            crs.execute(select_user_with_karma_count,[chat_id])
-            result = crs.fetchone()
-            user_with_karma_count = None
-            if result is not None:
-                user_with_karma_count = result[0]
-            else:
-                user_with_karma_count = 0
-
-            message = "Chat: {:s}.\n Number of Users with Karma: {:d}\n Total Reply Count: {:d}".format(title,user_with_karma_count, reply_count)
-            bot.send_message(chat_id=update.message.chat_id, text=message)
+    if title is None:
+        title = "No Title"
+    result = get_chat_info(chat_id, conn)
+    message = "Chat: {:s}.\n Number of Users with Karma: {:d}\n Total Reply Count: {:d}".format(title,
+    result['user_with_karma_count'], result['reply_count'])
+    bot.send_message(chat_id=update.message.chat_id, text=message)
 
 @restricted
 def am_I_admin(bot,update,args):
     message = "yes you are an admin"
     bot.send_message(chat_id=update.message.chat_id, text=message)
 
+
 def show_karma_personally(bot,update,args):
-    #TODO:check if this is a 1 on 1 message
-
-    #might be best to use a different handler:
+    #TODO:check if this is a 1 on 1 message handler
     #offer choice to user of which chat they want to see the karma totals of
-
     #user clicks on button to choose chat (similar to BotFather) then bot responds with karma for that chat
-
-    print()
+    return
 
 
 def error(bot, update, error):
@@ -382,11 +254,6 @@ def main():
     am_I_admin_handler = CommandHandler('amiadmin', am_I_admin, pass_args=True)
     dispatcher.add_handler(am_I_admin_handler)
 
-
-    #TODO: finish this
-    showusermessages_handler = CommandHandler('showusermessages', show_karma, pass_args=True)
-    """ dispatcher.add_handler(showusermessages_handler) """
-
     showversion_handler = CommandHandler('version', show_version, pass_args=True)
     dispatcher.add_handler(showversion_handler)
 
@@ -401,6 +268,7 @@ def main():
     many = cursor.fetchall()
     public_tables = list(map(lambda x: x[1], filter(lambda x: x[0] == 'public', many)))
     logger.info("public_tables: "+ str(public_tables))
+
     updater.idle()
 
     cursor.close()
