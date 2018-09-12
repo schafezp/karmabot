@@ -143,74 +143,21 @@ def show_user_stats(bot,update,args):
         
     use_command('userinfo',user_from_tg_user(update.message.from_user), str(update.message.chat_id), arguments=username)
 
-    user = get_user_by_username(username, conn)
+    message = None
+    try:
+        result = get_user_stats(username,chat_id, conn)
+        message = """Username: {:s} Karma: {:d}
+        Karma given out stats:
+        Upvotes, Downvotes, Total Votes, Net Karma
+        {:d}, {:d}, {:d}, {:d}"""
+        message = message.format(result['username'], result['karma'],
+        result['upvotes_given'], result['downvotes_given'],
+        result['total_votes_given'], result['net_karma_given'])
+    except UserNotFound as _:
+        message = f"No user with username: {username}"
     
-    if user is not None:
-        select_user_replies = """select username, message_id, react_score, react_message_id  from telegram_user tu
-            left join user_reacted_to_message urtm on urtm.user_id=tu.user_id
-            where tu.username = %s"""
-        reacted_messages_result = None
-        with conn:
-            with conn.cursor() as crs:
-                crs.execute(select_user_replies,[username])
-                reacted_messages_result = crs.fetchone()
-        if reacted_messages_result is not None:
-            #this cmd shows react given to other
-            stats_cmd = """select sum(react_score), count(react_score) from
-                (select username, message_id, react_score, react_message_id  from telegram_user tu
-                left join user_reacted_to_message urtm on urtm.user_id=tu.user_id
-                where tu.username = %s
-                ) as sub
-                left join telegram_message tm on  tm.message_id= sub.message_id
-                where tm.chat_id=%s;"""
-            how_many_of_react_stats = """select react_score, count(react_score)from
-            (select username, message_id, react_score, react_message_id  from telegram_user tu
-            left join user_reacted_to_message urtm on urtm.user_id=tu.user_id
-            where tu.username = %s
-            ) as sub left join telegram_message tm on  tm.message_id= sub.message_id
-            where tm.chat_id=%s
-            group by react_score;"""
-            how_many_reacted_to_user_stats = """
-
-            """
-            negative_karma_given = 0
-            positive_karma_given = 0
-
-            result = None
-
-            with conn:
-                with conn.cursor() as crs:
-                    crs.execute(stats_cmd,[username,chat_id])
-                    result = crs.fetchone()
-                    print(result)
-                    crs.execute(how_many_of_react_stats,[username,chat_id])
-                    rows = crs.fetchall()
-                    print("rows: " + str(rows))
-                    for row in rows:
-                        if row[0] == -1:
-                            negative_karma_given = int(row[1])
-                        if row[0] == 1:
-                            positive_karma_given = int(row[1])
-                    result = crs.fetchone()
-
-            karma = get_karma_for_user_in_chat(username,chat_id,conn)
-            if karma is None: karma = 0
-            message = """Username: {:s} Karma: {:d}
-Karma given out stats:
-    Upvotes, Downvotes, Total Votes, Net Karma
-    {:d}, {:d}, {:d}, {:d}"""
-            message = message.format(username, karma,
-            positive_karma_given, negative_karma_given,
-            positive_karma_given + negative_karma_given,
-            positive_karma_given - negative_karma_given)
-            bot.send_message(chat_id=update.message.chat_id, text=message)
-
-        else:
-            bot.send_message(chat_id=update.message.chat_id, text="User: " + username + " did not respond to any messages")
-
-    else:
-        bot.send_message(chat_id=update.message.chat_id, text="No user with that username")
-
+    bot.send_message(chat_id=update.message.chat_id, text=message)
+    
 
 def show_user_messages(bot,update,args):
     user_id = update.message.from_user.id
