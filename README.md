@@ -56,7 +56,6 @@ psql -h localhost -p 5432 karmabot test_user
 
 ### Server (python):
 *Features*
-- [ ] add /plus1 and /minus1 (or similar) commands as alternative to +1 or -1 for faster mobile usage
 - [ ] reply to a message with /showpostkarma (or similar) to do a print out of -the karma of a post
 - [ ] Create icon for the karmabot bot and add it through the BotFather
 - [ ] Allow you to +1 yourself only in your chat 1 on 1 with the bot. Useful for testing.
@@ -66,7 +65,6 @@ psql -h localhost -p 5432 karmabot test_user
 - [ ] Show deltas on /showkarma from most recent /showkarma
 - [ ] Create decorator to update chatname, username, etc
 - [ ] Add firstname and lastname (maybe even id?) to /userinfo 
-- [ ] Use ON CONFLICT UPDATE SET to not allow users to +1 a single post multiple times
 - [ ] Create support for testing performance of calls (perhaps using decorators)
 - [ ] Create menu for 1 on 1 interaction with karma bot to allow users to check the karma of chars they are in https://github.com/python-telegram-bot/python-telegram-bot/wiki/Code-snippets#build-a-menu-with-buttons
 
@@ -95,3 +93,5 @@ psql -h localhost -p 5432 karmabot test_user
 - [x] Fix bug: currently users without usernames cannot receive karma. (users get karma but /showkarma still does not display properly)
 - [x] Handle bot tokens being passed in as environment variables (including with docker-compose support)
 - [x] Fix users without username being reported as "NaN"  or "None" (in showkarma or userinfo)
+- [x] Use ON CONFLICT UPDATE SET to not allow users to +1 a single post multiple times
+- [x] add /plus1 and /minus1 (or similar) commands as alternative to +1 or -1 for faster mobile usage
