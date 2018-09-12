@@ -210,7 +210,8 @@ def show_chat_info(bot,update,args):
     if title is None:
         title = "No Title"
     result = get_chat_info(chat_id, conn)
-    message = "Chat: {:s}.\n Number of Users with Karma: {:d}\n Total Reply Count: {:d}".format(title, result['user_with_karma_count'], result['reply_count'])
+    message = "Chat: {:s}.\n Number of Users with Karma: {:d}\n Total Reply Count: {:d}".format(title,
+    result['user_with_karma_count'], result['reply_count'])
     bot.send_message(chat_id=update.message.chat_id, text=message)
 
 @restricted
