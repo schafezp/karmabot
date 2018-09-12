@@ -88,13 +88,14 @@ def user_reply_to_message(user: User,reply_to_user: User, chat: Telegram_chat , 
     uic: User_in_chat = save_or_create_user_in_chat(user, chat.chat_id, conn)
     reply_to_uic: User_in_chat = save_or_create_user_in_chat(reply_to_user, chat.chat_id, conn)
 
-    insert_message = """INSERT INTO telegram_message 
-    (message_id,chat_id, author_user_id, message_text) 
+    insert_message = """INSERT INTO telegram_message
+    (message_id,chat_id, author_user_id, message_text)
     VALUES (%s,%s,%s,%s)
     ON CONFLICT (message_id) DO UPDATE
     SET message_text = EXCLUDED.message_text;
     """
-    inserturtm = """INSERT INTO user_reacted_to_message 
+    selecturtm = """SELECT * from user_reacted_to_message urtm where urtm.user_id=%s and urtm.message_id=%s and urtm.react_message_id=%s"""
+    inserturtm = """INSERT INTO user_reacted_to_message
     (user_id,message_id,react_score,react_message_id)
     VALUES (%s,%s,%s,%s)"""
 
@@ -106,7 +107,7 @@ def user_reply_to_message(user: User,reply_to_user: User, chat: Telegram_chat , 
             args_select_urtm = [uic.user_id, original_message.message_id]
             crs.execute(selecturtmunique,args_select_urtm)
             user_already_reacted_to_message = crs.fetchone() is not None
-                
+
     if not user_already_reacted_to_message:
         if(karma == 1 or karma == -1):
             save_or_create_user_in_chat(reply_to_user,chat.chat_id, conn, change_karma=karma)
@@ -120,7 +121,7 @@ def user_reply_to_message(user: User,reply_to_user: User, chat: Telegram_chat , 
                 crs.execute(insert_message,args_original_message)
                 argsurtm = [uic.user_id, original_message.message_id, karma, reply_message.message_id]
                 crs.execute(inserturtm,argsurtm)
-            
+
 
 def get_karma_for_user_in_chat(username: str, chat_id: str,conn) -> Optional[int]:
     cmd = """select karma from telegram_user tu
@@ -134,12 +135,6 @@ def get_karma_for_user_in_chat(username: str, chat_id: str,conn) -> Optional[int
             if result is not None:
                 return result[0]
             return result
-#def is_user_admin(user_id: int):
-
-#def make_user_admin(user_id: int):
-
-def get_karma_for_users_in_chat(chat_id: str,conn) -> List[Tuple[str,str,int]]:
-    cmd = """select username, first_name, karma from user_in_chat uic
         LEFT JOIN telegram_user tu ON uic.user_id=tu.user_id
         where uic.chat_id=%s;"""
     with conn:

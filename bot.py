@@ -51,13 +51,13 @@ def check_env_vars_all_loaded() -> Tuple[bool,str]:
     env_vars = ['BOT_TOKEN','LOG_LEVEL','POSTGRES_USER','POSTGRES_PASS','POSTGRES_DB', ]
     logger.info("Environment Variables:")
     for var in env_vars:
-        val = os.environ.get(var) 
+        val = os.environ.get(var)
         if val is None or val == '':
             logger.info('Variable: {} Value: {}'.format(var," VALUE MISSING. EXITING"))
             return (False,var)
         else:
             logger.info('Variable: {} Value: {}'.format(var,val))
-            
+
     return (True,var)
 
 
@@ -359,7 +359,7 @@ def main():
         sys.exit(1)
 
     # Setup bot token from environment variables
-    bot_token = os.environ.get('BOT_TOKEN') 
+    bot_token = os.environ.get('BOT_TOKEN')
 
     updater = Updater(token=bot_token)
     dispatcher = updater.dispatcher
