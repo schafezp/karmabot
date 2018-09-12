@@ -105,7 +105,7 @@ def reply(bot: tg.Bot, update: tg.Update):
             logger.debug("user replying other user")
             logger.debug(replying_user)
             logger.debug(reply_user)
-    elif re.match("^([\+pP][1-9][0-9]*|[Dd]{2}).*", reply_text) : #user -1 someone else
+    elif re.match("^([\-pP][1-9][0-9]*|[Dd]{2}).*", reply_text) : #user -1 someone else
         user_reply_to_message(replying_user, reply_user, chat, original_message, reply_message, -1,conn)
         logger.debug("user replying other user")
         logger.debug(replying_user)
