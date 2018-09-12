@@ -30,9 +30,9 @@ CREATE TABLE IF NOT EXISTS telegram_message (
     message_time TIMESTAMP default current_timestamp
 );
 CREATE INDEX IF NOT EXISTS index_telegram_message_on_author_id
-  on telegram_message(author_id);
+  on telegram_message(author_user_id);
 CREATE INDEX IF NOT EXISTS index_telegram_message_on_chat_id
-  on telegram_message(chatid);
+  on telegram_message(chat_id);
 
 
 CREATE TABLE IF NOT EXISTS user_reacted_to_message (
