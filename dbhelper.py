@@ -135,7 +135,10 @@ def get_karma_for_user_in_chat(username: str, chat_id: str,conn) -> Optional[int
             if result is not None:
                 return result[0]
             return result
-        LEFT JOIN telegram_user tu ON uic.user_id=tu.user_id
+
+def get_karma_for_users_in_chat(chat_id: str,conn) -> List[Tuple[str,str,int]]:
+    cmd = """select username, first_name, karma from telegram_user tu 
+        LEFT JOIN user_in_chat uic ON uic.user_id=tu.user_id
         where uic.chat_id=%s;"""
     with conn:
         with conn.cursor() as crs:
