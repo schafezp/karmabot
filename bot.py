@@ -78,49 +78,35 @@ cursor = conn.cursor()
 
 
 def reply(bot: tg.Bot, update: tg.Update):
-    logger.debug("reply")
-    #TODO: move this logic into postgres_funcs where possible
     reply_user = user_from_tg_user(update.message.reply_to_message.from_user)
     replying_user = user_from_tg_user(update.message.from_user)
-    save_or_create_user(reply_user, conn)
-    save_or_create_user(replying_user, conn)
-    chat = Telegram_chat(str(update.message.chat_id), update.message.chat.title)
-    save_or_create_chat(chat,conn)
-
-    reply_uic = save_or_create_user_in_chat(reply_user, chat.chat_id,conn)
-    replying_uic = save_or_create_user_in_chat(replying_user, chat.chat_id,conn)
-
-    original_message_tg = update.message.reply_to_message
-    reply_message_tg = update.message
-
-    logger.debug("original_message_text: " + str(original_message_tg.text))
-    logger.debug("original_message_user: " + str(reply_user.username))
-    logger.debug("reply_message_text: " + str(reply_message_tg.text))
-    logger.debug("replying_user: " + str(replying_user.username))
-
-    original_message = Telegram_message(update.message.reply_to_message.message_id, chat.chat_id, reply_uic.user_id, update.message.reply_to_message.text)
-    reply_message = Telegram_message(update.message.message_id, chat.chat_id, replying_uic.user_id, update.message.text)
+    chat_id = str(update.message.chat_id)
+    chat = Telegram_chat(chat_id, update.message.chat.title)
+    original_message = Telegram_message(update.message.reply_to_message.message_id, chat.chat_id, reply_user.id, update.message.reply_to_message.text)
+    reply_message = Telegram_message(update.message.message_id, chat.chat_id, replying_user.id, update.message.text)
     reply_text = reply_message.message_text
-    chat_id = update.message.chat_id
+
     if re.match("^([\+pP][1-9][0-9]*|[Pp]{2}).*", reply_text):
         #if user tried to +1 self themselves
         if(replying_user.id == update.message.reply_to_message.from_user.id):
             witty_responses = [" how could you +1 yourself?", " what do you think you're doing?", " is your post really worth +1ing yourself?", " you won't get any goodie points for that", " try +1ing someone else instead of yourself!", " who are you to +1 yourself?", " beware the Jabberwocky", " have a 🍪!", " you must give praise. May he 🍔melt🍔! "]
             response = random.choice(witty_responses)
-            message = "" + replying_user.first_name + response
+            message = f"{replying_user.first_name}{response}"
             bot.send_message(chat_id=chat_id, text=message)
-        else:
+        else: # user +1 someone else
             user_reply_to_message(replying_user,reply_user, chat, original_message, reply_message, 1,conn)
             logger.debug("user replying other user")
             logger.debug(replying_user)
             logger.debug(reply_user)
-    elif re.match("^([\+pP][1-9][0-9]*|[Dd]{2}).*", reply_text) :
+    elif re.match("^([\+pP][1-9][0-9]*|[Dd]{2}).*", reply_text) : #user -1 someone else
         user_reply_to_message(replying_user, reply_user, chat, original_message, reply_message, -1,conn)
+        logger.debug("user replying other user")
         logger.debug(replying_user)
+        logger.debug(reply_user)
+        
 
 def start(bot, update):
     bot.send_message(chat_id=update.message.chat_id, text="I'm a bot, please talk to me!")
-
 
 def show_version(bot,update,args):
     message = "Version: " + version + "\n" + "Bot powered by Python."
