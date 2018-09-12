@@ -8,6 +8,13 @@ def get_user_by_user_id(user_id: int, conn) -> User:
             crs.execute(selectcmd, [user_id])
             res = crs.fetchone()
             return User(res[0],res[1],res[2],res[3])
+def get_user_by_username(username: str, conn) -> User:
+    with conn:
+        with conn.cursor() as crs: #I would love type hints here but psycopg2.cursor isn't a defined class
+            selectcmd = "SELECT user_id, username, first_name, last_name from telegram_user tu where tu.username=%s"
+            crs.execute(selectcmd, [username])
+            res = crs.fetchone()
+            return User(res[0],res[1],res[2],res[3])
 
 def save_or_create_user(user : User,conn) -> User:
     with conn:

@@ -143,13 +143,9 @@ def show_user_stats(bot,update,args):
         
     use_command('userinfo',user_from_tg_user(update.message.from_user), str(update.message.chat_id), arguments=username)
 
-    selectuser = "select * from telegram_user tu where tu.username=%s"
-    result = None
-    with conn:
-        with conn.cursor() as crs:
-            crs.execute(selectuser,[username])
-            result = crs.fetchone()
-    if result is not None:
+    user = get_user_by_username(username, conn)
+    
+    if user is not None:
         select_user_replies = """select username, message_id, react_score, react_message_id  from telegram_user tu
             left join user_reacted_to_message urtm on urtm.user_id=tu.user_id
             where tu.username = %s"""
