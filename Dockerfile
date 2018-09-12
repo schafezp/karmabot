@@ -5,5 +5,5 @@ WORKDIR /code
 ADD requirements.txt /code/
 RUN pip install -r requirements.txt
 ADD models.py /code/
-ADD dbhelper.py /code/
+ADD postgres_funcs.py /code/
 ADD bot.py /code/
