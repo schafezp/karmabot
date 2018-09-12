@@ -41,6 +41,13 @@ def restricted(func):
         return func(bot, update, *args, **kwargs)
     return wrapped
 
+#should invoke ChatAction.typing
+def types(func):
+    @wraps(func)
+    def wrapped(bot, update, *args, **kwargs):
+        bot.send_chat_action(chat_id=update.message.chat_id, action=tg.ChatAction.TYPING)
+        return func(bot, update, *args, **kwargs)
+    return wrapped
 
 conn = None
 import time
@@ -108,11 +115,14 @@ def reply(bot: tg.Bot, update: tg.Update):
 def start(bot, update):
     bot.send_message(chat_id=update.message.chat_id, text="I'm a bot, please talk to me!")
 
+@types
 def show_version(bot,update,args):
     message = "Version: " + version + "\n" + "Bot powered by Python."
     #harder to hack the bot if source code is obfuscated :p
     #message = message + "\nChangelog found at: " + changelog_url
     bot.send_message(chat_id=update.message.chat_id, text=message)
+
+@types
 def show_user_stats(bot,update,args):
     #TODO: remove this boiler plate code somehow
     #without this if this is the first command run alone with the bot it will fail due to psycopg2.IntegrityError: insert or update on table "command_used" violates foreign key constraint "command_used_chat_id_fkey"
@@ -154,7 +164,7 @@ def use_command(command: str,user: User, chat_id: str, arguments=""):
         with conn.cursor() as crs:
             crs.execute(insertcmd,[command,arguments,user.id,chat_id])
 
-
+@types
 def show_karma(bot,update,args):
     use_command('showkarma',user_from_tg_user(update.message.from_user), str(update.message.chat_id))
     logger.debug("Chat id: " + str(update.message.chat_id))
@@ -189,6 +199,7 @@ def show_karma(bot,update,args):
 
     bot.send_message(chat_id=update.message.chat_id, text=message)
 
+@types
 def show_chat_info(bot,update,args):
     use_command('chatinfo',user_from_tg_user(update.message.from_user), str(update.message.chat_id))
     chat_id = str(update.message.chat_id)
