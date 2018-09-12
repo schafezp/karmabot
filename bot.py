@@ -234,39 +234,14 @@ def show_karma(bot,update,args):
     bot.send_message(chat_id=update.message.chat_id, text=message)
 
 def show_chat_info(bot,update,args):
-    use_command('chatinfo',user_from_tg_user(update.message.from_user.id), str(update.message.chat_id))
+    use_command('chatinfo',user_from_tg_user(update.message.from_user), str(update.message.chat_id))
     chat_id = str(update.message.chat_id)
     title = update.message.chat.title
-    selectcmd = """select count(tm.message_id) from user_reacted_to_message urtm
-left join telegram_message tm ON tm.message_id = urtm.message_id
-where tm.chat_id=%s"""
-    select_user_with_karma_count = """
-    select count(*) from telegram_chat tc
-    left join user_in_chat uic on uic.chat_id = tc.chat_id
-    where tc.chat_id=%s
-    """
-    with conn:
-        with conn.cursor() as crs:
-            crs.execute(selectcmd,[chat_id])
-            result = crs.fetchone()
-
-            message = ""
-            reply_count = None
-            if result is not None:
-                reply_count = result[0]
-            else:
-                reply_count = 0
-
-            crs.execute(select_user_with_karma_count,[chat_id])
-            result = crs.fetchone()
-            user_with_karma_count = None
-            if result is not None:
-                user_with_karma_count = result[0]
-            else:
-                user_with_karma_count = 0
-
-            message = "Chat: {:s}.\n Number of Users with Karma: {:d}\n Total Reply Count: {:d}".format(title,user_with_karma_count, reply_count)
-            bot.send_message(chat_id=update.message.chat_id, text=message)
+    if title is None:
+        title = "No Title"
+    result = get_chat_info(chat_id, conn)
+    message = "Chat: {:s}.\n Number of Users with Karma: {:d}\n Total Reply Count: {:d}".format(title, result['user_with_karma_count'], result['reply_count'])
+    bot.send_message(chat_id=update.message.chat_id, text=message)
 
 @restricted
 def am_I_admin(bot,update,args):

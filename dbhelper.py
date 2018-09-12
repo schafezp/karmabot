@@ -69,6 +69,34 @@ def get_user_stats(username: str, chat_id: str, conn) -> Dict:
         'net_karma_given': positive_karma_given- negative_karma_given }
     return output_dict
         
+def get_chat_info(chat_id: str, conn) -> Dict:
+    count_reacts_cmd = """select count(tm.message_id) from user_reacted_to_message urtm
+left join telegram_message tm ON tm.message_id = urtm.message_id
+where tm.chat_id=%s"""
+    select_user_with_karma_count = """
+    select count(*) from telegram_chat tc
+    left join user_in_chat uic on uic.chat_id = tc.chat_id
+    where tc.chat_id=%s
+    """
+    with conn:
+        with conn.cursor() as crs:
+            reply_count = None
+            user_with_karma_count = None
+            message = ""
+            crs.execute(count_reacts_cmd,[chat_id])
+            result = crs.fetchone()
+            if result is not None:
+                reply_count = result[0]
+            else:
+                reply_count = 0
+
+            crs.execute(select_user_with_karma_count,[chat_id])
+            result = crs.fetchone()
+            if result is not None:
+                user_with_karma_count = result[0]
+            else:
+                user_with_karma_count = 0
+            return {'reply_count': reply_count, 'user_with_karma_count': user_with_karma_count}
 
 
 #TODO: use user_id instead of username
