@@ -84,12 +84,13 @@ while conn is None:
 cursor = conn.cursor()
 
 #TODO: move me somewhere topical
+#TODO: assumes only one of these is possible at a time; could multiple be attached?
+# extract files from messages
 def get_file_id_and_ext_from_message(message: tg.Message):
     file_id = None
     extension = None
     photos = message.photo
     if photos is not None and len(photos) > 0:
-        logging.info("Photo included")
         file_id = photos[-1]['file_id']
         extension = 'png'
     elif message.audio is not None:
@@ -100,7 +101,6 @@ def get_file_id_and_ext_from_message(message: tg.Message):
         extension = message.document.file_name.split('.')[-1]
     elif message.video is not None:
         video = message.video
-        logging.info("video: {video}")
         file_id = video.file_id 
         extension = 'mp4'
         logging.info("Mime type: {video.mime_type}")
@@ -109,25 +109,19 @@ def get_file_id_and_ext_from_message(message: tg.Message):
         extension = 'wav'
     return (file_id, extension)
     
-def reply(bot: tg.Bot, update: tg.Update):
-    
-    file_id = None
-    extension = None
-    # extract files from messages
-    #TODO: make this this is gaurd blocked behind a +1 or -1
-    (file_id, extension) = get_file_id_and_ext_from_message(update.message.reply_to_message)
-    
-    #TODO: check if file_id exists before downloading
+def save_file_to_drive(file_id: Optional[str], extension, bot:tg.Bot):
+    if extension is not None: logging.info(f"Extension: {extension}")
     if file_id is not None:
-        logging.info(f"extension: {extension}")
         newFile = bot.get_file(file_id)
         #points to volume
         file_dir = "/files"
         path = f'{file_dir}/{file_id}.{extension}'
         newFile.download(path)
-        
-    #logging.info(f"Media Group id: {update.message.reply_to_message.photo[-1]}")
-    #logging.debug(f"Media Group id: {message.media_group_id}")
+
+def reply(bot: tg.Bot, update: tg.Update):
+    #TODO: make this this is gaurd blocked behind a +1 or -1
+    (file_id, extension) = get_file_id_and_ext_from_message(update.message.reply_to_message)
+    
     reply_user = user_from_tg_user(update.message.reply_to_message.from_user)
     replying_user = user_from_tg_user(update.message.from_user)
     chat_id = str(update.message.chat_id)
@@ -146,11 +140,13 @@ def reply(bot: tg.Bot, update: tg.Update):
             bot.send_message(chat_id=chat_id, text=message)
         else: # user +1 someone else
             user_reply_to_message(replying_user,reply_user, chat, original_message, reply_message, 1,conn)
+            save_file_to_drive(file_id, extension, bot)
             logger.debug("user replying other user")
             logger.debug(replying_user)
             logger.debug(reply_user)
     elif re.match("^([\-mM][1-9][0-9]*|[Dd]{2}).*", reply_text) : #user -1 someone else
         user_reply_to_message(replying_user, reply_user, chat, original_message, reply_message, -1,conn)
+        save_file_to_drive(file_id, extension, bot)
         logger.debug("user replying other user")
         logger.debug(replying_user)
         logger.debug(reply_user)
