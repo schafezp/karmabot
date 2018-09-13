@@ -83,36 +83,41 @@ while conn is None:
 
 cursor = conn.cursor()
 
-
+#TODO: move me somewhere topical
+def get_file_id_and_ext_from_message(message: tg.Message):
+    file_id = None
+    extension = None
+    photos = message.photo
+    if photos is not None and len(photos) > 0:
+        logging.info("Photo included")
+        file_id = photos[-1]['file_id']
+        extension = 'png'
+    elif message.audio is not None:
+        file_id = message.audio.file_id 
+        extension = 'mp3'
+    elif message.document is not None:
+        file_id = message.document.file_id 
+        extension = message.document.file_name.split('.')[-1]
+    elif message.video is not None:
+        video = message.video
+        logging.info("video: {video}")
+        file_id = video.file_id 
+        extension = 'mp4'
+        logging.info("Mime type: {video.mime_type}")
+    elif message.voice is not None:
+        file_id = message.voice.file_id
+        extension = 'wav'
+    return (file_id, extension)
+    
 def reply(bot: tg.Bot, update: tg.Update):
     
     file_id = None
     extension = None
     # extract files from messages
     #TODO: make this this is gaurd blocked behind a +1 or -1
-    #TODO: extract this code into a function
-    reply_message = update.message.reply_to_message
-    photos = reply_message.photo
-    if photos is not None and len(photos) > 0:
-        logging.info("Photo included")
-        file_id = photos[-1]['file_id']
-        extension = 'png'
-    elif reply_message.audio is not None:
-        file_id = reply_message.audio.file_id 
-        extension = 'mp3'
-    elif reply_message.document is not None:
-        file_id = reply_message.document.file_id 
-        extension = reply_message.document.file_name.split('.')[-1]
-    elif reply_message.video is not None:
-        video = reply_message.video
-        logging.info("video: {video}")
-        file_id = video.file_id 
-        extension = 'mp4'
-        logging.info("Mime type: {video.mime_type}")
-    elif reply_message.voice is not None:
-        file_id = reply_message.voice.file_id
-        extension = 'wav'
-    #add voice file check
+    (file_id, extension) = get_file_id_and_ext_from_message(update.message.reply_to_message)
+    
+    #TODO: check if file_id exists before downloading
     if file_id is not None:
         logging.info(f"extension: {extension}")
         newFile = bot.get_file(file_id)
