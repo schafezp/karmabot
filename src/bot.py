@@ -95,6 +95,7 @@ def reply(bot: tg.Bot, update: tg.Update):
 
     if re.match("^([\+pP][1-9][0-9]*|[Pp]{2}).*", reply_text):
         #if user tried to +1 self themselves
+        #chat id is user_id when the user is talking 1 on 1 with the bot
         if(replying_user.id == update.message.reply_to_message.from_user.id and chat_id != str(reply_user.id)):
             witty_responses = [" how could you +1 yourself?", " what do you think you're doing?", " is your post really worth +1ing yourself?", " you won't get any goodie points for that", " try +1ing someone else instead of yourself!", " who are you to +1 yourself?", " beware the Jabberwocky", " have a 🍪!", " you must give praise. May he 🍔melt🍔! "]
             response = random.choice(witty_responses)
