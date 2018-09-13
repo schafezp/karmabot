@@ -9,7 +9,7 @@ sh scripts/server_setup.sh
 to setup docker.
 
 Run 
-````
+```
 sh run.sh test_env_vars.sh
 ```
 to actually run the bot and pass in the appropriate environment variables.
