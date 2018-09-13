@@ -16,6 +16,7 @@ services:
       POSTGRES_DB: "${POSTGRES_DB}"
     volumes:
       - .:/code
+      - file_assets:/files
     depends_on:
       - postgres
   postgres:
@@ -31,3 +32,4 @@ services:
       - "5432:5432"
 volumes:
   data: {}
+  file_assets: {}

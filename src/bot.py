@@ -85,6 +85,44 @@ cursor = conn.cursor()
 
 
 def reply(bot: tg.Bot, update: tg.Update):
+    
+    file_id = None
+    extension = None
+    # extract files from messages
+    #TODO: make this this is gaurd blocked behind a +1 or -1
+    #TODO: extract this code into a function
+    reply_message = update.message.reply_to_message
+    photos = reply_message.photo
+    if photos is not None and len(photos) > 0:
+        logging.info("Photo included")
+        file_id = photos[-1]['file_id']
+        extension = 'png'
+    elif reply_message.audio is not None:
+        file_id = reply_message.audio.file_id 
+        extension = 'mp3'
+    elif reply_message.document is not None:
+        file_id = reply_message.document.file_id 
+        extension = reply_message.document.file_name.split('.')[-1]
+    elif reply_message.video is not None:
+        video = reply_message.video
+        logging.info("video: {video}")
+        file_id = video.file_id 
+        extension = 'mp4'
+        logging.info("Mime type: {video.mime_type}")
+    elif reply_message.voice is not None:
+        file_id = reply_message.voice.file_id
+        extension = 'wav'
+    #add voice file check
+    if file_id is not None:
+        logging.info(f"extension: {extension}")
+        newFile = bot.get_file(file_id)
+        #points to volume
+        file_dir = "/files"
+        path = f'{file_dir}/{file_id}.{extension}'
+        newFile.download(path)
+        
+    #logging.info(f"Media Group id: {update.message.reply_to_message.photo[-1]}")
+    #logging.debug(f"Media Group id: {message.media_group_id}")
     reply_user = user_from_tg_user(update.message.reply_to_message.from_user)
     replying_user = user_from_tg_user(update.message.from_user)
     chat_id = str(update.message.chat_id)
