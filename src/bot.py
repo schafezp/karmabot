@@ -121,6 +121,14 @@ def save_file_to_drive(file_id: Optional[str], extension, bot:tg.Bot):
 def reply(bot: tg.Bot, update: tg.Update):
     #TODO: make this this is gaurd blocked behind a +1 or -1
     (file_id, extension) = get_file_id_and_ext_from_message(update.message.reply_to_message)
+    if file_id is not None: #file was sent
+        #insert file record
+        #TODO: handle conflict on id do set update perhaps
+        insertcmd = "insert into Telegram_file (id,extension,message_id) VALUES (%s,%s,%s)"
+        with conn:
+            with conn.cursor() as crs:
+                crs.execute(insertcmd,[file_id,extension,update.message.reply_to_message.message_id])
+
     
     reply_user = user_from_tg_user(update.message.reply_to_message.from_user)
     replying_user = user_from_tg_user(update.message.from_user)
