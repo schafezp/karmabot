@@ -1,2 +1,3 @@
-cp hooks/pre-recieve .git/hooks/pre-receive
-chmod +x .git/hooks/pre-receive
+#TODO: rewrite me in python so I work cross platform
+cp hooks/pre-commit .git/hooks/pre-commit
+chmod +x .git/hooks/pre-commit
