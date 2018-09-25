@@ -59,3 +59,11 @@ create table IF NOT EXISTS command_used (
     used_time TIMESTAMP default current_timestamp, --time they used the command
     program_version TEXT
 );
+
+CREATE TABLE Telegram_file (
+    id INT PRIMARY KEY,
+    extension TEXT, -- (audio, voice, video, document, photo) -> (mp3,wav,mp4,*,png)
+    message_id INT REFERENCES Telegram_message(message_id),
+    created_time TIMESTAMP default current_timestamp
+)
+ALTER TABLE Telegram_message ADD COLUMN file_id references(Telegram_file)
