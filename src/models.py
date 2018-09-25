@@ -17,7 +17,7 @@ class User(object):
     username : Optional[str]
 
 
-    def __init__(self, id:int, username: str, first_name:str, last_name:str):
+    def __init__(self, id:int, username: str, first_name:str, last_name:str) -> None:
         self.__karma = 0
         self.id = id
         self.username = username
@@ -59,10 +59,10 @@ class User(object):
 
 class User_in_chat(object):
     user_id: int
-    chat_id: int
+    chat_id: str
     karma: int
 
-    def __init__(self, user_id : int, chat_id: int, karma: int):
+    def __init__(self, user_id : int, chat_id: str, karma: int) -> None:
         self.user_id = user_id
         self.chat_id = chat_id
         self.karma = karma
@@ -70,16 +70,16 @@ class User_in_chat(object):
 class Telegram_chat(object):
     chat_id: str
     chat_name: str
-    def __init__(self,chat_id: str, chat_name: str):
+    def __init__(self,chat_id: str, chat_name: str) -> None:
         self.chat_id = chat_id
         self.chat_name = chat_name
         
 class Telegram_message(object):
     message_id: int
-    chat_id: int
+    chat_id: str
     author_user_id: int
     message_text: str
-    def __init__(self, message_id: int, chat_id: int, author_user_id: int, message_text: str):
+    def __init__(self, message_id: int, chat_id: str, author_user_id: int, message_text: str) -> None:
         self.message_id = message_id
         self.message_text = message_text
         self.chat_id = chat_id

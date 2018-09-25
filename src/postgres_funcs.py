@@ -134,7 +134,7 @@ def did_user_react_to_messages(username: str, conn) -> bool:
 
 
 def get_user_react_stats(username: str, conn) -> bool:
-    print()
+    return True
 
 
 def save_or_create_user(user: User, conn) -> User:
@@ -180,7 +180,7 @@ def save_or_create_chat(chat: Telegram_chat, conn):
             conn.commit()
 
 
-def create_chat_if_not_exists(chat_id: int, conn):
+def create_chat_if_not_exists(chat_id: str, conn):
     with conn:
         with conn.cursor() as crs:  # I would love type hints here but psycopg2.cursor isn't a defined class
             insertcmd = """INSERT into telegram_chat
@@ -228,15 +228,15 @@ def save_or_create_user_in_chat(
 
 
 def user_reply_to_message(
-        user: User,
-        reply_to_user: User,
+        reply_from_user_unsaved: User,
+        reply_to_user_unsaved: User,
         chat: Telegram_chat,
         original_message: Telegram_message,
         reply_message: Telegram_message,
         karma: int,
         conn):
-    user: User = save_or_create_user(user, conn)
-    reply_to_user: User = save_or_create_user(reply_to_user, conn)
+    user: User = save_or_create_user(reply_from_user_unsaved, conn)
+    reply_to_user: User = save_or_create_user(reply_to_user_unsaved, conn)
     if not does_chat_exist(chat.chat_id, conn):
         save_or_create_chat(chat, conn)
 

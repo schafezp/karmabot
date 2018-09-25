@@ -8,7 +8,7 @@ import re
 
 from telegram.ext import Filters, CommandHandler, MessageHandler, Updater
 import telegram as tg
-from typing import Dict, NewType, Tuple, List
+from typing import Dict, NewType, Tuple, List, Any
 
 from models import User, User_in_chat, Telegram_chat, Telegram_message, user_from_tg_user
 from postgres_funcs import *
@@ -56,10 +56,10 @@ def types(func):
     return wrapped
 
 
-conn = None
+conn: Any = None
 import time
 
-
+asfd
 def check_env_vars_all_loaded() -> Tuple[bool, str]:
     """Checks required environment variables and returns false if required env vars are not set
     """
@@ -103,7 +103,7 @@ while conn is None:
         print(oe)
         time.sleep(1)
 
-cursor = conn.cursor()
+
 
 
 def reply(bot: tg.Bot, update: tg.Update):
@@ -360,6 +360,7 @@ def main():
 
     updater.start_polling()
 
+    cursor = conn.cursor()
     cursor.execute("SELECT * FROM pg_catalog.pg_tables;")
     many = cursor.fetchall()
     public_tables = list(
