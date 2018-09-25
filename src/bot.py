@@ -59,7 +59,6 @@ def types(func):
 conn: Any = None
 import time
 
-asfdasdf
 def check_env_vars_all_loaded() -> Tuple[bool, str]:
     """Checks required environment variables and returns false if required env vars are not set
     """
