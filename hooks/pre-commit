@@ -19,3 +19,10 @@ if [ $ret_code != 0 ]; then
 else
 	printf "${GREEN}mypy linter passed.${NC}\n"
 fi
+
+# If there were no failures, it is good to commit
+if $pass; then
+	exit 0
+fi
+
+exit 1
