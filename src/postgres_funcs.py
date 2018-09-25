@@ -222,7 +222,7 @@ def save_or_create_user_in_chat(
 # message tg.Message
 # reply_message comes after and is the reply
 
-
+#TODO: refactor / reduce amount of local variables
 def user_reply_to_message(
         reply_from_user_unsaved: User,
         reply_to_user_unsaved: User,
