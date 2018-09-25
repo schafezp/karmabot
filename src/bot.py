@@ -44,10 +44,9 @@ def restricted(func):
         return func(bot, update, *args, **kwargs)
     return wrapped
 
-# should invoke ChatAction.typing
-
-
 def types(func):
+    """Used by bot handlers that respond with text.
+    ChatAction.Typing is called which makes the bot look like it's typing"""
     @wraps(func)
     def wrapped(bot, update, *args, **kwargs):
         bot.send_chat_action(
@@ -60,11 +59,12 @@ def types(func):
 conn = None
 import time
 
-# TODO: move this function
-# Returns false if any of the required environment variables are not set
-
 
 def check_env_vars_all_loaded() -> Tuple[bool, str]:
+    """Checks required environment variables and returns false if required env vars are not set
+    """
+    # TODO: move this function
+
     env_vars = [
         'BOT_TOKEN',
         'LOG_LEVEL',
@@ -310,10 +310,8 @@ def error(bot, update, error):
     logger.warning('Update "%s" caused error "%s"', update, error)
 
 
-""" this command runs last and lets the user know their command was not understood """
-
-
 def unknown(bot, update):
+    """This command runs last and lets the user know their command was not understood """
     bot.send_message(chat_id=update.message.chat_id,
                      text="Sorry, I didn't understand that command.")
 
