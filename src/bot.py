@@ -1,54 +1,63 @@
+"""Main entry point for telegram bot."""
 import logging
 import os
 import sys
-import pickle
 import random
-import psycopg2  # postgresql python
 import re
+from typing import Tuple, List, Any
+from functools import wraps
+import time
+import psycopg2  # postgresql python
+
 
 from telegram.ext import Filters, CommandHandler, MessageHandler, Updater
 import telegram as tg
-from typing import Dict, NewType, Tuple, List, Any
 
-from models import User, User_in_chat, Telegram_chat, Telegram_message, user_from_tg_user
-from postgres_funcs import *
 
-log_level = os.environ.get('LOG_LEVEL')
-level = None
-if log_level == "debug":
-    level = logging.DEBUG
-elif log_level == "info":
-    level = logging.INFO
+from models import User, Telegram_Chat, Telegram_Message, user_from_tg_user
+import postgres_funcs as pf
+#from postgres_funcs import *
+
+LOG_LEVEL_ENV_VAR = os.environ.get('LOG_LEVEL')
+LOG_LEVEL = None
+if LOG_LEVEL_ENV_VAR == "debug":
+    LOG_LEVEL = logging.DEBUG
+elif LOG_LEVEL_ENV_VAR == "info":
+    LOG_LEVEL = logging.INFO
 else:
-    level = logging.INFO
+    LOG_LEVEL = logging.INFO
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    level=level)
-logger = logging.getLogger(__name__)
+    level=LOG_LEVEL)
+LOGGER = logging.getLogger(__name__)
 
-version = '1.04'  # TODO: make this automatic
-changelog_url = 'https://schafezp.com/schafezp/txkarmabot/blob/master/CHANGELOG.md'
 
-from functools import wraps
+VERSION = '1.04'  # TODO: make this automatic
+CHANGELOG_URL = 'https://schafezp.com/schafezp/txkarmabot/blob/master/CHANGELOG.md'
+
+
 LIST_OF_ADMINS = [65278791]
 
 
 def restricted(func):
+    """Function wrap to deny access to a user based on user_id"""
     @wraps(func)
     def wrapped(bot, update, *args, **kwargs):
+        """function to wrap"""
         user_id = update.effective_user.id
         if user_id not in LIST_OF_ADMINS:
             print("Unauthorized access denied for {}.".format(user_id))
-            return
         return func(bot, update, *args, **kwargs)
     return wrapped
+
 
 def types(func):
     """Used by bot handlers that respond with text.
     ChatAction.Typing is called which makes the bot look like it's typing"""
     @wraps(func)
     def wrapped(bot, update, *args, **kwargs):
+        """function to wrap"""
         bot.send_chat_action(
             chat_id=update.message.chat_id,
             action=tg.ChatAction.TYPING)
@@ -57,7 +66,8 @@ def types(func):
 
 
 conn: Any = None
-import time
+
+
 
 def check_env_vars_all_loaded() -> Tuple[bool, str]:
     """Checks required environment variables and returns false if required env vars are not set
@@ -71,51 +81,50 @@ def check_env_vars_all_loaded() -> Tuple[bool, str]:
         'POSTGRES_PASS',
         'POSTGRES_DB',
     ]
-    logger.info("Environment Variables:")
+    logging.info("Environment Variables:")
     for var in env_vars:
         val = os.environ.get(var)
         if val is None or val == '':
-            logger.info(
-                'Variable: {} Value: {}'.format(
-                    var, " VALUE MISSING. EXITING"))
+            logging.info(f"Variable: {var} Value: VALUE MISSING. EXITING")
             return (False, var)
         else:
-            logger.info('Variable: {} Value: {}'.format(var, val))
+            logging.info(f"Variable: {var} Value: {val}")
 
-    return (True, var)
+    #TODO: return sensical second option; consider Optional[str]
+    return (True, "All Env vars loaded")
 
 
 # TODO:move this logic elsewhere and handle singleton connection in
 # different way
 while conn is None:
     try:
-        host = os.environ.get("POSTGRES_HOSTNAME")
-        database = os.environ.get("POSTGRES_DB")
-        user = os.environ.get("POSTGRES_USER")
-        password = os.environ.get("POSTGRES_PASS")
+        HOST = os.environ.get("POSTGRES_HOSTNAME")
+        DATABASE = os.environ.get("POSTGRES_DB")
+        USER = os.environ.get("POSTGRES_USER")
+        PASSWORD = os.environ.get("POSTGRES_PASS")
         conn = psycopg2.connect(
-            host=host,
-            database=database,
-            user=user,
-            password=password)
+            host=HOST,
+            database=DATABASE,
+            user=USER,
+            password=PASSWORD)
     except psycopg2.OperationalError as oe:
-        print(oe)
+        logging.info(oe)
         time.sleep(1)
 
 
-
-
 def reply(bot: tg.Bot, update: tg.Update):
+    """Handler that's run when one user replies to another userself.
+    This handler checks if an upvote or downvote are given"""
     reply_user = user_from_tg_user(update.message.reply_to_message.from_user)
     replying_user = user_from_tg_user(update.message.from_user)
     chat_id = str(update.message.chat_id)
-    chat = Telegram_chat(chat_id, update.message.chat.title)
-    original_message = Telegram_message(
+    chat = Telegram_Chat(chat_id, update.message.chat.title)
+    original_message = Telegram_Message(
         update.message.reply_to_message.message_id,
         chat.chat_id,
         reply_user.id,
         update.message.reply_to_message.text)
-    reply_message = Telegram_message(
+    reply_message = Telegram_Message(
         update.message.message_id,
         chat.chat_id,
         replying_user.id,
@@ -140,7 +149,7 @@ def reply(bot: tg.Bot, update: tg.Update):
             message = f"{replying_user.first_name}{response}"
             bot.send_message(chat_id=chat_id, text=message)
         else:  # user +1 someone else
-            user_reply_to_message(
+            pf.user_reply_to_message(
                 replying_user,
                 reply_user,
                 chat,
@@ -148,19 +157,20 @@ def reply(bot: tg.Bot, update: tg.Update):
                 reply_message,
                 1,
                 conn)
-            logger.debug("user replying other user")
-            logger.debug(replying_user)
-            logger.debug(reply_user)
+            logging.debug("user replying other user")
+            logging.debug(replying_user)
+            logging.debug(reply_user)
     # user -1 someone else
     elif re.match("^([\-mM][1-9][0-9]*|[Dd]{2}).*", reply_text):
-        user_reply_to_message(replying_user, reply_user,
-                              chat, original_message, reply_message, -1, conn)
-        logger.debug("user replying other user")
-        logger.debug(replying_user)
-        logger.debug(reply_user)
+        pf.user_reply_to_message(replying_user, reply_user,
+                                 chat, original_message, reply_message, -1, conn)
+        logging.debug("user replying other user")
+        logging.debug(replying_user)
+        logging.debug(reply_user)
 
 
 def start(bot, update):
+    """Message sent by bot upon first 1 on 1 interaction with the bot"""
     bot.send_message(
         chat_id=update.message.chat_id,
         text="I'm a bot, please talk to me!")
@@ -168,7 +178,8 @@ def start(bot, update):
 
 @types
 def show_version(bot, update, args):
-    message = "Version: " + version + "\n" + "Bot powered by Python."
+    """Handler to show the current version"""
+    message = f"Version: {VERSION}\nBot powered by Python."
     # harder to hack the bot if source code is obfuscated :p
     #message = message + "\nChangelog found at: " + changelog_url
     bot.send_message(chat_id=update.message.chat_id, text=message)
@@ -176,16 +187,16 @@ def show_version(bot, update, args):
 
 @types
 def show_user_stats(bot, update, args):
+    """Handler to return statistics on user"""
     # TODO: remove this boiler plate code somehow
     # without this if this is the first command run alone with the bot it will
     # fail due to psycopg2.IntegrityError: insert or update on table
     # "command_used" violates foreign key constraint
     # "command_used_chat_id_fkey"
-    chat = Telegram_chat(str(update.message.chat_id),
+    chat = Telegram_Chat(str(update.message.chat_id),
                          update.message.chat.title)
-    save_or_create_chat(chat, conn)
+    pf.save_or_create_chat(chat, conn)
 
-    user_id = update.message.from_user.id
     chat_id = str(update.message.chat_id)
     if len(args) != 1:
         bot.send_message(
@@ -199,11 +210,11 @@ def show_user_stats(bot, update, args):
     use_command(
         'userinfo', user_from_tg_user(
             update.message.from_user), str(
-            update.message.chat_id), arguments=username)
+                update.message.chat_id), arguments=username)
 
     message = None
     try:
-        result = get_user_stats(username, chat_id, conn)
+        result = pf.get_user_stats(username, chat_id, conn)
         message = """Username: {:s} Karma: {:d}
         Karma given out stats:
         Upvotes, Downvotes, Total Votes, Net Karma
@@ -215,7 +226,7 @@ def show_user_stats(bot, update, args):
             result['downvotes_given'],
             result['total_votes_given'],
             result['net_karma_given'])
-    except UserNotFound as _:
+    except pf.UserNotFound as _:
         message = f"No user with username: {username}"
 
     bot.send_message(chat_id=update.message.chat_id, text=message)
@@ -224,8 +235,9 @@ def show_user_stats(bot, update, args):
 
 
 def use_command(command: str, user: User, chat_id: str, arguments=""):
-    create_chat_if_not_exists(chat_id, conn)
-    save_or_create_user(user, conn)
+    """Handler to log when commands are used and with which arguments"""
+    pf.create_chat_if_not_exists(chat_id, conn)
+    pf.save_or_create_user(user, conn)
     insertcmd = """INSERT INTO command_used (command,arguments,user_id,chat_id) VALUES (%s,%s,%s,%s)"""
     with conn:
         with conn.cursor() as crs:
@@ -234,19 +246,21 @@ def use_command(command: str, user: User, chat_id: str, arguments=""):
 
 @types
 def show_karma(bot, update, args):
+    """Handler show the karma in the chat"""
     use_command(
         'showkarma', user_from_tg_user(
             update.message.from_user), str(
-            update.message.chat_id))
-    logger.debug("Chat id: " + str(update.message.chat_id))
+                update.message.chat_id))
+    logging.debug(f"Chat id: {str(update.message.chat_id)}")
 
     # returns username, first_name, karma
-    rows: List[Tuple[str, str, int]] = get_karma_for_users_in_chat(
+    rows: List[Tuple[str, str, int]] = pf.get_karma_for_users_in_chat(
         str(update.message.chat_id), conn)
     rows.sort(key=lambda user: user[2], reverse=True)
     # use firstname if username not set
 
     def cleanrow(user):
+        """selects desired user attributes to show"""
         if user[0] is None:
             return (user[1], user[2])
         else:
@@ -276,27 +290,30 @@ def show_karma(bot, update, args):
 
 @types
 def show_chat_info(bot, update, args):
+    """Handler to show information about current chat """
     use_command(
         'chatinfo', user_from_tg_user(
             update.message.from_user), str(
-            update.message.chat_id))
+                update.message.chat_id))
     chat_id = str(update.message.chat_id)
     title = update.message.chat.title
     if title is None:
         title = "No Title"
-    result = get_chat_info(chat_id, conn)
+    result = pf.get_chat_info(chat_id, conn)
     message = "Chat: {:s}.\n Number of Users with Karma: {:d}\n Total Reply Count: {:d}".format(
         title, result['user_with_karma_count'], result['reply_count'])
     bot.send_message(chat_id=update.message.chat_id, text=message)
 
 
 @restricted
-def am_I_admin(bot, update, args):
+def am_i_admin(bot, update, args):
+    """Handler to check if user is an admin"""
     message = "yes you are an admin"
     bot.send_message(chat_id=update.message.chat_id, text=message)
 
 
 def show_karma_personally(bot, update, args):
+    """Conversation handler to allow users to check karma values through custom keyboard"""
     # TODO:check if this is a 1 on 1 message handler
     # offer choice to user of which chat they want to see the karma totals of
     # user clicks on button to choose chat (similar to BotFather) then bot
@@ -304,9 +321,9 @@ def show_karma_personally(bot, update, args):
     return
 
 
-def error(bot, update, error):
+def error(bot, update, _error):
     """Log Errors caused by Updates."""
-    logger.warning('Update "%s" caused error "%s"', update, error)
+    logging.warning('Update "%s" caused error "%s"', update, _error)
 
 
 def unknown(bot, update):
@@ -319,7 +336,7 @@ def main():
     """Start the bot """
     (is_loaded, var) = check_env_vars_all_loaded()
     if not is_loaded:
-        logger.info("Env vars not set that are required: " + str(var))
+        logging.info(f"Env vars not set that are required: {str(var)}")
         sys.exit(1)
 
     # Setup bot token from environment variables
@@ -345,8 +362,8 @@ def main():
         'chatinfo', show_chat_info, pass_args=True)
     dispatcher.add_handler(chat_info_handler)
 
-    am_I_admin_handler = CommandHandler('amiadmin', am_I_admin, pass_args=True)
-    dispatcher.add_handler(am_I_admin_handler)
+    am_i_admin_handler = CommandHandler('amiadmin', am_i_admin, pass_args=True)
+    dispatcher.add_handler(am_i_admin_handler)
 
     showversion_handler = CommandHandler(
         'version', show_version, pass_args=True)
@@ -364,7 +381,7 @@ def main():
     many = cursor.fetchall()
     public_tables = list(
         map(lambda x: x[1], filter(lambda x: x[0] == 'public', many)))
-    logger.info("public_tables: " + str(public_tables))
+    logging.info(f"public_tables: {str(public_tables)}")
 
     updater.idle()
 
