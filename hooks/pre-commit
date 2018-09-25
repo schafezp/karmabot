@@ -20,6 +20,8 @@ else
 	printf "${GREEN}mypy linter passed.${NC}\n"
 fi
 
+#TODO: also call pylint
+
 # If there were no failures, it is good to commit
 if $pass; then
 	exit 0
