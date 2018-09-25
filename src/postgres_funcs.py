@@ -1,5 +1,6 @@
 from models import User, User_in_chat, Telegram_chat, Telegram_message
 from typing import Optional, Tuple, List, Dict
+import logging
 
 class UserNotFound(Exception):
     pass
@@ -204,19 +205,23 @@ def user_reply_to_message(user: User,reply_to_user: User, chat: Telegram_chat , 
     VALUES (%s,%s,%s,%s)"""
 
     #TODO: manage this with a constraint rather than having to select
-    selecturtmunique = """SELECT * from user_reacted_to_message urtm where urtm.user_id=%s and urtm.message_id=%s"""
-    user_already_reacted_to_message = None
+    selecturtmunique = """SELECT react_score from user_reacted_to_message urtm where urtm.user_id=%s and urtm.message_id=%s"""
+    #none if user hasn't reacted yet
+    user_previous_react = None
     with conn:
         with conn.cursor() as crs:
             args_select_urtm = [uic.user_id, original_message.message_id]
             crs.execute(selecturtmunique,args_select_urtm)
-            user_already_reacted_to_message = crs.fetchone() is not None
+            result = crs.fetchone()
+            if result is not None:
+                user_previous_react = result[0]
 
-    if not user_already_reacted_to_message:
+    #TODO: add gaurd for karma == 1 or == -1 up higher
+    if user_previous_react is None or user_previous_react != karma:
         if(karma == 1 or karma == -1):
             save_or_create_user_in_chat(reply_to_user,chat.chat_id, conn, change_karma=karma)
         else:
-            print("invalid karma passed to user_reply_to_message")
+            logging.info(f"invalid karma: {karma} passed to user_reply_to_message")
         with conn:
             with conn.cursor() as crs:
                 args_reply_message = [reply_message.message_id, chat.chat_id, uic.user_id, reply_message.message_text]
