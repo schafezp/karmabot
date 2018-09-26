@@ -418,7 +418,7 @@ def main():
     dispatcher.add_handler(showversion_handler)
 
     show_karma_personally_handler = CommandHandler(
-        'personal', show_karma_personally)
+        'checkchatkarmas', show_karma_personally)
     dispatcher.add_handler(show_karma_personally_handler)
 
     dispatcher.add_handler(CallbackQueryHandler(show_karma_personally_button_pressed))
