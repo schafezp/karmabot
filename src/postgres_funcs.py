@@ -347,3 +347,14 @@ def get_message_responses_for_user_in_chat(user_id: int, chat_id: int, conn):
         with conn.cursor() as crs:
             crs.execute(cmd, [user_id, chat_id])
             return crs.fetchall()
+
+def get_chats_user_is_in(user_id: int, conn) -> Optional[List[Tuple[str, str]]]:
+    """Returns a list of chat_ids and chat names """
+    cmd = """SELECT tc.chat_id, tc.chat_name from user_in_chat uic
+    LEFT JOIN telegram_chat tc on tc.chat_id = uic.chat_id
+    where uic.user_id = %s
+    """
+    with conn:
+        with conn.cursor() as crs:
+            crs.execute(cmd, [user_id])
+            return crs.fetchall()
