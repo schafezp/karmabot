@@ -331,7 +331,7 @@ def show_karma_personally(bot, update: tg.Update):
         for (chat_id, chat_name) in result:
             if chat_name is not None:
                 logging.info(f"Chat name:{chat_name}")
-                keyboard.append(tg.InlineKeyboardButton(chat_name, callback_data=chat_id))
+                keyboard.append([tg.InlineKeyboardButton(chat_name, callback_data=chat_id)])
             #keyboard.append(tg.InlineKeyboardButton("test", callback_data="1"))
     # keyboard = [tg.InlineKeyboardButton(chat_name, callback_data=chat_id) for (chat_id, chat_name) in result if chat_name is not None]
     # keyboard = [[tg.InlineKeyboardButton("Option 1", callback_data='1'),
@@ -340,7 +340,7 @@ def show_karma_personally(bot, update: tg.Update):
     #         [tg.InlineKeyboardButton("Option 3", callback_data='3')]]
     logging.info(f"keyboard: {keyboard}")
 
-    reply_markup = tg.InlineKeyboardMarkup([keyboard])
+    reply_markup = tg.InlineKeyboardMarkup(keyboard)
 
     update.message.reply_text('Please choose a chat:', reply_markup=reply_markup)
 
