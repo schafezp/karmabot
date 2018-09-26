@@ -442,7 +442,7 @@ def main():
 
     cursor.close()
     conn.close()
-asdfasdf
+asdfasdfasfd
 
 if __name__ == '__main__':
     main()
