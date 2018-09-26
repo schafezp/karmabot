@@ -1,17 +1,16 @@
-from models import User, User_in_chat, Telegram_chat, Telegram_message
-from typing import Optional, Tuple, List, Dict
+"""Contains postgres related functions for retrieving data
+"""
 import logging
-
+from typing import Optional, Tuple, List, Dict
+from models import User, User_in_Chat, Telegram_Chat, Telegram_Message
 
 class UserNotFound(Exception):
-    pass
-
-
-class NoUserReactsFound(Exception):
+    """Returned when no valid user is found"""
     pass
 
 
 def get_user_by_user_id(user_id: int, conn) -> User:
+    """Returns User given that user's id"""
     with conn:
         with conn.cursor() as crs:  # I would love type hints here but psycopg2.cursor isn't a defined class
             selectcmd = "SELECT user_id, username, first_name, last_name from telegram_user tu where tu.user_id=%s"
@@ -21,6 +20,7 @@ def get_user_by_user_id(user_id: int, conn) -> User:
 
 
 def get_user_by_username(username: str, conn) -> User:
+    """Returns User given that user's username"""
     with conn:
         with conn.cursor() as crs:  # I would love type hints here but psycopg2.cursor isn't a defined class
             selectcmd = "SELECT user_id, username, first_name, last_name from telegram_user tu where tu.username=%s"
@@ -34,6 +34,7 @@ def get_user_by_username(username: str, conn) -> User:
 
 
 def get_user_stats(username: str, chat_id: str, conn) -> Dict:
+    """Returns Dictionary of statistics for a user given a username"""
     user = get_user_by_username(username, conn)
     if user is None:
         raise UserNotFound()
@@ -59,10 +60,8 @@ def get_user_stats(username: str, chat_id: str, conn) -> Dict:
             where tu.username = %s) as sub left join telegram_message tm on  tm.message_id= sub.message_id
             where tm.chat_id=%s group by react_score;"""
         # TODO: implement how many reacts recieved by user
-        how_many_reacted_to_user_stats = """"""
         negative_karma_given = 0
         positive_karma_given = 0
-        result = None
         with conn:
             with conn.cursor() as crs:
                 crs.execute(
@@ -75,7 +74,6 @@ def get_user_stats(username: str, chat_id: str, conn) -> Dict:
                         negative_karma_given = int(row[1])
                     if row[0] == 1:
                         positive_karma_given = int(row[1])
-                result = crs.fetchone()
 
         # TODO: make this output type a class instead to bundle this info
         output_dict = {
@@ -89,6 +87,7 @@ def get_user_stats(username: str, chat_id: str, conn) -> Dict:
 
 
 def get_chat_info(chat_id: str, conn) -> Dict:
+    """Returns Dictionary of statistics for a chat given a chat_id"""
     count_reacts_cmd = """select count(tm.message_id) from user_reacted_to_message urtm
 left join telegram_message tm ON tm.message_id = urtm.message_id
 where tm.chat_id=%s"""
@@ -101,7 +100,6 @@ where tm.chat_id=%s"""
         with conn.cursor() as crs:
             reply_count = None
             user_with_karma_count = None
-            message = ""
             crs.execute(count_reacts_cmd, [chat_id])
             result = crs.fetchone()
             if result is not None:
@@ -121,6 +119,7 @@ where tm.chat_id=%s"""
 
 # TODO: use user_id instead of username
 def did_user_react_to_messages(username: str, conn) -> bool:
+    """Returns true if a user has responded to some messages"""
     select_user_replies = """select username, message_id, react_score, react_message_id  from telegram_user tu
             left join user_reacted_to_message urtm on urtm.user_id=tu.user_id
             where tu.username = %s"""
@@ -132,12 +131,8 @@ def did_user_react_to_messages(username: str, conn) -> bool:
             return reacted_messages_result is not None
 # TODO: user user_id
 
-
-def get_user_react_stats(username: str, conn) -> bool:
-    return True
-
-
 def save_or_create_user(user: User, conn) -> User:
+    """Creates a user in database if not exists, otherwise update values and return the new database copy of the User"""
     with conn:
         with conn.cursor() as crs:  # I would love type hints here but psycopg2.cursor isn't a defined class
             selectcmd = "SELECT user_id, username, first_name, last_name from telegram_user tu where tu.user_id=%s"
@@ -153,15 +148,16 @@ def save_or_create_user(user: User, conn) -> User:
             crs.execute(insertcmd,
                         [user.get_user_id(),
                          user.get_username(),
-                            user.get_first_name(),
-                            user.get_last_name()])
+                         user.get_first_name(),
+                         user.get_last_name()])
             conn.commit()
             crs.execute(selectcmd, [user.get_user_id()])
             (user_id, username, first_name, last_name) = crs.fetchone()
             return User(user_id, username, first_name, last_name)
 
 
-def does_chat_exist(chat_id: str, conn):
+def does_chat_exist(chat_id: str, conn) -> bool:
+    """Returns true if chat exists"""
     with conn:
         with conn.cursor() as crs:  # I would love type hints here but psycopg2.cursor isn't a defined class
             selectcmd = "SELECT chat_id, chat_name FROM telegram_chat tc where tc.chat_id=%s"
@@ -169,7 +165,8 @@ def does_chat_exist(chat_id: str, conn):
             return crs.fetchone() is not None
 
 
-def save_or_create_chat(chat: Telegram_chat, conn):
+def save_or_create_chat(chat: Telegram_Chat, conn):
+    """Creates chat if not exists otherwise updates chat_name"""
     with conn:
         with conn.cursor() as crs:  # I would love type hints here but psycopg2.cursor isn't a defined class
             insertcmd = """INSERT into telegram_chat
@@ -181,6 +178,7 @@ def save_or_create_chat(chat: Telegram_chat, conn):
 
 
 def create_chat_if_not_exists(chat_id: str, conn):
+    """Creates chat if not exists otherwise does nothing"""
     with conn:
         with conn.cursor() as crs:  # I would love type hints here but psycopg2.cursor isn't a defined class
             insertcmd = """INSERT into telegram_chat
@@ -196,15 +194,13 @@ def save_or_create_user_in_chat(
         user: User,
         chat_id: str,
         conn,
-        change_karma=0) -> User_in_chat:
+        change_karma=0) -> User_in_Chat:
+    """Creates user in chat if not exists otherwise updates user_in_chat karma"""
     with conn:
         with conn.cursor() as crs:  # I would love type hints here but psycopg2.cursor isn't a defined class
             # TODO: instead of select first, do insert and then trap exception
             # if primary key exists
-            selectcmd = "SELECT user_id, chat_id, karma FROM user_in_chat uic where uic.user_id=%s AND uic.chat_id=%s"
-            crs.execute(selectcmd, [user.id, chat_id, ])
-
-            result = crs.fetchone()
+            #selectcmd = "SELECT user_id, chat_id, karma FROM user_in_chat uic where uic.user_id=%s AND uic.chat_id=%s"
 
             insertcmd_karma = """INSERT into user_in_chat
                 (user_id, chat_id, karma) VALUES (%s,%s,%s)
@@ -221,28 +217,29 @@ def save_or_create_user_in_chat(
             row = crs.fetchone()
             conn.commit()
             karma = row[0]
-            return User_in_chat(user.id, chat_id, karma)
+            return User_in_Chat(user.id, chat_id, karma)
 
 # message tg.Message
 # reply_message comes after and is the reply
 
-
+#TODO: refactor / reduce amount of local variables
 def user_reply_to_message(
         reply_from_user_unsaved: User,
         reply_to_user_unsaved: User,
-        chat: Telegram_chat,
-        original_message: Telegram_message,
-        reply_message: Telegram_message,
+        chat: Telegram_Chat,
+        original_message: Telegram_Message,
+        reply_message: Telegram_Message,
         karma: int,
         conn):
+    """Processes a user replying to another users message with a given karma.
+    Saves both users, both messages, updates user in chat and creates a user_reacted_to_message row"""
     user: User = save_or_create_user(reply_from_user_unsaved, conn)
     reply_to_user: User = save_or_create_user(reply_to_user_unsaved, conn)
     if not does_chat_exist(chat.chat_id, conn):
         save_or_create_chat(chat, conn)
 
-    uic: User_in_chat = save_or_create_user_in_chat(user, chat.chat_id, conn)
-    reply_to_uic: User_in_chat = save_or_create_user_in_chat(
-        reply_to_user, chat.chat_id, conn)
+    uic: User_in_Chat = save_or_create_user_in_chat(user, chat.chat_id, conn)
+    save_or_create_user_in_chat(reply_to_user, chat.chat_id, conn)
 
     insert_message = """INSERT INTO telegram_message
     (message_id,chat_id, author_user_id, message_text)
@@ -250,7 +247,6 @@ def user_reply_to_message(
     ON CONFLICT (message_id) DO UPDATE
     SET message_text = EXCLUDED.message_text;
     """
-    selecturtm = """SELECT * from user_reacted_to_message urtm where urtm.user_id=%s and urtm.message_id=%s and urtm.react_message_id=%s"""
     inserturtm = """INSERT INTO user_reacted_to_message
     (user_id,message_id,react_score,react_message_id)
     VALUES (%s,%s,%s,%s)"""
@@ -301,6 +297,8 @@ def get_karma_for_user_in_chat(
         username: str,
         chat_id: str,
         conn) -> Optional[int]:
+    """Returns karma for a particular user in chat
+    if that uic does not exist, return None"""
     cmd = """select karma from telegram_user tu
         LEFT JOIN user_in_chat uic ON uic.user_id=tu.user_id
         where tu.username=%s AND uic.chat_id=%s"""
@@ -317,6 +315,7 @@ def get_karma_for_user_in_chat(
 
 def get_karma_for_users_in_chat(
         chat_id: str, conn) -> List[Tuple[str, str, int]]:
+    """Returns username, firstname, karma for all telegram users in a given chat"""
     cmd = """select username, first_name, karma from telegram_user tu
         LEFT JOIN user_in_chat uic ON uic.user_id=tu.user_id
         where uic.chat_id=%s;"""
@@ -329,6 +328,8 @@ def get_karma_for_users_in_chat(
 
 
 def get_message_responses_for_user_in_chat(user_id: int, chat_id: int, conn):
+    """Returns message text and react scores for all messages replying to a given user in a given chat"""
+    #TODO: WIP
     cmd = """    SELECT sub3.user_id, sub3.message_id, sub3.response_text AS message_text, urtm.react_score,
         urtm.react_message_id, sub3.username AS responder_username, sub3.first_name AS responder_first_name,
          sub3.last_name AS responder_last_name  FROM (
