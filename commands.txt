@@ -5,4 +5,3 @@ showkarma - view how much karma users have
 userinfo - Args: (username) show stats about a user
 chatinfo - Shows information about the current chat
 version - shows the current bot version
-checkchatkarmas - Allows the user to show karma of a chat they're in

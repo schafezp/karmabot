@@ -10,7 +10,7 @@ import time
 import psycopg2  # postgresql python
 
 
-from telegram.ext import Filters, CommandHandler, MessageHandler, Updater, CallbackQueryHandler
+from telegram.ext import Filters, CommandHandler, MessageHandler, Updater
 import telegram as tg
 
 
@@ -243,12 +243,19 @@ def use_command(command: str, user: User, chat_id: str, arguments=""):
         with conn.cursor() as crs:
             crs.execute(insertcmd, [command, arguments, user.id, chat_id])
 
-def format_show_karma_for_users_in_chat(chat_id):
-    """Returns a formatted message showing the karma for users in a chat"""
+
+@types
+def show_karma(bot, update, args):
+    """Handler show the karma in the chat"""
+    use_command(
+        'showkarma', user_from_tg_user(
+            update.message.from_user), str(
+                update.message.chat_id))
+    logging.debug(f"Chat id: {str(update.message.chat_id)}")
+
+    # returns username, first_name, karma
     rows: List[Tuple[str, str, int]] = pf.get_karma_for_users_in_chat(
-        chat_id, conn)
-    if rows is None:
-        return "No karma for users in this chat"
+        str(update.message.chat_id), conn)
     rows.sort(key=lambda user: user[2], reverse=True)
     # use firstname if username not set
 
@@ -271,21 +278,12 @@ def format_show_karma_for_users_in_chat(chat_id):
         idx = idx + 1
         message_rows.append(row)
     message = "\n".join(message_rows)
-    message = "Username: Karma\n" + message
-    return message
 
-@types
-def show_karma(bot, update, args):
-    """Handler show the karma in the chat"""
-    use_command(
-        'showkarma', user_from_tg_user(
-            update.message.from_user), str(
-                update.message.chat_id))
-    logging.debug(f"Chat id: {str(update.message.chat_id)}")
-
-    # returns username, first_name, karma
-    chat_id = str(update.message.chat_id)
-    message = format_show_karma_for_users_in_chat(chat_id)
+    if message != '':
+        # TODO: figure out a better way to add this heading
+        message = "Username: Karma\n" + message
+    else:
+        message = "Oops I didn't find any karma"
 
     bot.send_message(chat_id=update.message.chat_id, text=message)
 
@@ -314,60 +312,14 @@ def am_i_admin(bot, update, args):
     bot.send_message(chat_id=update.message.chat_id, text=message)
 
 
-@types
-def show_karma_personally(bot, update: tg.Update):
+def show_karma_personally(bot, update, args):
     """Conversation handler to allow users to check karma values through custom keyboard"""
     # TODO:check if this is a 1 on 1 message handler
     # offer choice to user of which chat they want to see the karma totals of
     # user clicks on button to choose chat (similar to BotFather) then bot
     # responds with karma for that chat
-    #TODO: get chats for user
-    user_id = update.effective_user.id
-    logging.info(f"User_id: {user_id}")
-    result = pf.get_chats_user_is_in(user_id, conn)
-    logging.info(f"Result {result}")
-    keyboard = []
-    if result is not None:
-        for (chat_id, chat_name) in result:
-            if chat_name is not None:
-                logging.info(f"Chat name:{chat_name}")
-                keyboard.append(tg.InlineKeyboardButton(chat_name, callback_data=chat_id))
-            #keyboard.append(tg.InlineKeyboardButton("test", callback_data="1"))
-    # keyboard = [tg.InlineKeyboardButton(chat_name, callback_data=chat_id) for (chat_id, chat_name) in result if chat_name is not None]
-    # keyboard = [[tg.InlineKeyboardButton("Option 1", callback_data='1'),
-    #          tg.InlineKeyboardButton("Option 2", callback_data='2')],
-    #
-    #         [tg.InlineKeyboardButton("Option 3", callback_data='3')]]
-    logging.info(f"keyboard: {keyboard}")
+    return
 
-    reply_markup = tg.InlineKeyboardMarkup([keyboard])
-
-    update.message.reply_text('Please choose a chat:', reply_markup=reply_markup)
-
-#     button_list = [
-#     tg.InlineKeyboardButton("col1", callback_data="blah1"),
-#     tg.InlineKeyboardButton("col2", callback_data="blah2"),
-#     tg.InlineKeyboardButton("row 2", callback_data="blah3")
-#
-# ]
-#     reply_markup = tg.InlineKeyboardMarkup(build_menu(button_list, n_cols=2))
-#     logging.info(reply_markup)
-#     bot.send_message(..., text="A two-column menu", reply_markup=reply_markup)
-
-#TODO: rename
-def show_karma_personally_button_pressed(bot, update):
-    """Runs /showkarma on chat the user_selected"""
-    query = update.callback_query
-    chat_id = query.data
-    message = format_show_karma_for_users_in_chat(chat_id)
-
-    bot.edit_message_text(text=message,
-                          chat_id=query.message.chat_id,
-                          message_id=query.message.message_id)
-
-    # bot.edit_message_text(text="Selected option: {}".format(query.data),
-    #                       chat_id=query.message.chat_id,
-    #                       message_id=query.message.message_id)
 
 def error(bot, update, _error):
     """Log Errors caused by Updates."""
@@ -416,13 +368,6 @@ def main():
     showversion_handler = CommandHandler(
         'version', show_version, pass_args=True)
     dispatcher.add_handler(showversion_handler)
-
-    show_karma_personally_handler = CommandHandler(
-        'checkchatkarmas', show_karma_personally)
-    dispatcher.add_handler(show_karma_personally_handler)
-
-    dispatcher.add_handler(CallbackQueryHandler(show_karma_personally_button_pressed))
-
 
     dispatcher.add_error_handler(error)
 
