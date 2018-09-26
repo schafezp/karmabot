@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env sh
 #run linter
 pass=true
 RED='\033[1;31m'
