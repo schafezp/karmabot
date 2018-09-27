@@ -25,6 +25,14 @@ Use the command,
 ```
 to check what version of bot is currently running.
 
+Use the command,
+```
+/checkchatkarmas
+```
+to run see the karma rankings for any chat you've participated in (given or received a +1 in)
+This command can be used in a 1 on 1 conversation with the bot so that other users aren't affected.
+
+
 ## Setup guide
 Install docker, set up a user with docker so you don't use "root" to run docker-compose.
 The scripts/server_setup.sh file includes commands for installing docker and docker-compose on an ubuntu machine. To install, run
