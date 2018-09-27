@@ -3,7 +3,7 @@ Karma bot tracks a karma score for each user. Use the bot with your friends to s
 
 ## Using the Bot
 To use the bot first add it to your telegram group chat. Currently the bot uses the username [@ThetaXiKarmaBot](http://t.me/ThetaXiKarmaBot).
-The karma bot will track a karma score for each user in the chat it is added to. Reply to a message with a message starting with "+1" or "-1" to add or remove a karma point from the author of that message. 
+The karma bot tracks a karma score for each user in the chat it is added to. Reply to a message with a message starting with "+1" or "-1" to add or remove a karma point from the author of that message. 
 
 There are also various bot commands that can be used to interact with the bot as listed below.
 
