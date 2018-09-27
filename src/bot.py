@@ -354,12 +354,6 @@ def error(bot, update, _error):
     logging.warning('Update "%s" caused error "%s"', update, _error)
 
 
-def unknown(bot, update):
-    """This command runs last and lets the user know their command was not understood """
-    bot.send_message(chat_id=update.message.chat_id,
-                     text="Sorry, I didn't understand that command.")
-
-
 def main():
     """Start the bot """
     (is_loaded, var) = check_env_vars_all_loaded()
@@ -405,9 +399,6 @@ def main():
 
 
     dispatcher.add_error_handler(error)
-
-    unknown_handler = MessageHandler(Filters.command, unknown)
-    dispatcher.add_handler(unknown_handler)
 
     updater.start_polling()
 
