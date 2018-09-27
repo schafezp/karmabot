@@ -318,8 +318,8 @@ def am_i_admin(bot, update, args):
 def show_karma_personally(bot, update: tg.Update):
     """Conversation handler to allow users to check karma values through custom keyboard"""
     user_id = update.effective_user.id
-    user : User = user_from_tg_user(update.effective_user)
-    chat_id : str = str(update.message.chat_id)
+    user: User = user_from_tg_user(update.effective_user)
+    chat_id: str = str(update.message.chat_id)
     result = pf.get_chats_user_is_in(user_id, conn)
     use_command('checkchatkarmas', user, chat_id)
 
