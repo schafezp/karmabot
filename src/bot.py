@@ -215,7 +215,7 @@ def show_user_stats(bot, update, args):
     message = None
     try:
         result = pf.get_user_stats(username, chat_id, conn)
-        message = """Username: {:s} Karma: {:d}
+        message = """<b>Username:</b> {:s} Karma: {:d}
         Karma given out stats:
         Upvotes, Downvotes, Total Votes, Net Karma
         {:d}, {:d}, {:d}, {:d}"""
@@ -229,7 +229,7 @@ def show_user_stats(bot, update, args):
     except pf.UserNotFound as _:
         message = f"No user with username: {username}"
 
-    bot.send_message(chat_id=update.message.chat_id, text=message)
+    bot.send_message(chat_id=update.message.chat_id, text=message, parse_mode=tg.ParseMode.HTML)
 
 # TODO: replace this with an annotation maybe?
 
@@ -244,7 +244,7 @@ def use_command(command: str, user: User, chat_id: str, arguments=""):
             crs.execute(insertcmd, [command, arguments, user.id, chat_id])
 
 def format_show_karma_for_users_in_chat(chat_id):
-    """Returns a formatted message showing the karma for users in a chat"""
+    """Returns a formatted html message showing the karma for users in a chat"""
     rows: List[Tuple[str, str, int]] = pf.get_karma_for_users_in_chat(
         chat_id, conn)
     if rows is None:
@@ -271,7 +271,7 @@ def format_show_karma_for_users_in_chat(chat_id):
         idx = idx + 1
         message_rows.append(row)
     message = "\n".join(message_rows)
-    message = "Username: Karma\n" + message
+    message = "<b>Username: Karma</b>\n" + message
     return message
 
 @types
@@ -287,7 +287,7 @@ def show_karma(bot, update, args):
     chat_id = str(update.message.chat_id)
     message = format_show_karma_for_users_in_chat(chat_id)
 
-    bot.send_message(chat_id=update.message.chat_id, text=message)
+    bot.send_message(chat_id=update.message.chat_id, text=message, parse_mode=tg.ParseMode.HTML)
 
 
 @types
@@ -302,9 +302,9 @@ def show_chat_info(bot, update, args):
     if title is None:
         title = "No Title"
     result = pf.get_chat_info(chat_id, conn)
-    message = "Chat: {:s}.\n Number of Users with Karma: {:d}\n Total Reply Count: {:d}".format(
+    message = "<b>Chat Name:</b> {:s}\n Number of Users with Karma: {:d}\n Total Reply Count: {:d}".format(
         title, result['user_with_karma_count'], result['reply_count'])
-    bot.send_message(chat_id=update.message.chat_id, text=message)
+    bot.send_message(chat_id=update.message.chat_id, text=message, parse_mode=tg.ParseMode.HTML)
 
 
 @restricted
@@ -345,7 +345,8 @@ def show_karma_personally_button_pressed(bot, update):
 
     bot.edit_message_text(text=message,
                           chat_id=query.message.chat_id,
-                          message_id=query.message.message_id)
+                          message_id=query.message.message_id,
+                          parse_mode=tg.ParseMode.HTML)
 
 
 def error(bot, update, _error):
