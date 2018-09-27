@@ -1,10 +1,7 @@
 # Karma Bot
-The goal is to make a bot which is able to track user karma 
+The goal is to make a bot which is able to track user karma.
 
-The architecture uses a telegram bot wrapper 'python-telegram-bot' which stores its data in a locally hosted Postgresql database.
-Docker-compose is used to manage the project and push incremental builds to testing and production.
-
-## Actions
+## Bot Commands
 The Karma bot will track each user in the telegram group it is a member of and keep track of a score for that individual. 
 Reply to a user's post with a message that starts with "+1" or "-1" to give or subtract from the global score of that user.
 
@@ -39,6 +36,9 @@ Use the command,
 to view the karma rankings for any chat you've participated in (given or received a +1 in)
 This command can be used in a 1 on 1 conversation with the bot so that other users aren't affected.
 
+## Architecture
+The architecture uses a telegram bot wrapper 'python-telegram-bot' which stores its data in a locally hosted Postgresql database.
+Docker-compose is used to manage the project and push incremental builds to testing and production.
 
 ## Setup guide
 Install docker, set up a user with docker so you don't use "root" to run docker-compose.
