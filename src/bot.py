@@ -317,57 +317,36 @@ def am_i_admin(bot, update, args):
 @types
 def show_karma_personally(bot, update: tg.Update):
     """Conversation handler to allow users to check karma values through custom keyboard"""
-    # TODO:check if this is a 1 on 1 message handler
-    # offer choice to user of which chat they want to see the karma totals of
-    # user clicks on button to choose chat (similar to BotFather) then bot
-    # responds with karma for that chat
-    #TODO: get chats for user
     user_id = update.effective_user.id
-    logging.info(f"User_id: {user_id}")
+    user : User = user_from_tg_user(update.effective_user)
+    chat_id : str = str(update.message.chat_id)
     result = pf.get_chats_user_is_in(user_id, conn)
-    logging.info(f"Result {result}")
+    use_command('checkchatkarmas', user, chat_id)
+
     keyboard = []
     if result is not None:
         for (chat_id, chat_name) in result:
             if chat_name is not None:
                 logging.info(f"Chat name:{chat_name}")
                 keyboard.append([tg.InlineKeyboardButton(chat_name, callback_data=chat_id)])
-            #keyboard.append(tg.InlineKeyboardButton("test", callback_data="1"))
-    # keyboard = [tg.InlineKeyboardButton(chat_name, callback_data=chat_id) for (chat_id, chat_name) in result if chat_name is not None]
-    # keyboard = [[tg.InlineKeyboardButton("Option 1", callback_data='1'),
-    #          tg.InlineKeyboardButton("Option 2", callback_data='2')],
-    #
-    #         [tg.InlineKeyboardButton("Option 3", callback_data='3')]]
-    logging.info(f"keyboard: {keyboard}")
+        reply_markup = tg.InlineKeyboardMarkup(keyboard)
+        update.message.reply_text('Please choose a chat:', reply_markup=reply_markup)
+    else:
+        update.message.reply_text("""No chats available.
+        You can only see chats you have given or received karma in.""")
 
-    reply_markup = tg.InlineKeyboardMarkup(keyboard)
-
-    update.message.reply_text('Please choose a chat:', reply_markup=reply_markup)
-
-#     button_list = [
-#     tg.InlineKeyboardButton("col1", callback_data="blah1"),
-#     tg.InlineKeyboardButton("col2", callback_data="blah2"),
-#     tg.InlineKeyboardButton("row 2", callback_data="blah3")
-#
-# ]
-#     reply_markup = tg.InlineKeyboardMarkup(build_menu(button_list, n_cols=2))
-#     logging.info(reply_markup)
-#     bot.send_message(..., text="A two-column menu", reply_markup=reply_markup)
 
 #TODO: rename
 def show_karma_personally_button_pressed(bot, update):
     """Runs /showkarma on chat the user_selected"""
     query = update.callback_query
-    chat_id = query.data
+    chat_id: str = str(query.data)
     message = format_show_karma_for_users_in_chat(chat_id)
 
     bot.edit_message_text(text=message,
                           chat_id=query.message.chat_id,
                           message_id=query.message.message_id)
 
-    # bot.edit_message_text(text="Selected option: {}".format(query.data),
-    #                       chat_id=query.message.chat_id,
-    #                       message_id=query.message.message_id)
 
 def error(bot, update, _error):
     """Log Errors caused by Updates."""
