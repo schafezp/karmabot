@@ -1,9 +1,13 @@
 # Karma Bot
-The goal is to make a bot which is able to track user karma.
+Karma bot tracks a karma score for each user. Use the bot with your friends to see who gets the most upvotes!
 
-## Bot Commands
-The Karma bot will track each user in the telegram group it is a member of and keep track of a score for that individual. 
-Reply to a user's post with a message that starts with "+1" or "-1" to give or subtract from the global score of that user.
+## Using the Bot
+To use the bot first add it to your telegram group chat. Currently the bot uses the username [@PlusMinusKarmaBot](http://t.me/PlusMinusKarmaBot).
+The karma bot tracks a karma score for each user in the chat it is added to. Reply to a message with a message starting with "+1" or "-1" to add or remove a karma point from the author of that message. 
+
+There are also various bot commands that can be used to interact with the bot as listed below.
+
+### Bot commands
 
 Use the command,
 ```
@@ -58,7 +62,7 @@ where ENV_VAR_FILENAME is a file in the format of test_env_vars.sh. Change the p
 
 Change BOT_TOKEN value environment variable based on the token given by the BotFather.
 
-### connecting to the database
+### Connecting to the database
 
 Postgres exposes port 5432 to the localhost so to connect from your localhost you can run the command
 ```
