@@ -62,6 +62,15 @@ where ENV_VAR_FILENAME is a file in the format of test_env_vars.sh. Change the p
 
 Change BOT_TOKEN value environment variable based on the token given by the BotFather.
 
+
+To create your own witty responses for when a user tries to upvote themselves add it to the witty_responses.csv file and then run
+
+```sh
+env_vars_filename = 'test_env_vars.sh'
+export $(grep -v '^#' ${env_vars_filename} | xargs)
+python src/setup_db_rows.py
+```
+
 ### Connecting to the database
 
 Postgres exposes port 5432 to the localhost so to connect from your localhost you can run the command
