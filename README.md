@@ -66,9 +66,7 @@ Change BOT_TOKEN value environment variable based on the token given by the BotF
 To create your own witty responses for when a user tries to upvote themselves add it to the witty_responses.csv file and then run
 
 ```sh
-env_vars_filename = 'test_env_vars.sh'
-export $(grep -v '^#' ${env_vars_filename} | xargs)
-python src/setup_db_rows.py
+sh scripts/db_setup.sh prod_env_vars.sh
 ```
 
 ### Connecting to the database
