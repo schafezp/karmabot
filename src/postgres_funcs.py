@@ -373,7 +373,7 @@ def get_chats_user_is_in(user_id: int, conn) -> Optional[List[Tuple[str, str]]]:
 
 def get_random_witty_response(conn) -> Optional[str]:
     """Returns a random witty response. Uses USER_FIRST_NAME as replace string for actual user first name"""
-    cmd = """SELECT response FROM witty_responses ORDER BY RANDOM() LIMIT 1"""
+    cmd = """SELECT response FROM attempted_self_plus_one_response ORDER BY RANDOM() LIMIT 1"""
     with conn:
         with conn.cursor() as crs:
             crs.execute(cmd, [])
