@@ -369,3 +369,16 @@ def get_chats_user_is_in(user_id: int, conn) -> Optional[List[Tuple[str, str]]]:
         with conn.cursor() as crs:
             crs.execute(cmd, [user_id])
             return crs.fetchall()
+
+
+def get_random_witty_response(conn) -> Optional[str]:
+    """Returns a random witty response. Uses USER_FIRST_NAME as replace string for actual user first name"""
+    cmd = """SELECT response FROM witty_responses ORDER BY RANDOM() LIMIT 1"""
+    with conn:
+        with conn.cursor() as crs:
+            crs.execute(cmd, [])
+            result = crs.fetchone()
+            if result is not None:
+                return result[0]
+            else:
+                return None

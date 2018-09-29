@@ -2,7 +2,6 @@
 import logging
 import os
 import sys
-import random
 import re
 from typing import Tuple, List, Any
 from functools import wraps
@@ -135,18 +134,12 @@ def reply(bot: tg.Bot, update: tg.Update):
         # if user tried to +1 self themselves
         # chat id is user_id when the user is talking 1 on 1 with the bot
         if(replying_user.id == update.message.reply_to_message.from_user.id and chat_id != str(reply_user.id)):
-            witty_responses = [
-                " how could you +1 yourself?",
-                " what do you think you're doing?",
-                " is your post really worth +1ing yourself?",
-                " you won't get any goodie points for that",
-                " try +1ing someone else instead of yourself!",
-                " who are you to +1 yourself?",
-                " beware the Jabberwocky",
-                " have a 🍪!",
-                " you must give praise. May he 🍔melt🍔! "]
-            response = random.choice(witty_responses)
-            message = f"{replying_user.first_name}{response}"
+            default_respose = "USER_FIRST_NAME you cannot +1 yourself"
+            response = pf.get_random_witty_response(conn)
+            if response is None:
+                response = default_respose
+
+            message = response.replace("USER_FIRST_NAME", replying_user.first_name)
             bot.send_message(chat_id=chat_id, text=message)
         else:  # user +1 someone else
             pf.user_reply_to_message(

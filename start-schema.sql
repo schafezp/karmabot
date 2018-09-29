@@ -59,3 +59,15 @@ create table IF NOT EXISTS command_used (
     used_time TIMESTAMP default current_timestamp, --time they used the command
     program_version TEXT
 );
+
+CREATE TABLE IF NOT EXISTS witty_responses(
+    response TEXT PRIMARY KEY
+);
+
+--- TODO: perhaps make a python script to load initial values rather than doing this here
+INSERT INTO witty_responses VALUES ('USER_FIRST_NAME how could you +1 yourself?');
+INSERT INTO witty_responses VALUES ('USER_FIRST_NAME what do you think you''re doing?');
+INSERT INTO witty_responses VALUES ('USER_FIRST_NAME you won''t get any goodie points for that');
+INSERT INTO witty_responses VALUES ('USER_FIRST_NAME try +1ing someone else instead of yourself!');
+INSERT INTO witty_responses VALUES ('USER_FIRST_NAME who are you to +1 yourself?');
+INSERT INTO witty_responses VALUES ('USER_FIRST_NAME have a 🍪! You won''t get any karma though...');
