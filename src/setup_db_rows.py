@@ -13,6 +13,7 @@ def main():
     conn = attempt_connect()
 
     #insert witty responses
+    print("Start loading witty responses")
     with conn:
         with conn.cursor() as crs:
             with open("witty_responses.csv", "r") as csv_file:
@@ -20,6 +21,7 @@ def main():
                 for row in reader:
                     cmd = """INSERT INTO witty_responses VALUES (%s) ON CONFLICT DO NOTHING"""
                     crs.execute(cmd,[row['response']])
+    print("Finish loading witty responses")
 
 
 if __name__ == '__main__':
