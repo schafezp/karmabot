@@ -3,19 +3,15 @@ import logging
 import os
 import sys
 import re
-from typing import Tuple, List, Any
+from typing import Tuple, List
 from functools import wraps
-import time
-import psycopg2  # postgresql python
-
 
 from telegram.ext import Filters, CommandHandler, MessageHandler, Updater, CallbackQueryHandler
 import telegram as tg
 
-
 from models import User, Telegram_Chat, Telegram_Message, user_from_tg_user
 import postgres_funcs as pf
-#from postgres_funcs import *
+from utils import attempt_connect, check_env_vars_all_loaded
 
 LOG_LEVEL_ENV_VAR = os.environ.get('LOG_LEVEL')
 LOG_LEVEL = None
@@ -64,51 +60,11 @@ def types(func):
     return wrapped
 
 
-conn: Any = None
 
-
-
-def check_env_vars_all_loaded() -> Tuple[bool, str]:
-    """Checks required environment variables and returns false if required env vars are not set
-    """
-    # TODO: move this function
-
-    env_vars = [
-        'BOT_TOKEN',
-        'LOG_LEVEL',
-        'POSTGRES_USER',
-        'POSTGRES_PASS',
-        'POSTGRES_DB',
-    ]
-    logging.info("Environment Variables:")
-    for var in env_vars:
-        val = os.environ.get(var)
-        if val is None or val == '':
-            logging.info(f"Variable: {var} Value: VALUE MISSING. EXITING")
-            return (False, var)
-        else:
-            logging.info(f"Variable: {var} Value: {val}")
-
-    #TODO: return sensical second option; consider Optional[str]
-    return (True, "All Env vars loaded")
-
-
-# TODO:move this logic elsewhere and handle singleton connection in
-# different way
-while conn is None:
-    try:
-        HOST = os.environ.get("POSTGRES_HOSTNAME")
-        DATABASE = os.environ.get("POSTGRES_DB")
-        USER = os.environ.get("POSTGRES_USER")
-        PASSWORD = os.environ.get("POSTGRES_PASS")
-        conn = psycopg2.connect(
-            host=HOST,
-            database=DATABASE,
-            user=USER,
-            password=PASSWORD)
-    except psycopg2.OperationalError as oe:
-        logging.info(oe)
-        time.sleep(1)
+#TODO: move this down into the main function
+#this stops us from importing directly from this function: bad practice
+#blocks here
+conn = attempt_connect()
 
 
 def reply(bot: tg.Bot, update: tg.Update):
@@ -352,7 +308,12 @@ def error(bot, update, _error):
 
 def main():
     """Start the bot """
-    (is_loaded, var) = check_env_vars_all_loaded()
+    required_env_vars = ['BOT_TOKEN',
+                         'LOG_LEVEL',
+                         'POSTGRES_USER',
+                         'POSTGRES_PASS',
+                         'POSTGRES_DB',]
+    (is_loaded, var) = check_env_vars_all_loaded(required_env_vars)
     if not is_loaded:
         logging.info(f"Env vars not set that are required: {str(var)}")
         sys.exit(1)

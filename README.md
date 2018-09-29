@@ -64,8 +64,19 @@ Change BOT_TOKEN value environment variable based on the token given by the BotF
 
 ### Connecting to the database
 
-Postgres exposes port 5432 to the localhost so to connect from your localhost you can run the command
+Docker exposes postgres through port 5432 to the localhost so to connect from your localhost you can run the command
 ```
 psql -h localhost -p 5432 karmabot test_user
 ```
 
+### Admin Maintenence
+
+When a user tries to +1 themselves they receive a "witty response" that tells them not to +1 themselves.
+To modify the list of random witty respones:
+Modify the attempted_self_plus_one_response.csv to add or remove responses as desired.
+
+Then run the following script to update the database.
+
+```sh
+sh scripts/db_admin_update.sh prod_env_vars.sh
+```
