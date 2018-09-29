@@ -62,17 +62,21 @@ where ENV_VAR_FILENAME is a file in the format of test_env_vars.sh. Change the p
 
 Change BOT_TOKEN value environment variable based on the token given by the BotFather.
 
-
-To create your own witty responses for when a user tries to upvote themselves add it to the witty_responses.csv file and then run
-
-```sh
-sh scripts/db_setup.sh prod_env_vars.sh
-```
-
 ### Connecting to the database
 
-Postgres exposes port 5432 to the localhost so to connect from your localhost you can run the command
+Docker exposes postgres through port 5432 to the localhost so to connect from your localhost you can run the command
 ```
 psql -h localhost -p 5432 karmabot test_user
 ```
 
+### Admin Maintenence 
+
+When a user tries to +1 themselves they receive a "witty response" that tells them not to +1 themselves.
+To modify the list of random witty respones:
+Modify the witty_responses.csv to add or remove responses as desired.
+
+Then run the following script to update the database.
+
+```sh
+sh scripts/db_admin_update.sh prod_env_vars.sh
+```
