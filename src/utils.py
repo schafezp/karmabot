@@ -1,10 +1,12 @@
+"""Contains useful functions that might be used elsewhere"""
+
 import os
 import logging
 import time
 from typing import Tuple
 import psycopg2
 
-def attempt_connect(time_sleep=1,do_log=True):
+def attempt_connect(time_sleep=1, do_log=True):
     """ returns connection to postgres
     attempts to reconnect every time_sleep seconds"""
     conn = None

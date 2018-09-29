@@ -3,7 +3,7 @@ import logging
 import os
 import sys
 import re
-from typing import Tuple, List, Any
+from typing import Tuple, List
 from functools import wraps
 
 from telegram.ext import Filters, CommandHandler, MessageHandler, Updater, CallbackQueryHandler
