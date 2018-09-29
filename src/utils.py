@@ -22,7 +22,7 @@ def attempt_connect(time_sleep=1,do_log=True):
             return conn
         except psycopg2.OperationalError as oe:
             if do_log:
-                print(oe)
+                logging.info(oe)
             time.sleep(time_sleep)
     return conn
 
