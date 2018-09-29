@@ -17,8 +17,8 @@ def main():
     witty_responses_filename = "witty_responses.csv"
     with conn:
         with conn.cursor() as crs:
-            #use truncate to empty table. Allows user to use custom 
-            delete_existing_reponses_cmd = "TRUNCATE TABLE witty_responses" 
+            #use truncate to empty table. Allows user to use custom
+            delete_existing_reponses_cmd = "TRUNCATE TABLE witty_responses"
             print("Delete existing witty responses")
             print(f"Start loading witty responses from {witty_responses_filename}")
             crs.execute(delete_existing_reponses_cmd, [])
