@@ -14,14 +14,20 @@ def main():
     conn = attempt_connect()
 
     #insert witty responses
-    print("Start loading witty responses")
+    witty_responses_filename = "witty_responses.csv"
     with conn:
         with conn.cursor() as crs:
-            with open("witty_responses.csv", "r") as csv_file:
+            #use truncate to empty table. Allows user to use custom 
+            delete_existing_reponses_cmd = "TRUNCATE TABLE witty_responses" 
+            print("Delete existing witty responses")
+            print(f"Start loading witty responses from {witty_responses_filename}")
+            crs.execute(delete_existing_reponses_cmd, [])
+            conn.commit()
+            with open(witty_responses_filename, "r") as csv_file:
                 reader = csv.DictReader(csv_file)
                 for row in reader:
-                    cmd = """INSERT INTO witty_responses VALUES (%s) ON CONFLICT DO NOTHING"""
-                    crs.execute(cmd, [row['response']])
+                    insert_cmd = """INSERT INTO witty_responses VALUES (%s) ON CONFLICT DO NOTHING"""
+                    crs.execute(insert_cmd, [row['response']])
     print("Finish loading witty responses")
 
 
