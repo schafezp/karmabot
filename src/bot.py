@@ -342,6 +342,9 @@ def show_karma_personally_button_pressed(bot, update):
     query = update.callback_query
     chat_id: str = str(query.data)
     message = format_show_karma_for_users_in_chat(chat_id)
+    chat_name = pf.get_chatname(chat_id, conn)
+    if chat_name is not None:
+        message = f"<b>Chat name: {chat_name}</b>\n{message}"
 
     bot.edit_message_text(text=message,
                           chat_id=query.message.chat_id,

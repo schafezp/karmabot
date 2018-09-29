@@ -164,6 +164,17 @@ def does_chat_exist(chat_id: str, conn) -> bool:
             crs.execute(selectcmd, [chat_id])
             return crs.fetchone() is not None
 
+def get_chatname(chat_id: str, conn) -> Optional[str]:
+    """Returns chat name"""
+    cmd = """select chat_name from telegram_chat tc where tc.chat_id=%s"""
+    with conn:
+        with conn.cursor() as crs:
+            crs.execute(cmd, [chat_id])
+            result = crs.fetchone()
+            if result is None:
+                return None
+            else:
+                return result[0] #unpack
 
 def save_or_create_chat(chat: Telegram_Chat, conn):
     """Creates chat if not exists otherwise updates chat_name"""
