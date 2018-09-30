@@ -1,5 +1,5 @@
-"""Inserts any rows neccesary to set up the database state.
-Any tables are created in start-schema.sql but this is for loading user defined content"""
+"""This is for loading user defined content into the database
+Currently allows users to modify the response given when a user attempts to +1 themselves"""
 import csv
 import sys
 from utils import check_env_vars_all_loaded, attempt_connect
