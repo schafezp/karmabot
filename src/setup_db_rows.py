@@ -25,7 +25,7 @@ def main():
             crs.execute(delete_existing_reponses_cmd, [])
             conn.commit()
             with open(witty_responses_filename, "r") as csv_file:
-                reader = csv.DictReader(csv_file)
+                reader = csv.DictReader(csv_file, delimiter="\t")
                 for row in reader:
                     insert_cmd = f"""INSERT INTO {self_plus_one_table_name} VALUES (%s) ON CONFLICT DO NOTHING"""
                     crs.execute(insert_cmd, [row['response']])
