@@ -203,7 +203,6 @@ def show_history_graph(bot: tg.Bot, update: tg.Update):
     plt.savefig(figure_name)
     logging.info(result)
     bot.send_photo(chat_id=update.message.chat_id, photo=open(figure_name,'rb'))
-    #bot.send_message(chat_id=update.message.chat_id, text="result")
     
 
 # TODO: replace this with an annotation maybe?
