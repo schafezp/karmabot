@@ -9,6 +9,13 @@ from functools import wraps
 from telegram.ext import Filters, CommandHandler, MessageHandler, Updater, CallbackQueryHandler
 import telegram as tg
 
+import matplotlib
+import matplotlib.pyplot as plt
+import numpy as np
+import datetime
+ 
+
+
 from models import User, Telegram_Chat, Telegram_Message, user_from_tg_user
 import postgres_funcs as pf
 from utils import attempt_connect, check_env_vars_all_loaded
@@ -179,6 +186,25 @@ def show_user_stats(bot, update, args):
         message = f"No user with username: {username}"
 
     bot.send_message(chat_id=update.message.chat_id, text=message, parse_mode=tg.ParseMode.HTML)
+
+
+def show_history_graph(bot: tg.Bot, update: tg.Update):
+    chat_id = str(update.message.chat_id)
+    chat_name = pf.get_chatname(chat_id, conn)
+    result = pf.get_responses_per_day(chat_id, conn)
+    days = list(map(lambda x: x[0], result))
+    responses = list(map(lambda x: x[1], result))
+    figure_name = f'{chat_id}.png'
+    plt.plot(days,responses)
+    plt.ylabel('Upvotes and Downvotes')
+    plt.xlabel('Day')
+    plt.title(f'{chat_name}: User votes per day')
+    plt.gcf().autofmt_xdate()
+    plt.savefig(figure_name)
+    logging.info(result)
+    bot.send_photo(chat_id=update.message.chat_id, photo=open(figure_name,'rb'))
+    #bot.send_message(chat_id=update.message.chat_id, text="result")
+    
 
 # TODO: replace this with an annotation maybe?
 
@@ -351,9 +377,11 @@ def main():
     show_karma_personally_handler = CommandHandler(
         'checkchatkarmas', show_karma_personally)
     dispatcher.add_handler(show_karma_personally_handler)
-
     dispatcher.add_handler(CallbackQueryHandler(show_karma_personally_button_pressed))
 
+    show_history_graph_handler = CommandHandler(
+        'historygraph', show_history_graph)
+    dispatcher.add_handler(show_history_graph_handler)
 
     dispatcher.add_error_handler(error)
 
