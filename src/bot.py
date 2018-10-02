@@ -8,13 +8,7 @@ from functools import wraps
 
 from telegram.ext import Filters, CommandHandler, MessageHandler, Updater, CallbackQueryHandler
 import telegram as tg
-
-import matplotlib
 import matplotlib.pyplot as plt
-import numpy as np
-import datetime
- 
-
 
 from models import User, Telegram_Chat, Telegram_Message, user_from_tg_user
 import postgres_funcs as pf
@@ -189,26 +183,29 @@ def show_user_stats(bot, update, args):
 
 
 def show_history_graph(bot: tg.Bot, update: tg.Update):
+    """Handler to show a graph of upvotes/downvotes per day"""
     chat_id = str(update.message.chat_id)
     chat_name = pf.get_chatname(chat_id, conn)
     if chat_name is None:
         chat_name = "Chat With Bot"
     result = pf.get_responses_per_day(chat_id, conn)
+    if result is None:
+        bot.send_message(chat_id=update.message.chat_id, text="No responses for this chat")
+        return
     days = list(map(lambda x: x[0], result))
     responses = list(map(lambda x: x[1], result))
 
     figure_name = f'/output/graph_{chat_id}.png'
     fig = plt.figure()
     ax = fig.add_subplot(1, 1, 1)
-    ax.plot(days,responses)
+    ax.plot(days, responses)
     ax.set_ylabel('Upvotes and Downvotes')
     ax.set_xlabel('Day')
     ax.set_title(f'{chat_name}: User votes per day')
     fig.autofmt_xdate()
     fig.savefig(figure_name)
 
-    bot.send_photo(chat_id=update.message.chat_id, photo=open(figure_name,'rb'))
-    
+    bot.send_photo(chat_id=update.message.chat_id, photo=open(figure_name, 'rb'))
 
 # TODO: replace this with an annotation maybe?
 
