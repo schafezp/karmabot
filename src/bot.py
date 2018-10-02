@@ -194,6 +194,10 @@ def show_history_graph(bot: tg.Bot, update: tg.Update):
         bot.send_message(chat_id=update.message.chat_id, text="No responses for this chat")
         return
 
+    bot.send_chat_action(
+        chat_id=update.message.chat_id,
+        action=tg.ChatAction.UPLOAD_PHOTO)
+        
     days, responses = zip(*result)
 
     figure_name = f'/output/graph_{chat_id}.png'
@@ -206,6 +210,7 @@ def show_history_graph(bot: tg.Bot, update: tg.Update):
     ax.set_title(f'{chat_name}: User votes per day')
     fig.autofmt_xdate()
     fig.savefig(figure_name)
+
 
     bot.send_photo(chat_id=update.message.chat_id, photo=open(figure_name, 'rb'))
 
