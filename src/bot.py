@@ -197,7 +197,7 @@ def show_history_graph(bot: tg.Bot, update: tg.Update):
     bot.send_chat_action(
         chat_id=update.message.chat_id,
         action=tg.ChatAction.UPLOAD_PHOTO)
-        
+
     days, responses = zip(*result)
 
     figure_name = f'/output/graph_{chat_id}.png'
