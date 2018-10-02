@@ -195,7 +195,7 @@ def show_history_graph(bot: tg.Bot, update: tg.Update):
         return
 
     days, responses = zip(*result)
-    
+
     figure_name = f'/output/graph_{chat_id}.png'
     fig = plt.figure()
     ax = fig.add_subplot(1, 1, 1)
