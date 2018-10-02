@@ -9,6 +9,7 @@ from functools import wraps
 from telegram.ext import Filters, CommandHandler, MessageHandler, Updater, CallbackQueryHandler
 import telegram as tg
 import matplotlib.pyplot as plt
+from matplotlib.ticker import MaxNLocator
 
 from models import User, Telegram_Chat, Telegram_Message, user_from_tg_user
 import postgres_funcs as pf
@@ -201,6 +202,7 @@ def show_history_graph(bot: tg.Bot, update: tg.Update):
     ax.plot(days, responses)
     ax.set_ylabel('Upvotes and Downvotes')
     ax.set_xlabel('Day')
+    ax.yaxis.set_major_locator(MaxNLocator(integer=True))
     ax.set_title(f'{chat_name}: User votes per day')
     fig.autofmt_xdate()
     fig.savefig(figure_name)
