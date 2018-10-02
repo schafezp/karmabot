@@ -191,17 +191,22 @@ def show_user_stats(bot, update, args):
 def show_history_graph(bot: tg.Bot, update: tg.Update):
     chat_id = str(update.message.chat_id)
     chat_name = pf.get_chatname(chat_id, conn)
+    if chat_name is None:
+        chat_name = "Chat With Bot"
     result = pf.get_responses_per_day(chat_id, conn)
     days = list(map(lambda x: x[0], result))
     responses = list(map(lambda x: x[1], result))
-    figure_name = f'{chat_id}.png'
-    plt.plot(days,responses)
-    plt.ylabel('Upvotes and Downvotes')
-    plt.xlabel('Day')
-    plt.title(f'{chat_name}: User votes per day')
-    plt.gcf().autofmt_xdate()
-    plt.savefig(figure_name)
-    logging.info(result)
+
+    figure_name = f'/output/graph_{chat_id}.png'
+    fig = plt.figure()
+    ax = fig.add_subplot(1, 1, 1)
+    ax.plot(days,responses)
+    ax.set_ylabel('Upvotes and Downvotes')
+    ax.set_xlabel('Day')
+    ax.set_title(f'{chat_name}: User votes per day')
+    fig.autofmt_xdate()
+    fig.savefig(figure_name)
+
     bot.send_photo(chat_id=update.message.chat_id, photo=open(figure_name,'rb'))
     
 
