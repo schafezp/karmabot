@@ -382,3 +382,19 @@ def get_random_witty_response(conn) -> Optional[str]:
                 return result[0]
             else:
                 return None
+
+#TODO: give option for using day/week as well as start/end date
+
+def get_responses_per_day(chat_id: str, conn) -> Optional[Tuple[str, str]]:
+    """Returns responses per day per chat"""
+    cmd = """select date_trunc('day',tm.message_time ) "day", count(*) as result_nums
+                from user_reacted_to_message urtm 
+                LEFT JOIN telegram_message tm ON tm.message_id=urtm.message_id
+                WHERE tm.chat_id = %s AND tm.message_time is not null
+                group by 1
+                order by 1"""
+    with conn:
+        with conn.cursor() as crs:
+            crs.execute(cmd, [chat_id])
+            return crs.fetchall()
+    
