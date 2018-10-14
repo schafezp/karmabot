@@ -1,12 +1,7 @@
 """This module stores the models for the telegram bot"""
 from typing import Optional
-import telegram as tg
 
-
-
-
-
-class User(object):
+class User:
     """
     A representation of a telegram user
     """
@@ -62,7 +57,7 @@ class User(object):
                 " karma: " + str(self.get_karma())
 
 
-class User_in_Chat(object):
+class User_in_Chat:
     """Model for user_in_chat row"""
     user_id: int
     chat_id: str
@@ -74,7 +69,7 @@ class User_in_Chat(object):
         self.karma = karma
 
 
-class Telegram_Chat(object):
+class Telegram_Chat:
     """Model for telegram_chat row"""
     chat_id: str
     chat_name: str
@@ -84,7 +79,7 @@ class Telegram_Chat(object):
         self.chat_name = chat_name
 
 
-class Telegram_Message(object):
+class Telegram_Message:
     """Model for telegram_message row"""
     message_id: int
     chat_id: str
@@ -103,7 +98,7 @@ class Telegram_Message(object):
         self.author_user_id = author_user_id
 
 
-class User_reacted_to_message(object):
+class User_reacted_to_message:
     """Model for user_reacted_to_message row"""
     id: int
     user_in_chat_id: int
@@ -126,12 +121,12 @@ class User_reacted_to_message(object):
 
 
 #TODO: move these helpers functions elsewhere
-def user_from_tg_user(user: tg.User) -> User:
+def user_from_tg_user(user) -> User:
     """Creates a User object from a Telegram User object """
     return User(user.id, user.username, user.first_name, user.last_name)
 
 
-def message_from_tg_message(message: tg.Message):
+def message_from_tg_message(message):
     """Creates a Telegram_message object from a Telegram message passed into the bot"""
     return Telegram_Message(
         message.message_id,
