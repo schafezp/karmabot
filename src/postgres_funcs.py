@@ -276,7 +276,7 @@ def user_reply_to_message(
 
     # TODO: add gaurd for karma == 1 or == -1 up higher
     if user_previous_react is None or user_previous_react != karma:
-        if(karma == 1 or karma == -1):
+        if karma in (1, -1):
             save_or_create_user_in_chat(
                 reply_to_user, chat.chat_id, conn, change_karma=karma)
         else:
