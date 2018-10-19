@@ -29,6 +29,6 @@ services:
       - data:/var/lib/postgresql/data
       - ./start-schema.sql:/docker-entrypoint-initdb.d/1-schema.sql
     ports:
-      - "5432:5432"
+      - "${PORTGRES_LOCAL_PORT}:5432"
 volumes:
   data: {}
