@@ -1,0 +1,37 @@
+
+version: '3'
+services:
+  bot:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    
+    command: python3 src/tests.py
+    ports:
+      - "5000:5000"
+    environment:
+      PROD: "true"
+      BOT_TOKEN : "${BOT_TOKEN}"
+      LOG_LEVEL: "${LOG_LEVEL}"
+      POSTGRES_HOSTNAME : "postgres" # this is based on the service name
+      POSTGRES_USER: "${POSTGRES_USER}"
+      POSTGRES_PASS: "${POSTGRES_PASS}"
+      POSTGRES_DB: "test_db"
+    volumes:
+      - .:/code
+      - ./output:/output
+    depends_on:
+      - postgres
+  postgres:
+    image: postgres:9.6.10-alpine
+    environment:
+      POSTGRES_USER: "${POSTGRES_USER}"
+      POSTGRES_PASS: "${POSTGRES_PASS}"
+      POSTGRES_DB: "test_db"
+    volumes:
+      - test_data:/var/lib/postgresql/data
+      - ./start-schema.sql:/docker-entrypoint-initdb.d/1-schema.sql
+    ports:
+      - "${POSTGRES_PORT_LOCAL}:5432"
+volumes:
+  test_data: {}

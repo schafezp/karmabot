@@ -6,14 +6,15 @@ import time
 from typing import Tuple
 import psycopg2
 
-def attempt_connect(time_sleep=1, do_log=True):
+def attempt_connect(time_sleep=1, do_log=True, DATABASE=None):
     """ returns connection to postgres
     attempts to reconnect every time_sleep seconds"""
     conn = None
     while conn is None:
         try:
             HOST = os.environ.get("POSTGRES_HOSTNAME")
-            DATABASE = os.environ.get("POSTGRES_DB")
+            if DATABASE is None:
+                DATABASE = os.environ.get("POSTGRES_DB")
             USER = os.environ.get("POSTGRES_USER")
             PASSWORD = os.environ.get("POSTGRES_PASS")
             conn = psycopg2.connect(
