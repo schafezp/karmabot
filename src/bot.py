@@ -336,11 +336,12 @@ def show_karma_personally_button_pressed(bot, update):
 
 def clear_chat_with_bot(bot, update):
     chat_id = update.message.chat_id
-    user = user_from_tg_user(update.message.from_user)
-    if (user.id == chat_id):
-        bot.send_message(chat_id=update.message.chat_id, text="Yes this a chat with the bot")
-    else:
+    user = update.message.from_user.id
+    if (user.id != chat_id):
         bot.send_message(chat_id=update.message.chat_id, text="This is a group chat. Don't delete me!")
+        return
+    bot.send_message(chat_id=update.message.chat_id, text="Yes this a chat with the bot")
+
 
 
 
