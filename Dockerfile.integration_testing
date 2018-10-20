@@ -1,15 +1,21 @@
 FROM python:3.7.0-alpine3.8
 WORKDIR /build
 RUN apk add git
-#clone my fork until 
+#clone my fork until PR for pyrogram 0.8.0 is accepted into master
 RUN git clone https://github.com/schafezp/tgintegration.git
 WORKDIR /build/tgintegration
 RUN git checkout support_pyrogram_0.8.0
-RUN python setup.py install
-
 
 FROM python:3
 ENV PYTHONUNBUFFERED 1
+WORKDIR /build
+COPY --from=0 /build/tgintegration .
+RUN python setup.py install
+ADD integration_requirements.txt .
+RUN pip install -r integration_requirements.txt
+#remove build files from docker image for smaller size
+RUN rm -rf /build 
+
 RUN mkdir /code
 WORKDIR /code
 ADD src/tests.py /code/tests.py
