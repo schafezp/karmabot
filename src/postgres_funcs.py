@@ -406,6 +406,7 @@ def clear_chat_with_bot(chat_id: int, user_id: int, conn):
     if chat_id != user_id:
         raise ValueError("Not a chat with a bot. Don't delete group chats")
     
+    chat_id_str = str(chat_id)
     #delete user_in_chat
     del_user_in_chat_cmd = "DELETE FROM user_in_chat uic WHERE uic.chat_id = %s"
 
@@ -421,9 +422,9 @@ def clear_chat_with_bot(chat_id: int, user_id: int, conn):
 
     with conn:
         with conn.cursor() as crs:
-            crs.execute(del_user_in_chat_cmd, [])
-            crs.execute(del_user_reacted_to_message_cmd, [])
-            crs.execute(del_telegram_messages, [])
+            crs.execute(del_user_in_chat_cmd, [chat_id_str])
+            crs.execute(del_user_reacted_to_message_cmd, [chat_id_str])
+            crs.execute(del_telegram_messages, [chat_id_str])
     
 
     #delete command_used

@@ -340,7 +340,8 @@ def clear_chat_with_bot(bot, update):
     if (user_id != chat_id):
         bot.send_message(chat_id=update.message.chat_id, text="This is a group chat. Don't delete me!")
         return
-    bot.send_message(chat_id=update.message.chat_id, text="Yes this a chat with the bot")
+    bot.send_message(chat_id=update.message.chat_id, text="Clearing chat history")
+    pf.clear_chat_with_bot(chat_id, user_id, conn)
 
 
 
