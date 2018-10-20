@@ -7,6 +7,10 @@ def main():
     """entrypoint for integration test"""
     API_ID = os.environ.get("API_ID")
     API_HASH = os.environ.get("API_HASH")
+    if None in [API_HASH, API_ID]:
+        print("API_ID or API_HASH not set")
+        return
+
     TEST_BOT_NAME = os.environ.get("TEST_BOT_NAME")
     client = BotIntegrationClient(
         bot_under_test=TEST_BOT_NAME,
