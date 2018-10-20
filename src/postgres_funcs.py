@@ -398,3 +398,34 @@ def get_responses_per_day(chat_id: str, conn) -> Optional[Tuple[str, str]]:
             crs.execute(cmd, [chat_id])
             return crs.fetchall()
     
+
+def clear_chat_with_bot(chat_id: int, user_id: int, conn):
+    """Clears all history from a chat but only if chat_id matches user_id
+    If chat_id matches user_id then the chat is a 1 on 1 with a bot.
+    """
+    if chat_id != user_id:
+        raise ValueError("Not a chat with a bot. Don't delete group chats")
+    
+    #delete user_in_chat
+    del_user_in_chat_cmd = "DELETE FROM user_in_chat uic WHERE uic.chat_id = %s"
+
+    #TODO: delete user_reacted_to_message find all message in chat, find all urtm with those messages then delete them
+    del_user_reacted_to_message_cmd = """DELETE FROM user_reacted_to_message urtmd WHERE id IN
+    (select urtm.id as user_reacted_to_message_id FROM (select tm.message_id from telegram_message tm where tm.chat_id = %s) as message_in_chat
+    LEFT JOIN user_reacted_to_message urtm on urtm.message_id=message_in_chat.message_id);"""
+
+    #delete all telegram_messages with matching chat id
+    del_telegram_messages = """DELETE FROM user_reacted_to_message urtmd WHERE id IN
+    (select urtm.id as user_reacted_to_message_id FROM (select tm.message_id from telegram_message tm where tm.chat_id = %s) as message_in_chat
+    LEFT JOIN user_reacted_to_message urtm on urtm.message_id=message_in_chat.message_id);"""
+
+    with conn:
+        with conn.cursor() as crs:
+            crs.execute(del_user_in_chat_cmd, [])
+            crs.execute(del_user_reacted_to_message_cmd, [])
+            crs.execute(del_telegram_messages, [])
+    
+
+    #delete command_used
+
+
