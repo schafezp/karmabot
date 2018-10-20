@@ -7,3 +7,5 @@ prodenvvar.sh
 test_env_vars.sh
 .mypy_cache
 output
+my_account.session
+session
