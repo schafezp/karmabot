@@ -335,17 +335,14 @@ def show_karma_personally_button_pressed(bot, update):
                           parse_mode=tg.ParseMode.HTML)
 
 def clear_chat_with_bot(bot, update):
+    """Clears chat with bot"""
     chat_id = update.message.chat_id
     user_id = update.message.from_user.id
-    if (user_id != chat_id):
+    if user_id != chat_id:
         bot.send_message(chat_id=update.message.chat_id, text="This is a group chat. Don't delete me!")
         return
     bot.send_message(chat_id=update.message.chat_id, text="Clearing chat history")
     pf.clear_chat_with_bot(chat_id, user_id, conn)
-
-
-
-
 
 def error(bot, update, _error):
     """Log Errors caused by Updates."""
