@@ -334,6 +334,16 @@ def show_karma_personally_button_pressed(bot, update):
                           message_id=query.message.message_id,
                           parse_mode=tg.ParseMode.HTML)
 
+def clear_chat_with_bot(bot, update):
+    chat_id = update.message.chat_id
+    user = user_from_tg_user(update.message.from_user)
+    if (user.id == chat_id):
+        bot.send_message(chat_id=update.message.chat_id, text="Yes this a chat with the bot")
+    else:
+        bot.send_message(chat_id=update.message.chat_id, text="This is a group chat. Don't delete me!")
+
+
+
 
 def error(bot, update, _error):
     """Log Errors caused by Updates."""
@@ -390,6 +400,14 @@ def main():
     show_history_graph_handler = CommandHandler(
         'historygraph', show_history_graph)
     dispatcher.add_handler(show_history_graph_handler)
+
+    #used for integration testing
+    #should only work to clear a chat with a bot
+    #chat_id == user_id
+    clear_chat_with_bot_handler = CommandHandler(
+        'clearchatwithbot', clear_chat_with_bot)
+    dispatcher.add_handler(clear_chat_with_bot_handler)
+
 
     dispatcher.add_error_handler(error)
 
