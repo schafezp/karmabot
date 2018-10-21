@@ -233,8 +233,9 @@ def format_show_karma_for_users_in_chat(chat_id):
     """Returns a formatted html message showing the karma for users in a chat"""
     rows: List[Tuple[str, str, int]] = pf.get_karma_for_users_in_chat(
         chat_id, conn)
-    if rows is None:
-        return "No karma for users in this chat"
+    if rows == []:
+        return SHOW_KARMA_NO_HISTORY_RESPONSE
+
     rows.sort(key=lambda user: user[2], reverse=True)
     # use firstname if username not set
 
