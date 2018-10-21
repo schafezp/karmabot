@@ -136,7 +136,8 @@ disable=print-statement,
         too-many-locals,
         no-else-return,
         too-few-public-methods,
-        logging-fstring-interpolation
+        logging-fstring-interpolation,
+        no-member
 
 # Enable the message, report, category or checker with the given id(s). You can
 # either give multiple identifier separated by comma (,) or put this option
