@@ -48,7 +48,10 @@ class IntegrationTests(unittest.TestCase):
         self.assertEqual(len(show_karma_response.messages), 1)
         self.assertEqual(show_karma_response.messages[0].text, SHOW_KARMA_NO_HISTORY_RESPONSE)
 
-    def test_showkarma_works_with_history(self):
+    def test_zshowkarma_works_with_history(self):
+        clear_chat_response = self.client.send_command_await(CLEAR_CHAT_COMMAND, num_expected=1)
+        print(clear_chat_response)
+        print(dir(clear_chat_response))
         #clear chat
         #run showkarma (capture message id)
         #make sure has empty result
