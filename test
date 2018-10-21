@@ -1,2 +1,0 @@
-#!/usr/bin/env bash
-sh run.sh test_env_vars.sh
