@@ -2,7 +2,7 @@
 Currently allows users to modify the response given when a user attempts to +1 themselves"""
 import csv
 import sys
-from utils import check_env_vars_all_loaded, attempt_connect
+from .utils import check_env_vars_all_loaded, attempt_connect
 
 def main():
     """Load custom user info into the database"""
