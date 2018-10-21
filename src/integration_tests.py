@@ -4,6 +4,7 @@ import os
 import unittest
 from tgintegration import BotIntegrationClient
 from responses import *
+from commands import START_COMMAND, CLEAR_CHAT_COMMAND
 
 class IntegrationTests(unittest.TestCase):
     """ Runs intergation tests"""
@@ -35,16 +36,14 @@ class IntegrationTests(unittest.TestCase):
         
     def test_start(self):
         """ Test start command"""
-        response = self.client.send_command_await("start", num_expected=1)
-
+        response = self.client.send_command_await(START_COMMAND, num_expected=1)
         self.assertEqual(len(response.messages), 1)
         self.assertEqual(response.messages[0].text, START_BOT_RESPONSE)
         
-        #assert response.num_messages == 1
-        #self.assertTrue(self.client is not None)
-        #self.assertEqual(response.num_messages, 1)
-        
-    #def test_showkarma(self):
+    def test_showkarma(self):
+        response = self.client.send_command_await(CLEAR_CHAT_COMMAND, num_expected=1)
+        self.assertEqual(len(response.messages), 1)
+        self.assertEqual(response.messages[0].text, SUCCESSFUL_CLEAR_CHAT)
         #clear chat
         #run showkarma (capture message id)
         #make sure has empty result
