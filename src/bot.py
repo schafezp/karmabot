@@ -16,6 +16,7 @@ import postgres_funcs as pf
 from utils import attempt_connect, check_env_vars_all_loaded
 
 from responses import START_BOT_RESPONSE, SUCCESSFUL_CLEAR_CHAT, FAILED_CLEAR_CHAT_DUE_TO_GROUPCHAT
+from commands import START_COMMAND, CLEAR_CHAT_COMMAND
 
 LOG_LEVEL_ENV_VAR = os.environ.get('LOG_LEVEL')
 LOG_LEVEL = None
@@ -369,7 +370,7 @@ def main():
     updater = Updater(token=bot_token)
     dispatcher = updater.dispatcher
 
-    start_handler = CommandHandler('start', start)
+    start_handler = CommandHandler(START_COMMAND, start)
     dispatcher.add_handler(start_handler)
 
     reply_handler = MessageHandler(Filters.reply, reply)
@@ -406,7 +407,7 @@ def main():
     #should only work to clear a chat with a bot
     #chat_id == user_id
     clear_chat_with_bot_handler = CommandHandler(
-        'clearchatwithbot', clear_chat_with_bot)
+        CLEAR_CHAT_COMMAND, clear_chat_with_bot)
     dispatcher.add_handler(clear_chat_with_bot_handler)
 
 
