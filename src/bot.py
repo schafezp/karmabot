@@ -15,7 +15,7 @@ from models import User, Telegram_Chat, Telegram_Message, user_from_tg_user
 import postgres_funcs as pf
 from utils import attempt_connect, check_env_vars_all_loaded
 
-from responses import START_BOT_RESPONSE
+from responses import START_BOT_RESPONSE, SUCCESSFUL_CLEAR_CHAT, FAILED_CLEAR_CHAT_DUE_TO_GROUPCHAT
 
 LOG_LEVEL_ENV_VAR = os.environ.get('LOG_LEVEL')
 LOG_LEVEL = None
@@ -341,9 +341,9 @@ def clear_chat_with_bot(bot, update):
     chat_id = update.message.chat_id
     user_id = update.message.from_user.id
     if user_id != chat_id:
-        bot.send_message(chat_id=update.message.chat_id, text="This is a group chat. Don't delete me!")
+        bot.send_message(chat_id=update.message.chat_id, text=FAILED_CLEAR_CHAT_DUE_TO_GROUPCHAT)
         return
-    bot.send_message(chat_id=update.message.chat_id, text="Clearing chat history")
+    bot.send_message(chat_id=update.message.chat_id, text=SUCCESSFUL_CLEAR_CHAT)
     pf.clear_chat_with_bot(chat_id, user_id, conn)
 
 def error(bot, update, _error):
