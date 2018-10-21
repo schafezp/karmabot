@@ -4,7 +4,7 @@ import os
 import unittest
 from tgintegration import BotIntegrationClient
 from responses import *
-from commands import START_COMMAND, CLEAR_CHAT_COMMAND
+from commands import START_COMMAND, CLEAR_CHAT_COMMAND, SHOW_KARMA_COMMAND
 
 class IntegrationTests(unittest.TestCase):
     """ Runs intergation tests"""
@@ -40,16 +40,21 @@ class IntegrationTests(unittest.TestCase):
         self.assertEqual(len(response.messages), 1)
         self.assertEqual(response.messages[0].text, START_BOT_RESPONSE)
         
-    def test_showkarma(self):
-        response = self.client.send_command_await(CLEAR_CHAT_COMMAND, num_expected=1)
-        self.assertEqual(len(response.messages), 1)
-        self.assertEqual(response.messages[0].text, SUCCESSFUL_CLEAR_CHAT)
+    def test_showkarma_works_on_empty_chat(self):
+        clear_chat_response = self.client.send_command_await(CLEAR_CHAT_COMMAND, num_expected=1)
+        self.assertEqual(len(clear_chat_response.messages), 1)
+        self.assertEqual(clear_chat_response.messages[0].text, SUCCESSFUL_CLEAR_CHAT)
+        show_karma_response = self.client.send_command_await(SHOW_KARMA_COMMAND, num_expected=1)
+        self.assertEqual(len(show_karma_response.messages), 1)
+        self.assertEqual(show_karma_response.messages[0].text, SHOW_KARMA_NO_HISTORY_RESPONSE)
+
+    def test_showkarma_works_with_history(self):
         #clear chat
         #run showkarma (capture message id)
         #make sure has empty result
         #plus 1 showkarma message
         #make sure there is a number 1 in karma
-        #pass
+        pass
 
 
 if __name__ == "__main__":
