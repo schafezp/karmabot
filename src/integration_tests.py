@@ -36,10 +36,9 @@ class IntegrationTests(unittest.TestCase):
     def test_start(self):
         """ Test start command"""
         response = self.client.send_command_await("start", num_expected=1)
-        #print(f"my constant: {MY_CONSTANT}")
 
         self.assertEqual(len(response.messages), 1)
-        self.assertEqual(response.messages[0].text, "I'm a bot, please talk to me!")
+        self.assertEqual(response.messages[0].text, START_BOT_RESPONSE)
         
         #assert response.num_messages == 1
         #self.assertTrue(self.client is not None)

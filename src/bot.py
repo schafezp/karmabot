@@ -15,6 +15,8 @@ from models import User, Telegram_Chat, Telegram_Message, user_from_tg_user
 import postgres_funcs as pf
 from utils import attempt_connect, check_env_vars_all_loaded
 
+from responses import START_BOT_RESPONSE
+
 LOG_LEVEL_ENV_VAR = os.environ.get('LOG_LEVEL')
 LOG_LEVEL = None
 if LOG_LEVEL_ENV_VAR == "debug":
@@ -124,7 +126,7 @@ def start(bot, update):
     """Message sent by bot upon first 1 on 1 interaction with the bot"""
     bot.send_message(
         chat_id=update.message.chat_id,
-        text="I'm a bot, please talk to me!")
+        text=START_BOT_RESPONSE)
 
 
 @types
