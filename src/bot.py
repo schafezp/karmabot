@@ -15,8 +15,8 @@ from models import User, Telegram_Chat, Telegram_Message, user_from_tg_user
 import postgres_funcs as pf
 from utils import attempt_connect, check_env_vars_all_loaded
 
-from responses import START_BOT_RESPONSE, SUCCESSFUL_CLEAR_CHAT, FAILED_CLEAR_CHAT_DUE_TO_GROUPCHAT
-from commands import START_COMMAND, CLEAR_CHAT_COMMAND
+from responses import START_BOT_RESPONSE, SUCCESSFUL_CLEAR_CHAT, FAILED_CLEAR_CHAT_DUE_TO_GROUPCHAT, SHOW_KARMA_NO_HISTORY_RESPONSE
+from commands import START_COMMAND, CLEAR_CHAT_COMMAND, SHOW_KARMA_COMMAND
 
 LOG_LEVEL_ENV_VAR = os.environ.get('LOG_LEVEL')
 LOG_LEVEL = None
@@ -377,7 +377,7 @@ def main():
     reply_handler = MessageHandler(Filters.reply, reply)
     dispatcher.add_handler(reply_handler)
 
-    showkarma_handler = CommandHandler('showkarma', show_karma, pass_args=True)
+    showkarma_handler = CommandHandler(SHOW_KARMA_COMMAND, show_karma, pass_args=True)
     dispatcher.add_handler(showkarma_handler)
 
     show_user_handler = CommandHandler(
