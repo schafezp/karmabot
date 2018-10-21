@@ -2,10 +2,11 @@
 """
 import os
 import unittest
+import re
 from tgintegration import BotIntegrationClient
 from karmabot.responses import START_BOT_RESPONSE, SUCCESSFUL_CLEAR_CHAT, SHOW_KARMA_NO_HISTORY_RESPONSE
 from karmabot.commands_strings import START_COMMAND, CLEAR_CHAT_COMMAND, SHOW_KARMA_COMMAND
-import re
+
 
 class IntegrationTests(unittest.TestCase):
     """ Runs intergation tests"""
@@ -76,10 +77,10 @@ class IntegrationTests(unittest.TestCase):
 
     #     does_bot_have_zero_karma = bool(re.search(f"{bot_name_without_at}: 0", show_karma_response.messages[0].text))
     #     self.assertTrue(does_bot_have_zero_karma, '-1 on same message should override last vote')
-        
+
     def test_upvote(self):
         """Tests that upvoting a message results in +1 karma"""
-        clear_chat_response = self.client.send_command_await(CLEAR_CHAT_COMMAND, num_expected=1)
+        self.client.send_command_await(CLEAR_CHAT_COMMAND)
         show_karma_response = self.client.send_command_await(SHOW_KARMA_COMMAND, num_expected=1)
         self.assertEqual(len(show_karma_response.messages), 1)
         message = show_karma_response.messages[0]
