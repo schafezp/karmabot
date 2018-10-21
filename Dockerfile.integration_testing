@@ -17,7 +17,8 @@ RUN pip install -r integration_requirements.txt
 RUN rm -rf /build 
 
 RUN mkdir /code
-WORKDIR /code
-ADD src/ /code
+WORKDIR /karmabot
+ADD karmabot /karmabot/karmabot
+ADD test /karmabot/test
 
-CMD ["python3", "integration_tests.py"]
+CMD ["python3", "-m", "unittest", "test.integration_tests"]

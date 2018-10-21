@@ -4,4 +4,6 @@ RUN mkdir /code
 WORKDIR /code
 ADD requirements.txt /code/
 RUN pip install -r requirements.txt
-ADD src /code/
+ADD karmabot /code/
+
+CMD [ "python3", "karmabot/bot.py" ]

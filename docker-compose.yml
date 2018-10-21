@@ -3,7 +3,6 @@ version: '3'
 services:
   bot:
     build: .
-    command: python3 src/bot.py
     ports:
       - "5000:5000"
     environment:
