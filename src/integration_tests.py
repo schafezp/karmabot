@@ -5,6 +5,7 @@ import unittest
 from tgintegration import BotIntegrationClient
 from responses import START_BOT_RESPONSE, SUCCESSFUL_CLEAR_CHAT, SHOW_KARMA_NO_HISTORY_RESPONSE
 from commands_strings import START_COMMAND, CLEAR_CHAT_COMMAND, SHOW_KARMA_COMMAND
+import re
 
 class IntegrationTests(unittest.TestCase):
     """ Runs intergation tests"""
@@ -16,6 +17,8 @@ class IntegrationTests(unittest.TestCase):
         if None in [API_HASH, API_ID, TEST_BOT_NAME]:
             print("API_ID, API_HASH, TEST_BOT_NAME not set")
             raise ValueError()
+
+        self.TEST_BOT_NAME = TEST_BOT_NAME
 
         client = BotIntegrationClient(
             bot_under_test=TEST_BOT_NAME,
@@ -47,16 +50,66 @@ class IntegrationTests(unittest.TestCase):
         self.assertEqual(len(show_karma_response.messages), 1)
         self.assertEqual(show_karma_response.messages[0].text, SHOW_KARMA_NO_HISTORY_RESPONSE)
 
-    def test_zshowkarma_works_with_history(self):
-        """Test that showkarma withs with upvote"""
+    #TODO: fixme
+    def test_zvotes_can_be_overriden(self):
+        """Tests that if a message is +1 and then -1, the total net karma is 0"""
         clear_chat_response = self.client.send_command_await(CLEAR_CHAT_COMMAND, num_expected=1)
-        print(clear_chat_response)
-        print(dir(clear_chat_response))
+        show_karma_response = self.client.send_command_await(SHOW_KARMA_COMMAND, num_expected=1)
+        self.assertEqual(len(show_karma_response.messages), 1)
+
+        message = show_karma_response.messages[0]
+        chat_id = message.chat.id
+        message_id = message.message_id
+        self.client.send_message(chat_id, "+1", reply_to_message_id=message_id)
+
+        show_karma_response = self.client.send_command_await(SHOW_KARMA_COMMAND, num_expected=1)
+        self.assertEqual(len(show_karma_response.messages), 1)
+        bot_response = show_karma_response.messages[0].text
+
+        bot_name_without_at = self.TEST_BOT_NAME[1:]
+        does_bot_have_1_karma = bool(re.search(f"{bot_name_without_at}: 1", bot_response))
+        self.assertTrue(does_bot_have_1_karma)
+
+        self.client.send_message(chat_id, "-1", reply_to_message_id=message_id)
+        show_karma_response = self.client.send_command_await(SHOW_KARMA_COMMAND, num_expected=1)
+        self.assertEqual(len(show_karma_response.messages), 1)
+
+        does_bot_have_zero_karma = bool(re.search(f"{bot_name_without_at}: 0", show_karma_response.messages[0].text))
+        self.assertTrue(does_bot_have_minus_1_karma, '-1 on same message should override last vote')
+        
+    def test_upvote(self):
+        """Tests that upvoting a message results in +1 karma"""
+        clear_chat_response = self.client.send_command_await(CLEAR_CHAT_COMMAND, num_expected=1)
+        show_karma_response = self.client.send_command_await(SHOW_KARMA_COMMAND, num_expected=1)
+        self.assertEqual(len(show_karma_response.messages), 1)
+        message = show_karma_response.messages[0]
+        chat_id = message.chat.id
+        message_id = message.message_id
+        self.client.send_message(chat_id, "+1", reply_to_message_id=message_id)
+        show_karma_response = self.client.send_command_await(SHOW_KARMA_COMMAND, num_expected=1)
+        self.assertEqual(len(show_karma_response.messages), 1)
+
+        bot_name_without_at = self.TEST_BOT_NAME[1:]
+        bot_response = show_karma_response.messages[0].text
+        does_bot_have_1_karma = re.search(f"{bot_name_without_at}: 1", bot_response)
+        self.assertTrue(does_bot_have_1_karma, "Bot should have 1 karma after 1 plus 1")
+
+
+        #(chat_id, "+1", send_to_message_id=message_id)
+        #print(f"Message id: {message.message_id}")
+        #TOOD: how to send message as response to other message. Could be done directly with pyrogram
+
+        #print(clear_chat_response)
+        #print(dir(clear_chat_response))
         #clear chat
         #run showkarma (capture message id)
         #make sure has empty result
         #plus 1 showkarma message
         #make sure there is a number 1 in karma
+    #TODO: test keyboard implementation
+    #TODO: test non existent use cases (userstats where userid doesn't exist, etc)
+    #TODO: host multiple bots with swarm and split integration tests amoung them
+
 
 
 if __name__ == "__main__":
