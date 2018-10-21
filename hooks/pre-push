@@ -8,7 +8,7 @@ NC='\033[0m'
 echo "Running Linters:"
 
 # Run mypylint and get the output and return code
-mypylint=$(mypy --ignore-missing-imports src)
+mypylint=$(mypy --ignore-missing-imports karmabot test)
 ret_code=$?
 
 # If it didn't pass, announce it failed and print the output
@@ -21,7 +21,7 @@ else
 fi
 
 #TODO: also call pylint
-pylint=$(pylint --rcfile=pylintrc src)
+pylint=$(pylint --rcfile=pylintrc karmabot test)
 ret_code=$?
 
 # If it didn't pass, announce it failed and print the output
