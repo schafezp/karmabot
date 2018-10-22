@@ -54,7 +54,7 @@ class IntegrationTests(unittest.TestCase):
     @unittest.skip("vote overriding broken right now")
     def test_votes_can_be_overriden(self):
         """Tests that if a message is +1 and then -1, the total net karma is 0"""
-        clear_chat_response = self.client.send_command_await(CLEAR_CHAT_COMMAND, num_expected=1)
+        self.client.send_command_await(CLEAR_CHAT_COMMAND, num_expected=1)
         show_karma_response = self.client.send_command_await(SHOW_KARMA_COMMAND, num_expected=1)
         self.assertEqual(len(show_karma_response.messages), 1)
 
