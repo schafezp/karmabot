@@ -21,21 +21,21 @@ else
 fi
 
 #TODO: also call pylint
-pylint=$(pylint --rcfile=pylintrc karmabot test)
-ret_code=$?
+# pylint=$(pylint --rcfile=pylintrc karmabot test)
+# ret_code=$?
 
-# If it didn't pass, announce it failed and print the output
-if [ $ret_code != 0 ]; then
-	printf "\n${RED}pylint linter failed:${NC}"
-	echo "$pylint\n"
-	pass=false
-else
-	printf "${GREEN}pylint linter passed.${NC}\n"
-fi
+# # If it didn't pass, announce it failed and print the output
+# if [ $ret_code != 0 ]; then
+# 	printf "\n${RED}pylint linter failed:${NC}"
+# 	echo "$pylint\n"
+# 	pass=false
+# else
+# 	printf "${GREEN}pylint linter passed.${NC}\n"
+# fi
 
-# If there were no failures, it is good to commit
-if $pass; then
-	exit 0
-fi
+# # If there were no failures, it is good to commit
+# if $pass; then
+# 	exit 0
+# fi
 
 exit 1
