@@ -17,6 +17,10 @@ from customutils import attempt_connect, check_env_vars_all_loaded
 
 from responses import START_BOT_RESPONSE, SUCCESSFUL_CLEAR_CHAT, FAILED_CLEAR_CHAT_DUE_TO_GROUPCHAT, SHOW_KARMA_NO_HISTORY_RESPONSE
 from commands_strings import START_COMMAND, CLEAR_CHAT_COMMAND, SHOW_KARMA_COMMAND
+from annotations import types
+
+from handlers import gen_show_karma
+from telegramservice import PostgresKarmabotDatabaseService, PostgresDBConfig
 
 LOG_LEVEL_ENV_VAR = os.environ.get('LOG_LEVEL')
 LOG_LEVEL = None
@@ -51,18 +55,6 @@ def restricted(func):
         return func(bot, update, *args, **kwargs)
     return wrapped
 
-
-def types(func):
-    """Used by bot handlers that respond with text.
-    ChatAction.Typing is called which makes the bot look like it's typing"""
-    @wraps(func)
-    def wrapped(bot, update, *args, **kwargs):
-        """function to wrap"""
-        bot.send_chat_action(
-            chat_id=update.message.chat_id,
-            action=tg.ChatAction.TYPING)
-        return func(bot, update, *args, **kwargs)
-    return wrapped
 
 
 
@@ -365,6 +357,12 @@ def main():
         logging.info(f"Env vars not set that are required: {str(var)}")
         sys.exit(1)
 
+    HOST = os.environ.get("POSTGRES_HOSTNAME")
+    DATABASE = os.environ.get("POSTGRES_DB")
+    USER = os.environ.get("POSTGRES_USER")
+    PASSWORD = os.environ.get("POSTGRES_PASS")
+    dbConfig = PostgresDBConfig(HOST, DATABASE, USER, PASSWORD)
+    db_service = PostgresKarmabotDatabaseService(dbConfig)
     # Setup bot token from environment variables
     bot_token = os.environ.get('BOT_TOKEN')
 
@@ -377,7 +375,7 @@ def main():
     reply_handler = MessageHandler(Filters.reply, reply)
     dispatcher.add_handler(reply_handler)
 
-    showkarma_handler = CommandHandler(SHOW_KARMA_COMMAND, show_karma, pass_args=True)
+    showkarma_handler = CommandHandler(SHOW_KARMA_COMMAND, gen_show_karma(db_service), pass_args=True)
     dispatcher.add_handler(showkarma_handler)
 
     show_user_handler = CommandHandler(
