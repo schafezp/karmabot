@@ -38,7 +38,7 @@ LOGGER = logging.getLogger(__name__)
 
 
 VERSION = '1.04'  # TODO: make this automatic
-CHANGELOG_URL = 'https://schafezp.com/schafezp/txkarmabot/blob/master/CHANGELOG.md'
+CHANGELOG_URL = 'https://github.com/schafezp/karmabot'
 
 
 LIST_OF_ADMINS = [65278791]
