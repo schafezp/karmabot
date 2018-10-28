@@ -25,6 +25,7 @@ class KarmabotDatabaseService:
 
 class PostgresKarmabotDatabaseService(KarmabotDatabaseService):
     """Does connections to postgres"""
+    #TODO: trigger use_commmand on function invocations (perhaps add annotation?)
     def __init__(self, dbConfig: PostgresDBConfig):
         try:
             self.conn = psycopg2.connect(
