@@ -1,11 +1,12 @@
-from annotations import types
-from telegramservice import KarmabotDatabaseService
-from formatters import format_show_karma_for_users_in_chat
-import logging
-import telegram as tg
 import re
-import postgres_funcs as pf
-from models import User, Telegram_Chat, Telegram_Message, user_from_tg_user
+import logging
+
+import telegram as tg
+
+from .annotations import types
+from .telegramservice import KarmabotDatabaseService
+from .formatters import format_show_karma_for_users_in_chat
+from .models import User, Telegram_Chat, Telegram_Message, user_from_tg_user
 
 def gen_show_karma(dbservice: KarmabotDatabaseService):
     """Handler show the karma in the chat"""

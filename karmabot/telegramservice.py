@@ -1,10 +1,9 @@
 """Manages class for telegram service.
 """
 from typing import List, Tuple, Optional
-import psycopg2
-from customutils import attempt_connect
 from dataclasses import dataclass
-from models import User, Telegram_Chat, Telegram_Message, User_in_Chat
+import psycopg2
+from .models import User, Telegram_Chat, Telegram_Message, User_in_Chat
 
 class InvalidDBConfig(Exception):
     pass

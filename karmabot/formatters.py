@@ -1,7 +1,7 @@
 """Used for formatting the result of db queries
 """
 from typing import List, Tuple
-from responses import SHOW_KARMA_NO_HISTORY_RESPONSE
+from .responses import SHOW_KARMA_NO_HISTORY_RESPONSE
 
 
 def format_show_karma_for_users_in_chat(user_data_rows: List[Tuple[str, str, int]]) -> str:

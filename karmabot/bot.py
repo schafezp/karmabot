@@ -11,16 +11,16 @@ import telegram as tg
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
 
-from models import User, Telegram_Chat, Telegram_Message, user_from_tg_user
-import postgres_funcs as pf
-from customutils import attempt_connect, check_env_vars_all_loaded
+from .models import User, Telegram_Chat, Telegram_Message, user_from_tg_user
+from . import postgres_funcs as pf
+from .customutils import attempt_connect, check_env_vars_all_loaded
 
-from responses import START_BOT_RESPONSE, SUCCESSFUL_CLEAR_CHAT, FAILED_CLEAR_CHAT_DUE_TO_GROUPCHAT, SHOW_KARMA_NO_HISTORY_RESPONSE
-from commands_strings import START_COMMAND, CLEAR_CHAT_COMMAND, SHOW_KARMA_COMMAND
-from annotations import types
+from .responses import START_BOT_RESPONSE, SUCCESSFUL_CLEAR_CHAT, FAILED_CLEAR_CHAT_DUE_TO_GROUPCHAT, SHOW_KARMA_NO_HISTORY_RESPONSE
+from .commands_strings import START_COMMAND, CLEAR_CHAT_COMMAND, SHOW_KARMA_COMMAND
+from .annotations import types
 
-from handlers import gen_show_karma, gen_reply
-from telegramservice import PostgresKarmabotDatabaseService, PostgresDBConfig
+from .handlers import gen_show_karma, gen_reply
+from .telegramservice import PostgresKarmabotDatabaseService, PostgresDBConfig
 
 LOG_LEVEL_ENV_VAR = os.environ.get('LOG_LEVEL')
 LOG_LEVEL = None
@@ -361,8 +361,8 @@ def main():
     DATABASE = os.environ.get("POSTGRES_DB")
     USER = os.environ.get("POSTGRES_USER")
     PASSWORD = os.environ.get("POSTGRES_PASS")
-    dbConfig = PostgresDBConfig(HOST, DATABASE, USER, PASSWORD)
-    db_service = PostgresKarmabotDatabaseService(dbConfig)
+    db_config = PostgresDBConfig(HOST, DATABASE, USER, PASSWORD)
+    db_service = PostgresKarmabotDatabaseService(db_config)
     # Setup bot token from environment variables
     bot_token = os.environ.get('BOT_TOKEN')
 
@@ -409,7 +409,6 @@ def main():
         CLEAR_CHAT_COMMAND, clear_chat_with_bot)
     dispatcher.add_handler(clear_chat_with_bot_handler)
 
-
     dispatcher.add_error_handler(error)
 
     updater.start_polling()
@@ -425,6 +424,7 @@ def main():
 
     cursor.close()
     conn.close()
+
 
 if __name__ == '__main__':
     main()
