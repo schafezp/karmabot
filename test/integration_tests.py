@@ -5,7 +5,7 @@ import unittest
 import re
 from tgintegration import BotIntegrationClient
 from karmabot.responses import START_BOT_RESPONSE, SUCCESSFUL_CLEAR_CHAT, SHOW_KARMA_NO_HISTORY_RESPONSE
-from karmabot.commands_strings import START_COMMAND, CLEAR_CHAT_COMMAND, SHOW_KARMA_COMMAND
+from karmabot.commands_strings import START_COMMAND, CLEAR_CHAT_COMMAND, SHOW_KARMA_COMMAND, USER_INFO_COMMAND
 
 
 class IntegrationTests(unittest.TestCase):
@@ -127,6 +127,18 @@ class IntegrationTests(unittest.TestCase):
     #TODO: test keyboard implementation
     #TODO: test non existent use cases (userstats where userid doesn't exist, etc)
     #TODO: host multiple bots with swarm and split integration tests amoung them
+
+    def test_userinfo(self):
+        # self.client.send_command_await(CLEAR_CHAT_COMMAND)
+        # show_karma_response = self.client.send_command_await(SHOW_KARMA_COMMAND, num_expected=1)
+        # self.assertEqual(len(show_karma_response.messages), 1)
+        # message = show_karma_response.messages[0]
+        # chat_id = message.chat.id
+        # message_id = message.message_id
+        # self.client.send_message(chat_id, "+1", reply_to_message_id=message_id)
+        command = f"{USER_INFO_COMMAND} {self.TEST_BOT_NAME[1:]}"
+        user_info_response = self.client.send_command_await(command, num_expected=1)
+        self.assertEqual(len(user_info_response.messages), 1)
 
 
 
