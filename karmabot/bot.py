@@ -19,7 +19,7 @@ from responses import START_BOT_RESPONSE, SUCCESSFUL_CLEAR_CHAT, FAILED_CLEAR_CH
 from commands_strings import START_COMMAND, CLEAR_CHAT_COMMAND, SHOW_KARMA_COMMAND
 from annotations import types
 
-from handlers import gen_show_karma
+from handlers import gen_show_karma, gen_reply
 from telegramservice import PostgresKarmabotDatabaseService, PostgresDBConfig
 
 LOG_LEVEL_ENV_VAR = os.environ.get('LOG_LEVEL')
@@ -372,7 +372,7 @@ def main():
     start_handler = CommandHandler(START_COMMAND, start)
     dispatcher.add_handler(start_handler)
 
-    reply_handler = MessageHandler(Filters.reply, reply)
+    reply_handler = MessageHandler(Filters.reply, gen_reply(db_service))
     dispatcher.add_handler(reply_handler)
 
     showkarma_handler = CommandHandler(SHOW_KARMA_COMMAND, gen_show_karma(db_service), pass_args=True)
