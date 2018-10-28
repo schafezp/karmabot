@@ -4,6 +4,7 @@ from typing import List, Tuple, Optional
 from dataclasses import dataclass
 import psycopg2
 from .models import User, Telegram_Chat, Telegram_Message, User_in_Chat
+import logging
 
 class InvalidDBConfig(Exception):
     pass
@@ -23,7 +24,8 @@ class KarmabotDatabaseService:
         """Gets karma for user in chat"""
         raise NotImplementedError
 
-    def get_random_witty_response(self) -> str:
+    #TODO: don't return optional
+    def get_random_witty_response(self) -> Optional[str]:
         raise NotImplementedError
 
     def save_or_create_user(self, user: User) -> User:
@@ -44,7 +46,7 @@ class KarmabotDatabaseService:
 class PostgresKarmabotDatabaseService(KarmabotDatabaseService):
     """Does connections to postgres"""
     #TODO: trigger use_commmand on function invocations (perhaps add annotation?)
-    def __init__(self, db_config: PostgresDBConfig):
+    def __init__(self, db_config: PostgresDBConfig) -> None:
         try:
             self.conn = psycopg2.connect(
                 host=db_config.host,
@@ -197,7 +199,7 @@ class PostgresKarmabotDatabaseService(KarmabotDatabaseService):
                     reply_to_user, chat.chat_id, change_karma=karma)
             else:
                 #TODO: move logging into handler
-                self.logging.info(
+                logging.info(
                     f"invalid karma: {karma} passed to user_reply_to_message")
             with self.conn:
                 with self.conn.cursor() as crs:
