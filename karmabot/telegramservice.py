@@ -24,6 +24,7 @@ class PostgresDBConfig:
 
 class KarmabotDatabaseService:
     """Base class for karmabot service"""
+    #TODO: make sure all my methods have docstrings
     def get_karma_for_users_in_chat(self, chat_id: str) -> List[Tuple[str, str, int]]:
         """Gets karma for user in chat"""
         raise NotImplementedError
@@ -51,6 +52,9 @@ class KarmabotDatabaseService:
         raise NotImplementedError
 
     def get_user_stats(self, username: str, chat_id: str) -> Dict:
+        raise NotImplementedError
+
+    def get_chat_info(self, chat_id: str):
         raise NotImplementedError
 
 class PostgresKarmabotDatabaseService(KarmabotDatabaseService):
@@ -328,6 +332,36 @@ class PostgresKarmabotDatabaseService(KarmabotDatabaseService):
                 'total_votes_given': positive_karma_given + negative_karma_given,
                 'net_karma_given': positive_karma_given - negative_karma_given}
         return output_dict
+
+    def get_chat_info(self, chat_id: str) -> Dict:
+        """Returns Dictionary of statistics for a chat given a chat_id"""
+        count_reacts_cmd = """select count(tm.message_id) from user_reacted_to_message urtm
+    left join telegram_message tm ON tm.message_id = urtm.message_id
+    where tm.chat_id=%s"""
+        select_user_with_karma_count = """
+        select count(*) from telegram_chat tc
+        left join user_in_chat uic on uic.chat_id = tc.chat_id
+        where tc.chat_id=%s
+        """
+        with self.conn:
+            with self.conn.cursor() as crs:
+                reply_count = None
+                user_with_karma_count = None
+                crs.execute(count_reacts_cmd, [chat_id])
+                result = crs.fetchone()
+                if result is not None:
+                    reply_count = result[0]
+                else:
+                    reply_count = 0
+
+                crs.execute(select_user_with_karma_count, [chat_id])
+                result = crs.fetchone()
+                if result is not None:
+                    user_with_karma_count = result[0]
+                else:
+                    user_with_karma_count = 0
+                return {'reply_count': reply_count,
+                        'user_with_karma_count': user_with_karma_count}
 
 class Neo4jKarmabotDatabaseService(KarmabotDatabaseService):
     """Does connections to neo4j"""

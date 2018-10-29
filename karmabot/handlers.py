@@ -131,3 +131,21 @@ def gen_show_user_stats(db_service: KarmabotDatabaseService):
         bot.send_message(chat_id=update.message.chat_id, text=message, parse_mode=tg.ParseMode.HTML)
 
     return show_user_stats
+
+def gen_show_chat_info(db_service: KarmabotDatabaseService):
+    @types
+    def show_chat_info(bot, update, args):
+        """Handler to show information about current chat """
+        # use_command(
+        #     'chatinfo', user_from_tg_user(
+        #         update.message.from_user), str(
+        #             update.message.chat_id))
+        chat_id = str(update.message.chat_id)
+        title = update.message.chat.title
+        if title is None:
+            title = "No Title"
+        result = db_service.get_chat_info(chat_id)
+        message = "<b>Chat Name:</b> {:s}\n Number of Users with Karma: {:d}\n Total Reply Count: {:d}".format(
+            title, result['user_with_karma_count'], result['reply_count'])
+        bot.send_message(chat_id=update.message.chat_id, text=message, parse_mode=tg.ParseMode.HTML)
+    return show_chat_info

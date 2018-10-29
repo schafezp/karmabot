@@ -15,10 +15,10 @@ from . import postgres_funcs as pf
 from .customutils import attempt_connect, check_env_vars_all_loaded
 
 from .responses import START_BOT_RESPONSE, SUCCESSFUL_CLEAR_CHAT, FAILED_CLEAR_CHAT_DUE_TO_GROUPCHAT, SHOW_KARMA_NO_HISTORY_RESPONSE
-from .commands_strings import START_COMMAND, CLEAR_CHAT_COMMAND, SHOW_KARMA_COMMAND, USER_INFO_COMMAND
+from .commands_strings import START_COMMAND, CLEAR_CHAT_COMMAND, SHOW_KARMA_COMMAND, USER_INFO_COMMAND, CHAT_INFO_COMMAND
 from .annotations import types
 
-from .handlers import gen_show_karma, gen_reply, gen_show_user_stats
+from .handlers import gen_show_karma, gen_reply, gen_show_user_stats, gen_show_chat_info
 from .telegramservice import PostgresKarmabotDatabaseService, PostgresDBConfig
 
 LOG_LEVEL_ENV_VAR = os.environ.get('LOG_LEVEL')
@@ -172,22 +172,6 @@ def show_karma(bot, update, args):
     bot.send_message(chat_id=update.message.chat_id, text=message, parse_mode=tg.ParseMode.HTML)
 
 
-@types
-def show_chat_info(bot, update, args):
-    """Handler to show information about current chat """
-    use_command(
-        'chatinfo', user_from_tg_user(
-            update.message.from_user), str(
-                update.message.chat_id))
-    chat_id = str(update.message.chat_id)
-    title = update.message.chat.title
-    if title is None:
-        title = "No Title"
-    result = pf.get_chat_info(chat_id, conn)
-    message = "<b>Chat Name:</b> {:s}\n Number of Users with Karma: {:d}\n Total Reply Count: {:d}".format(
-        title, result['user_with_karma_count'], result['reply_count'])
-    bot.send_message(chat_id=update.message.chat_id, text=message, parse_mode=tg.ParseMode.HTML)
-
 
 @restricted
 def am_i_admin(bot, update, args):
@@ -275,6 +259,7 @@ def main():
     start_handler = CommandHandler(START_COMMAND, start)
     dispatcher.add_handler(start_handler)
 
+    #TODO: determine better way to get db_service in scope than to inject into each funcntion
     reply_handler = MessageHandler(Filters.reply, gen_reply(db_service))
     dispatcher.add_handler(reply_handler)
 
@@ -286,7 +271,7 @@ def main():
     dispatcher.add_handler(show_user_handler)
 
     chat_info_handler = CommandHandler(
-        'chatinfo', show_chat_info, pass_args=True)
+        CHAT_INFO_COMMAND, gen_show_chat_info(db_service), pass_args=True)
     dispatcher.add_handler(chat_info_handler)
 
     am_i_admin_handler = CommandHandler('amiadmin', am_i_admin, pass_args=True)
