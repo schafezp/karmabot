@@ -28,7 +28,6 @@ def gen_show_karma(dbservice: KarmabotDatabaseService):
 
 def gen_reply(dbservice: KarmabotDatabaseService):
 
-    @types
     def reply(bot: tg.Bot, update: tg.Update):
         """Handler that's run when one user replies to another userself.
         This handler checks if an upvote or downvote are given"""
