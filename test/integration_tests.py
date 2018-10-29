@@ -5,7 +5,7 @@ import unittest
 import re
 from tgintegration import BotIntegrationClient
 from karmabot.responses import START_BOT_RESPONSE, SUCCESSFUL_CLEAR_CHAT, SHOW_KARMA_NO_HISTORY_RESPONSE
-from karmabot.commands_strings import START_COMMAND, CLEAR_CHAT_COMMAND, SHOW_KARMA_COMMAND, USER_INFO_COMMAND
+from karmabot.commands_strings import START_COMMAND, CLEAR_CHAT_COMMAND, SHOW_KARMA_COMMAND, USER_INFO_COMMAND, CHAT_INFO_COMMAND
 
 
 class IntegrationTests(unittest.TestCase):
@@ -140,6 +140,9 @@ class IntegrationTests(unittest.TestCase):
         user_info_response = self.client.send_command_await(command, num_expected=1)
         self.assertEqual(len(user_info_response.messages), 1)
 
+    def test_chatinfo(self):
+        response = self.client.send_command_await(CHAT_INFO_COMMAND, num_expected=1)
+        self.assertEqual(len(response.messages), 1)
 
 
 if __name__ == "__main__":
