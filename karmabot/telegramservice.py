@@ -50,7 +50,7 @@ class KarmabotDatabaseService:
             karma: int):
         raise NotImplementedError
 
-    def get_user_stats(username: str, chat_id: str) -> Dict:
+    def get_user_stats(self, username: str, chat_id: str) -> Dict:
         raise NotImplementedError
 
 class PostgresKarmabotDatabaseService(KarmabotDatabaseService):
