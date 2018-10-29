@@ -149,6 +149,12 @@ class IntegrationTests(unittest.TestCase):
         #TODO: check that number of users with karma is 2
         #TODO: Check total reply count
 
+    @unittest.skip("test not yet implemented")
+    def test_history_graph(self):
+        #TODO: run command, check that a file asset is sent back
+        #TODO: add another test case for showing a file not being sent when there is no data in the chat
+        pass
 
 if __name__ == "__main__":
+    #TOOD: seperate this into test suites for the various features
     unittest.main()
