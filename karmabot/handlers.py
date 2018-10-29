@@ -2,6 +2,8 @@ import re
 import logging
 
 import telegram as tg
+import matplotlib.pyplot as plt
+from matplotlib.ticker import MaxNLocator
 
 from .annotations import types
 from .telegramservice import KarmabotDatabaseService, UserNotFound
@@ -149,3 +151,39 @@ def gen_show_chat_info(db_service: KarmabotDatabaseService):
             title, result['user_with_karma_count'], result['reply_count'])
         bot.send_message(chat_id=update.message.chat_id, text=message, parse_mode=tg.ParseMode.HTML)
     return show_chat_info
+
+def gen_show_history_graph(db_service: KarmabotDatabaseService):
+
+    def show_history_graph(bot: tg.Bot, update: tg.Update):
+        """Handler to show a graph of upvotes/downvotes per day"""
+        chat_id = str(update.message.chat_id)
+        chat_name = str(update.message.chat.title)
+        if chat_name is None:
+            chat_name = "Chat With Bot"
+        result = db_service.get_responses_per_day(chat_id)
+        logging.info(f"result: {result}")
+
+        if result is None or result == []:
+            bot.send_message(chat_id=update.message.chat_id, text="No responses for this chat")
+            return
+
+        bot.send_chat_action(
+            chat_id=update.message.chat_id,
+            action=tg.ChatAction.UPLOAD_PHOTO)
+
+        days, responses = zip(*result)
+
+        figure_name = f'/output/graph_{chat_id}.png'
+        fig = plt.figure()
+        ax = fig.add_subplot(1, 1, 1)
+        ax.plot(days, responses)
+        ax.set_ylabel('Upvotes and Downvotes')
+        ax.set_xlabel('Day')
+        ax.yaxis.set_major_locator(MaxNLocator(integer=True))
+        ax.set_title(f'{chat_name}: User votes per day')
+        fig.autofmt_xdate()
+        fig.savefig(figure_name)
+
+
+        bot.send_photo(chat_id=update.message.chat_id, photo=open(figure_name, 'rb'))
+    return show_history_graph

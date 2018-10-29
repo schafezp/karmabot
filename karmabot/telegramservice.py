@@ -54,8 +54,15 @@ class KarmabotDatabaseService:
     def get_user_stats(self, username: str, chat_id: str) -> Dict:
         raise NotImplementedError
 
-    def get_chat_info(self, chat_id: str):
+    def get_chat_info(self, chat_id: str) -> Dict:
         raise NotImplementedError
+
+    # TODO: give option for using day/week as well as start/end date
+
+    def get_responses_per_day(self, chat_id: str) -> Optional[Tuple[str, str]]:
+        """Returns responses per day per chat"""
+        raise NotImplementedError
+
 
 class PostgresKarmabotDatabaseService(KarmabotDatabaseService):
     """Does connections to postgres"""
@@ -362,6 +369,19 @@ class PostgresKarmabotDatabaseService(KarmabotDatabaseService):
                     user_with_karma_count = 0
                 return {'reply_count': reply_count,
                         'user_with_karma_count': user_with_karma_count}
+
+    def get_responses_per_day(self, chat_id: str) -> Optional[Tuple[str, str]]:
+        """Returns responses per day per chat"""
+        cmd = """select date_trunc('day',tm.message_time ) "day", count(*) as result_nums
+                    from user_reacted_to_message urtm 
+                    LEFT JOIN telegram_message tm ON tm.message_id=urtm.message_id
+                    WHERE tm.chat_id = %s AND tm.message_time is not null
+                    group by 1
+                    order by 1"""
+        with self.conn:
+            with self.conn.cursor() as crs:
+                crs.execute(cmd, [chat_id])
+                return crs.fetchall()
 
 class Neo4jKarmabotDatabaseService(KarmabotDatabaseService):
     """Does connections to neo4j"""
