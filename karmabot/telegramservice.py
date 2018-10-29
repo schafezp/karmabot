@@ -1,12 +1,16 @@
 """Manages class for telegram service.
 """
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Optional, Dict
 from dataclasses import dataclass
 import psycopg2
 from .models import User, Telegram_Chat, Telegram_Message, User_in_Chat
 import logging
 
 class InvalidDBConfig(Exception):
+    pass
+
+class UserNotFound(Exception):
+    """Returned when no valid user is found"""
     pass
 
 @dataclass
@@ -24,6 +28,9 @@ class KarmabotDatabaseService:
         """Gets karma for user in chat"""
         raise NotImplementedError
 
+    #TODO: determine if this should be on public api
+    # def get_user_by_username(self, username: str) -> User:
+    #     raise NotImplementedError
     #TODO: don't return optional
     def get_random_witty_response(self) -> Optional[str]:
         raise NotImplementedError
@@ -41,6 +48,9 @@ class KarmabotDatabaseService:
             original_message: Telegram_Message,
             reply_message: Telegram_Message,
             karma: int):
+        raise NotImplementedError
+
+    def get_user_stats(username: str, chat_id: str) -> Dict:
         raise NotImplementedError
 
 class PostgresKarmabotDatabaseService(KarmabotDatabaseService):
@@ -68,6 +78,16 @@ class PostgresKarmabotDatabaseService(KarmabotDatabaseService):
                 # does not exist
                 crs.execute(cmd, [chat_id])
                 return crs.fetchall()
+
+    def get_user_by_username(self, username: str) -> User:
+        """Returns User given that user's username"""
+        with self.conn:
+            with self.conn.cursor() as crs:  # I would love type hints here but psycopg2.cursor isn't a defined class
+                selectcmd = "SELECT user_id, username, first_name, last_name from telegram_user tu where tu.username=%s"
+                crs.execute(selectcmd, [username])
+                res = crs.fetchone()
+                return User(res[0], res[1], res[2], res[3])
+
 
     def get_random_witty_response(self)-> Optional[str]:
         """Returns a random witty response. Uses USER_FIRST_NAME as replace string for actual user first name"""
@@ -221,6 +241,93 @@ class PostgresKarmabotDatabaseService(KarmabotDatabaseService):
                         karma,
                         reply_message.message_id]
                     crs.execute(inserturtm, argsurtm)
+
+    #TODO: determine if this should be in the public api (super)
+    def did_user_react_to_messages(self, username: str) -> bool:
+        """Returns true if a user has responded to some messages"""
+        select_user_replies = """select username, message_id, react_score, react_message_id  from telegram_user tu
+                left join user_reacted_to_message urtm on urtm.user_id=tu.user_id
+                where tu.username = %s"""
+        reacted_messages_result = None
+        with self.conn:
+            with self.conn.cursor() as crs:
+                crs.execute(select_user_replies, [username])
+                reacted_messages_result = crs.fetchone()
+                return reacted_messages_result is not None
+
+    def get_karma_for_user_in_chat(self,
+            username: str,
+            chat_id: str) -> Optional[int]:
+        """Returns karma for a particular user in chat
+        if that uic does not exist, return None"""
+        cmd = """select karma from telegram_user tu
+            LEFT JOIN user_in_chat uic ON uic.user_id=tu.user_id
+            where tu.username=%s AND uic.chat_id=%s"""
+        with self.conn:
+            with self.conn.cursor() as crs:
+                # TODO: handle | psycopg2.ProgrammingError: relation "user_in_chat"
+                # does not exist
+                crs.execute(cmd, [username, chat_id])
+                result = crs.fetchone()
+                if result is not None:
+                    return result[0]
+                return result
+
+    # TODO: pass in user_id
+    # TODO: implement this as a stored procedure instead since there is a number of round trips
+    # TODO: return some structure and then parse it
+
+    def get_user_stats(self, username: str, chat_id: str) -> Dict:
+        """Returns Dictionary of statistics for a user given a username"""
+        user = self.get_user_by_username(username)
+        if user is None:
+            raise UserNotFound()
+        user_has_reacts = self.did_user_react_to_messages(username)
+        karma = self.get_karma_for_user_in_chat(username, chat_id)
+        if karma is None:
+            karma = 0
+
+        output_dict = None
+        if not user_has_reacts:
+            output_dict = {
+                'username': username,
+                'karma': karma,
+                'upvotes_given': 0,
+                'downvotes_given': 0,
+                'total_votes_given': 0,
+                'net_karma_given': 0}
+        else:
+            # how many reacts given out by user
+            how_many_user_reacted_to_stats = """select react_score, count(react_score)from
+                (select username, message_id, react_score, react_message_id  from telegram_user tu
+                left join user_reacted_to_message urtm on urtm.user_id=tu.user_id
+                where tu.username = %s) as sub left join telegram_message tm on  tm.message_id= sub.message_id
+                where tm.chat_id=%s group by react_score;"""
+            # TODO: implement how many reacts recieved by user
+            negative_karma_given = 0
+            positive_karma_given = 0
+            with self.conn:
+                with self.conn.cursor() as crs:
+                    crs.execute(
+                        how_many_user_reacted_to_stats, [
+                            username, chat_id])
+                    rows = crs.fetchall()
+                    # there are only two rows
+                    for row in rows:
+                        if row[0] == -1:
+                            negative_karma_given = int(row[1])
+                        if row[0] == 1:
+                            positive_karma_given = int(row[1])
+
+            # TODO: make this output type a class instead to bundle this info
+            output_dict = {
+                'username': username,
+                'karma': karma,
+                'upvotes_given': positive_karma_given,
+                'downvotes_given': negative_karma_given,
+                'total_votes_given': positive_karma_given + negative_karma_given,
+                'net_karma_given': positive_karma_given - negative_karma_given}
+        return output_dict
 
 class Neo4jKarmabotDatabaseService(KarmabotDatabaseService):
     """Does connections to neo4j"""

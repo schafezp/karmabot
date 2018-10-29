@@ -2,7 +2,6 @@
 import logging
 import os
 import sys
-import re
 from typing import Tuple, List
 from functools import wraps
 
@@ -16,10 +15,10 @@ from . import postgres_funcs as pf
 from .customutils import attempt_connect, check_env_vars_all_loaded
 
 from .responses import START_BOT_RESPONSE, SUCCESSFUL_CLEAR_CHAT, FAILED_CLEAR_CHAT_DUE_TO_GROUPCHAT, SHOW_KARMA_NO_HISTORY_RESPONSE
-from .commands_strings import START_COMMAND, CLEAR_CHAT_COMMAND, SHOW_KARMA_COMMAND
+from .commands_strings import START_COMMAND, CLEAR_CHAT_COMMAND, SHOW_KARMA_COMMAND, USER_INFO_COMMAND
 from .annotations import types
 
-from .handlers import gen_show_karma, gen_reply
+from .handlers import gen_show_karma, gen_reply, gen_show_user_stats
 from .telegramservice import PostgresKarmabotDatabaseService, PostgresDBConfig
 
 LOG_LEVEL_ENV_VAR = os.environ.get('LOG_LEVEL')
@@ -79,51 +78,7 @@ def show_version(bot, update, args):
     bot.send_message(chat_id=update.message.chat_id, text=message)
 
 
-@types
-def show_user_stats(bot, update, args):
-    """Handler to return statistics on user"""
-    # TODO: remove this boiler plate code somehow
-    # without this if this is the first command run alone with the bot it will
-    # fail due to psycopg2.IntegrityError: insert or update on table
-    # "command_used" violates foreign key constraint
-    # "command_used_chat_id_fkey"
-    chat = Telegram_Chat(str(update.message.chat_id),
-                         update.message.chat.title)
-    pf.save_or_create_chat(chat, conn)
 
-    chat_id = str(update.message.chat_id)
-    if len(args) != 1:
-        bot.send_message(
-            chat_id=update.message.chat_id,
-            text="use command like: /userinfo username")
-        return
-    username = args[0]
-    if username[0] == "@":
-        username = username[1:]
-
-    use_command(
-        'userinfo', user_from_tg_user(
-            update.message.from_user), str(
-                update.message.chat_id), arguments=username)
-
-    message = None
-    try:
-        result = pf.get_user_stats(username, chat_id, conn)
-        message = """<b>Username:</b> {:s} Karma: {:d}
-        Karma given out stats:
-        Upvotes, Downvotes, Total Votes, Net Karma
-        {:d}, {:d}, {:d}, {:d}"""
-        message = message.format(
-            result['username'],
-            result['karma'],
-            result['upvotes_given'],
-            result['downvotes_given'],
-            result['total_votes_given'],
-            result['net_karma_given'])
-    except pf.UserNotFound as _:
-        message = f"No user with username: {username}"
-
-    bot.send_message(chat_id=update.message.chat_id, text=message, parse_mode=tg.ParseMode.HTML)
 
 
 def show_history_graph(bot: tg.Bot, update: tg.Update):
@@ -327,7 +282,7 @@ def main():
     dispatcher.add_handler(showkarma_handler)
 
     show_user_handler = CommandHandler(
-        'userinfo', show_user_stats, pass_args=True)
+        USER_INFO_COMMAND, gen_show_user_stats(db_service), pass_args=True)
     dispatcher.add_handler(show_user_handler)
 
     chat_info_handler = CommandHandler(

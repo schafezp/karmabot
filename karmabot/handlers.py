@@ -4,7 +4,7 @@ import logging
 import telegram as tg
 
 from .annotations import types
-from .telegramservice import KarmabotDatabaseService
+from .telegramservice import KarmabotDatabaseService, UserNotFound
 from .formatters import format_show_karma_for_users_in_chat
 from .models import User, Telegram_Chat, Telegram_Message, user_from_tg_user
 
@@ -81,3 +81,53 @@ def gen_reply(dbservice: KarmabotDatabaseService):
             logging.debug(replying_user)
             logging.debug(reply_user)
     return reply
+
+
+def gen_show_user_stats(db_service: KarmabotDatabaseService):
+    @types
+    def show_user_stats(bot, update, args):
+        """Handler to return statistics on user"""
+        # TODO: remove this boiler plate code somehow
+        # without this if this is the first command run alone with the bot it will
+        # fail due to psycopg2.IntegrityError: insert or update on table
+        # "command_used" violates foreign key constraint
+        # "command_used_chat_id_fkey"
+        chat = Telegram_Chat(str(update.message.chat_id),
+                             update.message.chat.title)
+        db_service.save_or_create_chat(chat)
+
+        chat_id = str(update.message.chat_id)
+        if len(args) != 1:
+            bot.send_message(
+                chat_id=update.message.chat_id,
+                text="use command like: /userinfo username")
+            return
+        username = args[0]
+        if username[0] == "@":
+            username = username[1:]
+
+        # use_command(
+        #     'userinfo', user_from_tg_user(
+        #         update.message.from_user), str(
+        #         update.message.chat_id), arguments=username)
+
+        message = None
+        try:
+            result = db_service.get_user_stats(username, chat_id)
+            message = """<b>Username:</b> {:s} Karma: {:d}
+            Karma given out stats:
+            Upvotes, Downvotes, Total Votes, Net Karma
+            {:d}, {:d}, {:d}, {:d}"""
+            message = message.format(
+                result['username'],
+                result['karma'],
+                result['upvotes_given'],
+                result['downvotes_given'],
+                result['total_votes_given'],
+                result['net_karma_given'])
+        except UserNotFound as _:
+            message = f"No user with username: {username}"
+
+        bot.send_message(chat_id=update.message.chat_id, text=message, parse_mode=tg.ParseMode.HTML)
+
+    return show_user_stats
