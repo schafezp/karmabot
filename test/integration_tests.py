@@ -143,6 +143,8 @@ class IntegrationTests(unittest.TestCase):
     def test_chatinfo(self):
         response = self.client.send_command_await(CHAT_INFO_COMMAND, num_expected=1)
         self.assertEqual(len(response.messages), 1)
+        #TODO: check that number of users with karma is 2
+        #TODO: Check total reply count
 
 
 if __name__ == "__main__":
