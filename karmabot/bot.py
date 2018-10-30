@@ -28,7 +28,7 @@ if LOG_LEVEL_ENV_VAR == "debug":
 elif LOG_LEVEL_ENV_VAR == "info":
     LOG_LEVEL = logging.INFO
 else:
-    LOG_LEVEL = logging.INFO
+    LOG_LEVEL = logging.ERROR
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
