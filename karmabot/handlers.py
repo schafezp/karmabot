@@ -8,7 +8,7 @@ from matplotlib.ticker import MaxNLocator
 from .annotations import types
 from .telegramservice import KarmabotDatabaseService, UserNotFound
 from .formatters import format_show_karma_for_users_in_chat
-from .models import Telegram_Chat, Telegram_Message, user_from_tg_user
+from .models import Telegram_Chat, Telegram_Message, user_from_tg_user, User
 from .responses import START_BOT_RESPONSE, FAILED_CLEAR_CHAT_DUE_TO_GROUPCHAT, SUCCESSFUL_CLEAR_CHAT
 
 VERSION = '1.04'  # TODO: make this automatic
@@ -219,3 +219,28 @@ def gen_clear_chat_with_bot(db_service: KarmabotDatabaseService):
         db_service.clear_chat_with_bot(chat_id, user_id)
 
     return clear_chat_with_bot
+
+
+def gen_show_karma_personally(db_service: KarmabotDatabaseService):
+    @types
+    def show_karma_personally(bot, update: tg.Update):
+        """Conversation handler to allow users to check karma values through custom keyboard"""
+        user_id = update.effective_user.id
+        #user: User = user_from_tg_user(update.effective_user)
+        chat_id: str = str(update.message.chat_id)
+        result = db_service.get_chats_user_is_in(user_id)
+        #use_command('checkchatkarmas', user, chat_id)
+
+        keyboard = []
+        if result is not None:
+            for (chat_id, chat_name) in result:
+                if chat_name is not None:
+                    logging.info(f"Chat name:{chat_name}")
+                    keyboard.append([tg.InlineKeyboardButton(chat_name, callback_data=chat_id)])
+            reply_markup = tg.InlineKeyboardMarkup(keyboard)
+            update.message.reply_text('Please choose a chat:', reply_markup=reply_markup)
+        else:
+            update.message.reply_text("""No chats available.
+            You can only see chats you have given or received karma in.""")
+
+    return show_karma_personally

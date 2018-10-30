@@ -69,6 +69,9 @@ class KarmabotDatabaseService:
             If chat_id matches user_id then the chat is a 1 on 1 with a bot."""
         raise NotImplementedError
 
+    def get_chats_user_is_in(user_id: int, conn) -> Optional[List[Tuple[str, str]]]:
+        raise NotImplementedError
+
 
 class PostgresKarmabotDatabaseService(KarmabotDatabaseService):
     """Does connections to postgres"""
@@ -412,7 +415,18 @@ class PostgresKarmabotDatabaseService(KarmabotDatabaseService):
                 crs.execute(del_user_in_chat_cmd, [chat_id_str])
                 crs.execute(del_user_reacted_to_message_cmd, [chat_id_str])
                 crs.execute(del_telegram_messages, [chat_id_str])
+    #TODO: don't return optional
 
+    def get_chats_user_is_in(self, user_id: int) -> Optional[List[Tuple[str, str]]]:
+        """Returns a list of chat_ids and chat names """
+        cmd = """SELECT tc.chat_id, tc.chat_name from user_in_chat uic
+        LEFT JOIN telegram_chat tc on tc.chat_id = uic.chat_id
+        where uic.user_id = %s
+        """
+        with self.conn:
+            with self.conn.cursor() as crs:
+                crs.execute(cmd, [user_id])
+                return crs.fetchall()
 
 class Neo4jKarmabotDatabaseService(KarmabotDatabaseService):
     """Does connections to neo4j"""

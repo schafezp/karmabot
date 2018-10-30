@@ -8,16 +8,15 @@ from functools import wraps
 from telegram.ext import Filters, CommandHandler, MessageHandler, Updater, CallbackQueryHandler
 import telegram as tg
 
-from .models import User, user_from_tg_user
+from .models import User
 from . import postgres_funcs as pf
 from .customutils import attempt_connect, check_env_vars_all_loaded
 
 from .responses import SHOW_KARMA_NO_HISTORY_RESPONSE
 from .commands_strings import START_COMMAND, CLEAR_CHAT_COMMAND, SHOW_KARMA_COMMAND, USER_INFO_COMMAND, CHAT_INFO_COMMAND, HISTORY_GRAPH_COMMAND, SHOW_KARMA_KEYBOARD_COMMAND
-from .annotations import types
 
 from .handlers import start, show_version, gen_show_karma, gen_reply, gen_show_user_stats, gen_show_chat_info, \
-    gen_show_history_graph, gen_clear_chat_with_bot
+    gen_show_history_graph, gen_clear_chat_with_bot, gen_show_karma_personally
 from .telegramservice import PostgresKarmabotDatabaseService, PostgresDBConfig
 
 LOG_LEVEL_ENV_VAR = os.environ.get('LOG_LEVEL')
@@ -109,26 +108,7 @@ def am_i_admin(bot, update, args):
     bot.send_message(chat_id=update.message.chat_id, text=message)
 
 
-@types
-def show_karma_personally(bot, update: tg.Update):
-    """Conversation handler to allow users to check karma values through custom keyboard"""
-    user_id = update.effective_user.id
-    user: User = user_from_tg_user(update.effective_user)
-    chat_id: str = str(update.message.chat_id)
-    result = pf.get_chats_user_is_in(user_id, conn)
-    use_command('checkchatkarmas', user, chat_id)
 
-    keyboard = []
-    if result is not None:
-        for (chat_id, chat_name) in result:
-            if chat_name is not None:
-                logging.info(f"Chat name:{chat_name}")
-                keyboard.append([tg.InlineKeyboardButton(chat_name, callback_data=chat_id)])
-        reply_markup = tg.InlineKeyboardMarkup(keyboard)
-        update.message.reply_text('Please choose a chat:', reply_markup=reply_markup)
-    else:
-        update.message.reply_text("""No chats available.
-        You can only see chats you have given or received karma in.""")
 
 
 #TODO: rename
@@ -202,7 +182,7 @@ def main():
     dispatcher.add_handler(showversion_handler)
 
     show_karma_personally_handler = CommandHandler(
-        SHOW_KARMA_KEYBOARD_COMMAND, show_karma_personally)
+        SHOW_KARMA_KEYBOARD_COMMAND, gen_show_karma_personally(db_service))
     dispatcher.add_handler(show_karma_personally_handler)
     dispatcher.add_handler(CallbackQueryHandler(show_karma_personally_button_pressed))
 
