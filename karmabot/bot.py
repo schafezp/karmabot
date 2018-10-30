@@ -138,22 +138,6 @@ def format_show_karma_for_users_in_chat(chat_id):
     message = "<b>Username: Karma</b>\n" + message
     return message
 
-@types
-def show_karma(bot, update, args):
-    """Handler show the karma in the chat"""
-    use_command(
-        'showkarma', user_from_tg_user(
-            update.message.from_user), str(
-                update.message.chat_id))
-    logging.debug(f"Chat id: {str(update.message.chat_id)}")
-
-    # returns username, first_name, karma
-    chat_id = str(update.message.chat_id)
-    message = format_show_karma_for_users_in_chat(chat_id)
-
-    bot.send_message(chat_id=update.message.chat_id, text=message, parse_mode=tg.ParseMode.HTML)
-
-
 
 @restricted
 def am_i_admin(bot, update, args):
