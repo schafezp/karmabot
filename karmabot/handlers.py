@@ -66,7 +66,7 @@ def gen_reply(dbservice: KarmabotDatabaseService):
             update.message.text)
         reply_text = reply_message.message_text
 
-        if re.match("^([\+pP][1-9][0-9]*|[Pp]{2}).*", reply_text):
+        if re.match("^([+pP][1-9][0-9]*|[Pp]{2}).*", reply_text):
             # if user tried to +1 self themselves
             # chat id is user_id when the user is talking 1 on 1 with the bot
             if(replying_user.id == update.message.reply_to_message.from_user.id and chat_id != str(reply_user.id)):
