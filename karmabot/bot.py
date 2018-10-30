@@ -10,11 +10,11 @@ import telegram as tg
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
 
-from .models import User, Telegram_Chat, Telegram_Message, user_from_tg_user
+from .models import User, user_from_tg_user
 from . import postgres_funcs as pf
 from .customutils import attempt_connect, check_env_vars_all_loaded
 
-from .responses import START_BOT_RESPONSE, SUCCESSFUL_CLEAR_CHAT, FAILED_CLEAR_CHAT_DUE_TO_GROUPCHAT, SHOW_KARMA_NO_HISTORY_RESPONSE
+from .responses import SUCCESSFUL_CLEAR_CHAT, FAILED_CLEAR_CHAT_DUE_TO_GROUPCHAT, SHOW_KARMA_NO_HISTORY_RESPONSE
 from .commands_strings import START_COMMAND, CLEAR_CHAT_COMMAND, SHOW_KARMA_COMMAND, USER_INFO_COMMAND, CHAT_INFO_COMMAND, HISTORY_GRAPH_COMMAND
 from .annotations import types
 
@@ -36,7 +36,7 @@ logging.basicConfig(
 LOGGER = logging.getLogger(__name__)
 
 
-VERSION = '1.04'  # TODO: make this automatic
+
 CHANGELOG_URL = 'https://github.com/schafezp/karmabot'
 
 

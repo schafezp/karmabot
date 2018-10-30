@@ -8,8 +8,10 @@ from matplotlib.ticker import MaxNLocator
 from .annotations import types
 from .telegramservice import KarmabotDatabaseService, UserNotFound
 from .formatters import format_show_karma_for_users_in_chat
-from .models import User, Telegram_Chat, Telegram_Message, user_from_tg_user
+from .models import Telegram_Chat, Telegram_Message, user_from_tg_user
+from .responses import START_BOT_RESPONSE
 
+VERSION = '1.04'  # TODO: make this automatic
 
 def start(bot, update):
     """Message sent by bot upon first 1 on 1 interaction with the bot"""
