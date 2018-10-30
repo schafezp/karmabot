@@ -10,6 +10,14 @@ from .telegramservice import KarmabotDatabaseService, UserNotFound
 from .formatters import format_show_karma_for_users_in_chat
 from .models import User, Telegram_Chat, Telegram_Message, user_from_tg_user
 
+
+def start(bot, update):
+    """Message sent by bot upon first 1 on 1 interaction with the bot"""
+    bot.send_message(
+        chat_id=update.message.chat_id,
+        text=START_BOT_RESPONSE)
+
+
 def gen_show_karma(dbservice: KarmabotDatabaseService):
     """Handler show the karma in the chat"""
     """ use_command(

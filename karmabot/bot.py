@@ -18,7 +18,7 @@ from .responses import START_BOT_RESPONSE, SUCCESSFUL_CLEAR_CHAT, FAILED_CLEAR_C
 from .commands_strings import START_COMMAND, CLEAR_CHAT_COMMAND, SHOW_KARMA_COMMAND, USER_INFO_COMMAND, CHAT_INFO_COMMAND, HISTORY_GRAPH_COMMAND
 from .annotations import types
 
-from .handlers import gen_show_karma, gen_reply, gen_show_user_stats, gen_show_chat_info, gen_show_history_graph
+from .handlers import start, gen_show_karma, gen_reply, gen_show_user_stats, gen_show_chat_info, gen_show_history_graph
 from .telegramservice import PostgresKarmabotDatabaseService, PostgresDBConfig
 
 LOG_LEVEL_ENV_VAR = os.environ.get('LOG_LEVEL')
@@ -62,11 +62,7 @@ def restricted(func):
 #blocks here
 conn = attempt_connect()
 
-def start(bot, update):
-    """Message sent by bot upon first 1 on 1 interaction with the bot"""
-    bot.send_message(
-        chat_id=update.message.chat_id,
-        text=START_BOT_RESPONSE)
+
 
 
 @types
