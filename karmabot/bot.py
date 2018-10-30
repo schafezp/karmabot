@@ -7,8 +7,6 @@ from functools import wraps
 
 from telegram.ext import Filters, CommandHandler, MessageHandler, Updater, CallbackQueryHandler
 import telegram as tg
-import matplotlib.pyplot as plt
-from matplotlib.ticker import MaxNLocator
 
 from .models import User, user_from_tg_user
 from . import postgres_funcs as pf
@@ -58,38 +56,6 @@ def restricted(func):
 #this stops us from importing directly from this function: bad practice
 #blocks here
 conn = attempt_connect()
-
-
-def show_history_graph(bot: tg.Bot, update: tg.Update):
-    """Handler to show a graph of upvotes/downvotes per day"""
-    chat_id = str(update.message.chat_id)
-    chat_name = pf.get_chatname(chat_id, conn)
-    if chat_name is None:
-        chat_name = "Chat With Bot"
-    result = pf.get_responses_per_day(chat_id, conn)
-    if result is None:
-        bot.send_message(chat_id=update.message.chat_id, text="No responses for this chat")
-        return
-
-    bot.send_chat_action(
-        chat_id=update.message.chat_id,
-        action=tg.ChatAction.UPLOAD_PHOTO)
-
-    days, responses = zip(*result)
-
-    figure_name = f'/output/graph_{chat_id}.png'
-    fig = plt.figure()
-    ax = fig.add_subplot(1, 1, 1)
-    ax.plot(days, responses)
-    ax.set_ylabel('Upvotes and Downvotes')
-    ax.set_xlabel('Day')
-    ax.yaxis.set_major_locator(MaxNLocator(integer=True))
-    ax.set_title(f'{chat_name}: User votes per day')
-    fig.autofmt_xdate()
-    fig.savefig(figure_name)
-
-
-    bot.send_photo(chat_id=update.message.chat_id, photo=open(figure_name, 'rb'))
 
 # TODO: replace this with an annotation maybe?
 
