@@ -13,7 +13,7 @@ from . import postgres_funcs as pf
 from .customutils import attempt_connect, check_env_vars_all_loaded
 
 from .responses import SHOW_KARMA_NO_HISTORY_RESPONSE
-from .commands_strings import START_COMMAND, CLEAR_CHAT_COMMAND, SHOW_KARMA_COMMAND, USER_INFO_COMMAND, CHAT_INFO_COMMAND, HISTORY_GRAPH_COMMAND
+from .commands_strings import START_COMMAND, CLEAR_CHAT_COMMAND, SHOW_KARMA_COMMAND, USER_INFO_COMMAND, CHAT_INFO_COMMAND, HISTORY_GRAPH_COMMAND, SHOW_KARMA_KEYBOARD_COMMAND
 from .annotations import types
 
 from .handlers import start, show_version, gen_show_karma, gen_reply, gen_show_user_stats, gen_show_chat_info, \
@@ -202,7 +202,7 @@ def main():
     dispatcher.add_handler(showversion_handler)
 
     show_karma_personally_handler = CommandHandler(
-        'checkchatkarmas', show_karma_personally)
+        SHOW_KARMA_KEYBOARD_COMMAND, show_karma_personally)
     dispatcher.add_handler(show_karma_personally_handler)
     dispatcher.add_handler(CallbackQueryHandler(show_karma_personally_button_pressed))
 
