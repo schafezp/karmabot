@@ -18,7 +18,7 @@ from .responses import START_BOT_RESPONSE, SUCCESSFUL_CLEAR_CHAT, FAILED_CLEAR_C
 from .commands_strings import START_COMMAND, CLEAR_CHAT_COMMAND, SHOW_KARMA_COMMAND, USER_INFO_COMMAND, CHAT_INFO_COMMAND, HISTORY_GRAPH_COMMAND
 from .annotations import types
 
-from .handlers import start, gen_show_karma, gen_reply, gen_show_user_stats, gen_show_chat_info, gen_show_history_graph
+from .handlers import start, show_version, gen_show_karma, gen_reply, gen_show_user_stats, gen_show_chat_info, gen_show_history_graph
 from .telegramservice import PostgresKarmabotDatabaseService, PostgresDBConfig
 
 LOG_LEVEL_ENV_VAR = os.environ.get('LOG_LEVEL')
@@ -61,20 +61,6 @@ def restricted(func):
 #this stops us from importing directly from this function: bad practice
 #blocks here
 conn = attempt_connect()
-
-
-
-
-@types
-def show_version(bot, update, args):
-    """Handler to show the current version"""
-    message = f"Version: {VERSION}\nBot powered by Python."
-    # harder to hack the bot if source code is obfuscated :p
-    #message = message + "\nChangelog found at: " + changelog_url
-    bot.send_message(chat_id=update.message.chat_id, text=message)
-
-
-
 
 
 def show_history_graph(bot: tg.Bot, update: tg.Update):

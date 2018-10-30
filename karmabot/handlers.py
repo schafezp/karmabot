@@ -18,6 +18,15 @@ def start(bot, update):
         text=START_BOT_RESPONSE)
 
 
+@types
+def show_version(bot, update, args):
+    """Handler to show the current version"""
+    message = f"Version: {VERSION}\nBot powered by Python."
+    # harder to hack the bot if source code is obfuscated :p
+    #message = message + "\nChangelog found at: " + changelog_url
+    bot.send_message(chat_id=update.message.chat_id, text=message)
+
+
 def gen_show_karma(dbservice: KarmabotDatabaseService):
     """Handler show the karma in the chat"""
     """ use_command(
