@@ -9,7 +9,7 @@ from .annotations import types
 from .telegramservice import KarmabotDatabaseService, UserNotFound
 from .formatters import format_show_karma_for_users_in_chat
 from .models import Telegram_Chat, Telegram_Message, user_from_tg_user
-from .responses import START_BOT_RESPONSE
+from .responses import START_BOT_RESPONSE, FAILED_CLEAR_CHAT_DUE_TO_GROUPCHAT, SUCCESSFUL_CLEAR_CHAT
 
 VERSION = '1.04'  # TODO: make this automatic
 
@@ -205,3 +205,17 @@ def gen_show_history_graph(db_service: KarmabotDatabaseService):
 
         bot.send_photo(chat_id=update.message.chat_id, photo=open(figure_name, 'rb'))
     return show_history_graph
+
+
+def gen_clear_chat_with_bot(db_service: KarmabotDatabaseService):
+    def clear_chat_with_bot(bot, update):
+        """Clears chat with bot"""
+        chat_id = update.message.chat_id
+        user_id = update.message.from_user.id
+        if user_id != chat_id:
+            bot.send_message(chat_id=update.message.chat_id, text=FAILED_CLEAR_CHAT_DUE_TO_GROUPCHAT)
+            return
+        bot.send_message(chat_id=update.message.chat_id, text=SUCCESSFUL_CLEAR_CHAT)
+        db_service.clear_chat_with_bot(chat_id, user_id)
+
+    return clear_chat_with_bot

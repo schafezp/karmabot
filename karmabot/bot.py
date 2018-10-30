@@ -14,11 +14,12 @@ from .models import User, user_from_tg_user
 from . import postgres_funcs as pf
 from .customutils import attempt_connect, check_env_vars_all_loaded
 
-from .responses import SUCCESSFUL_CLEAR_CHAT, FAILED_CLEAR_CHAT_DUE_TO_GROUPCHAT, SHOW_KARMA_NO_HISTORY_RESPONSE
+from .responses import SHOW_KARMA_NO_HISTORY_RESPONSE
 from .commands_strings import START_COMMAND, CLEAR_CHAT_COMMAND, SHOW_KARMA_COMMAND, USER_INFO_COMMAND, CHAT_INFO_COMMAND, HISTORY_GRAPH_COMMAND
 from .annotations import types
 
-from .handlers import start, show_version, gen_show_karma, gen_reply, gen_show_user_stats, gen_show_chat_info, gen_show_history_graph
+from .handlers import start, show_version, gen_show_karma, gen_reply, gen_show_user_stats, gen_show_chat_info, \
+    gen_show_history_graph, gen_clear_chat_with_bot
 from .telegramservice import PostgresKarmabotDatabaseService, PostgresDBConfig
 
 LOG_LEVEL_ENV_VAR = os.environ.get('LOG_LEVEL')
@@ -183,15 +184,6 @@ def show_karma_personally_button_pressed(bot, update):
                           message_id=query.message.message_id,
                           parse_mode=tg.ParseMode.HTML)
 
-def clear_chat_with_bot(bot, update):
-    """Clears chat with bot"""
-    chat_id = update.message.chat_id
-    user_id = update.message.from_user.id
-    if user_id != chat_id:
-        bot.send_message(chat_id=update.message.chat_id, text=FAILED_CLEAR_CHAT_DUE_TO_GROUPCHAT)
-        return
-    bot.send_message(chat_id=update.message.chat_id, text=SUCCESSFUL_CLEAR_CHAT)
-    pf.clear_chat_with_bot(chat_id, user_id, conn)
 
 def error(bot, update, _error):
     """Log Errors caused by Updates."""
@@ -260,7 +252,7 @@ def main():
     #should only work to clear a chat with a bot
     #chat_id == user_id
     clear_chat_with_bot_handler = CommandHandler(
-        CLEAR_CHAT_COMMAND, clear_chat_with_bot)
+        CLEAR_CHAT_COMMAND, gen_clear_chat_with_bot(db_service))
     dispatcher.add_handler(clear_chat_with_bot_handler)
 
     dispatcher.add_error_handler(error)
