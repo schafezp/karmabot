@@ -168,7 +168,8 @@ class IntegrationTests(unittest.TestCase):
         keyboard = keyboards[0]
         karma_result = keyboard.press_button_await(pattern=r'.*', num_expected=1)
         bot_name_without_at = self.TEST_BOT_NAME[1:]
-        did_bot_provide_karma = re.search(f"{bot_name_without_at}", karma_result)
+        #print(karma_result)
+        did_bot_provide_karma = re.search(f"{bot_name_without_at}", str(karma_result))
         self.assertTrue(did_bot_provide_karma)
 
 
