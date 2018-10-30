@@ -36,12 +36,8 @@ logging.basicConfig(
     level=LOG_LEVEL)
 LOGGER = logging.getLogger(__name__)
 
-
-
 CHANGELOG_URL = 'https://github.com/schafezp/karmabot'
-
-
-LIST_OF_ADMINS = [65278791]
+LIST_OF_ADMINS = []
 
 
 def restricted(func):
