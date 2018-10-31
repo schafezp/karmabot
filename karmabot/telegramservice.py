@@ -57,6 +57,8 @@ class KarmabotDatabaseService:
     def get_chat_info(self, chat_id: str) -> Dict:
         raise NotImplementedError
 
+    def get_chat_name(self, chat_id: str) -> Optional[str]:
+        raise NotImplementedError
     # TODO: give option for using day/week as well as start/end date
 
     def get_responses_per_day(self, chat_id: str) -> Optional[Tuple[str, str]]:
@@ -70,6 +72,9 @@ class KarmabotDatabaseService:
         raise NotImplementedError
 
     def get_chats_user_is_in(user_id: int, conn) -> Optional[List[Tuple[str, str]]]:
+        raise NotImplementedError
+
+    def use_command(self, command: str, user: User, chat_id: str):
         raise NotImplementedError
 
 
@@ -410,11 +415,13 @@ class PostgresKarmabotDatabaseService(KarmabotDatabaseService):
             (select urtm.id as user_reacted_to_message_id FROM (select tm.message_id from telegram_message tm where tm.chat_id = %s) as message_in_chat
             LEFT JOIN user_reacted_to_message urtm on urtm.message_id=message_in_chat.message_id);"""
 
+        del_command_used = """DELETE FROM command_used cu where chat_id=%s"""
         with self.conn:
             with self.conn.cursor() as crs:
                 crs.execute(del_user_in_chat_cmd, [chat_id_str])
                 crs.execute(del_user_reacted_to_message_cmd, [chat_id_str])
                 crs.execute(del_telegram_messages, [chat_id_str])
+                crs.execute(del_command_used, [chat_id_str])
     #TODO: don't return optional
 
     def get_chats_user_is_in(self, user_id: int) -> Optional[List[Tuple[str, str]]]:
@@ -427,6 +434,39 @@ class PostgresKarmabotDatabaseService(KarmabotDatabaseService):
             with self.conn.cursor() as crs:
                 crs.execute(cmd, [user_id])
                 return crs.fetchall()
+
+    def get_chat_name(self, chat_id: str) -> Optional[str]:
+        """Returns chat name"""
+        cmd = """select chat_name from telegram_chat tc where tc.chat_id=%s"""
+        with self.conn:
+            with self.conn.cursor() as crs:
+                crs.execute(cmd, [chat_id])
+                result = crs.fetchone()
+                if result is None:
+                    return None
+                else:
+                    return result[0]  # unpack
+
+    def create_chat_if_not_exists(self, chat_id: str):
+        """Creates chat if not exists otherwise does nothing"""
+        with self.conn:
+            with self.conn.cursor() as crs:  # I would love type hints here but psycopg2.cursor isn't a defined class
+                insertcmd = """INSERT into telegram_chat
+                    (chat_id) VALUES (%s)
+                    ON CONFLICT (chat_id) DO NOTHING"""
+                crs.execute(insertcmd, [chat_id])
+                self.conn.commit()
+
+    def use_command(self, command: str, user: User, chat_id: str, arguments=""):
+        """Handler to log when commands are used and with which arguments"""
+        self.create_chat_if_not_exists(chat_id)
+        self.save_or_create_user(user)
+
+        insertcmd = """INSERT INTO command_used (command,arguments,user_id,chat_id) VALUES (%s,%s,%s,%s)"""
+        with self.conn:
+            with self.conn.cursor() as crs:
+                crs.execute(insertcmd, [command, arguments, user.id, chat_id])
+
 
 class Neo4jKarmabotDatabaseService(KarmabotDatabaseService):
     """Does connections to neo4j"""

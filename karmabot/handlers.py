@@ -10,6 +10,7 @@ from .telegramservice import KarmabotDatabaseService, UserNotFound
 from .formatters import format_show_karma_for_users_in_chat
 from .models import Telegram_Chat, Telegram_Message, user_from_tg_user, User
 from .responses import START_BOT_RESPONSE, FAILED_CLEAR_CHAT_DUE_TO_GROUPCHAT, SUCCESSFUL_CLEAR_CHAT
+from .commands_strings import SHOW_KARMA_COMMAND, USER_INFO_COMMAND, CHAT_INFO_COMMAND, HISTORY_GRAPH_COMMAND
 
 VERSION = '1.04'  # TODO: make this automatic
 
@@ -31,6 +32,7 @@ def show_version(bot, update, args):
 
 def gen_show_karma(dbservice: KarmabotDatabaseService):
     """Handler show the karma in the chat"""
+
     """ use_command(
         'showkarma', user_from_tg_user(
             update.message.from_user), str(
@@ -38,8 +40,11 @@ def gen_show_karma(dbservice: KarmabotDatabaseService):
     @types
     def show_karma(bot, update, args):
         # returns username, first_name, karma
+
         logging.debug(f"Chat id: {str(update.message.chat_id)}")
+        user = user_from_tg_user(update.message.from_user)
         chat_id = str(update.message.chat_id)
+        dbservice.use_command(SHOW_KARMA_COMMAND, user, chat_id)
         users_and_karma = dbservice.get_karma_for_users_in_chat(chat_id)
         message = format_show_karma_for_users_in_chat(users_and_karma)
         bot.send_message(chat_id=update.message.chat_id, text=message, parse_mode=tg.ParseMode.HTML)
@@ -116,7 +121,10 @@ def gen_show_user_stats(db_service: KarmabotDatabaseService):
                              update.message.chat.title)
         db_service.save_or_create_chat(chat)
 
+        user = user_from_tg_user(update.message.from_user)
         chat_id = str(update.message.chat_id)
+        db_service.use_command(USER_INFO_COMMAND, user, chat_id)
+
         if len(args) != 1:
             bot.send_message(
                 chat_id=update.message.chat_id,
@@ -156,11 +164,9 @@ def gen_show_chat_info(db_service: KarmabotDatabaseService):
     @types
     def show_chat_info(bot, update, args):
         """Handler to show information about current chat """
-        # use_command(
-        #     'chatinfo', user_from_tg_user(
-        #         update.message.from_user), str(
-        #             update.message.chat_id))
+        user = user_from_tg_user(update.message.from_user)
         chat_id = str(update.message.chat_id)
+        db_service.use_command(CHAT_INFO_COMMAND, user, chat_id)
         title = update.message.chat.title
         if title is None:
             title = "No Title"
@@ -176,6 +182,8 @@ def gen_show_history_graph(db_service: KarmabotDatabaseService):
         """Handler to show a graph of upvotes/downvotes per day"""
         chat_id = str(update.message.chat_id)
         chat_name = str(update.message.chat.title)
+        user = user_from_tg_user(update.message.from_user)
+        db_service.use_command(HISTORY_GRAPH_COMMAND, user, chat_id)
         if chat_name is None:
             chat_name = "Chat With Bot"
         result = db_service.get_responses_per_day(chat_id)
@@ -244,3 +252,21 @@ def gen_show_karma_personally(db_service: KarmabotDatabaseService):
             You can only see chats you have given or received karma in.""")
 
     return show_karma_personally
+
+def gen_show_karma_personally_button_pressed(db_service: KarmabotDatabaseService):
+    def show_karma_personally_button_pressed(bot, update):
+        """Runs /showkarma on chat the user_selected"""
+        query = update.callback_query
+        chat_id: str = str(query.data)
+        karma_rows = db_service.get_karma_for_users_in_chat(chat_id)
+        message = format_show_karma_for_users_in_chat(karma_rows)
+        chat_name = db_service.get_chat_name(chat_id)
+
+        if chat_name is not None:
+            message = f"<b>Chat name: {chat_name}</b>\n{message}"
+
+        bot.edit_message_text(text=message,
+                              chat_id=query.message.chat_id,
+                              message_id=query.message.message_id,
+                              parse_mode=tg.ParseMode.HTML)
+    return show_karma_personally_button_pressed

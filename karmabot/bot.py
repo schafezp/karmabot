@@ -16,7 +16,7 @@ from .responses import SHOW_KARMA_NO_HISTORY_RESPONSE
 from .commands_strings import START_COMMAND, CLEAR_CHAT_COMMAND, SHOW_KARMA_COMMAND, USER_INFO_COMMAND, CHAT_INFO_COMMAND, HISTORY_GRAPH_COMMAND, SHOW_KARMA_KEYBOARD_COMMAND
 
 from .handlers import start, show_version, gen_show_karma, gen_reply, gen_show_user_stats, gen_show_chat_info, \
-    gen_show_history_graph, gen_clear_chat_with_bot, gen_show_karma_personally
+    gen_show_history_graph, gen_clear_chat_with_bot, gen_show_karma_personally, gen_show_karma_personally_button_pressed
 from .telegramservice import PostgresKarmabotDatabaseService, PostgresDBConfig
 
 LOG_LEVEL_ENV_VAR = os.environ.get('LOG_LEVEL')
@@ -68,63 +68,11 @@ def use_command(command: str, user: User, chat_id: str, arguments=""):
         with conn.cursor() as crs:
             crs.execute(insertcmd, [command, arguments, user.id, chat_id])
 
-def format_show_karma_for_users_in_chat(chat_id):
-    """Returns a formatted html message showing the karma for users in a chat"""
-    rows: List[Tuple[str, str, int]] = pf.get_karma_for_users_in_chat(
-        chat_id, conn)
-    if rows == []:
-        return SHOW_KARMA_NO_HISTORY_RESPONSE
-
-    rows.sort(key=lambda user: user[2], reverse=True)
-    # use firstname if username not set
-
-    def cleanrow(user):
-        """selects desired user attributes to show"""
-        if user[0] is None:
-            return (user[1], user[2])
-        else:
-            return (user[0], user[2])
-    message_rows = []
-    idx = 0
-    for user in map(cleanrow, rows):
-        row = f"{user[0]}: {user[1]}"
-        if idx == 0:
-            row = '🥇' + row
-        elif idx == 1:
-            row = '🥈' + row
-        elif idx == 2:
-            row = '🥉' + row
-        idx = idx + 1
-        message_rows.append(row)
-    message = "\n".join(message_rows)
-    message = "<b>Username: Karma</b>\n" + message
-    return message
-
-
 @restricted
 def am_i_admin(bot, update, args):
     """Handler to check if user is an admin"""
     message = "yes you are an admin"
     bot.send_message(chat_id=update.message.chat_id, text=message)
-
-
-
-
-
-#TODO: rename
-def show_karma_personally_button_pressed(bot, update):
-    """Runs /showkarma on chat the user_selected"""
-    query = update.callback_query
-    chat_id: str = str(query.data)
-    message = format_show_karma_for_users_in_chat(chat_id)
-    chat_name = pf.get_chatname(chat_id, conn)
-    if chat_name is not None:
-        message = f"<b>Chat name: {chat_name}</b>\n{message}"
-
-    bot.edit_message_text(text=message,
-                          chat_id=query.message.chat_id,
-                          message_id=query.message.message_id,
-                          parse_mode=tg.ParseMode.HTML)
 
 
 def error(bot, update, _error):
@@ -184,7 +132,7 @@ def main():
     show_karma_personally_handler = CommandHandler(
         SHOW_KARMA_KEYBOARD_COMMAND, gen_show_karma_personally(db_service))
     dispatcher.add_handler(show_karma_personally_handler)
-    dispatcher.add_handler(CallbackQueryHandler(show_karma_personally_button_pressed))
+    dispatcher.add_handler(CallbackQueryHandler(gen_show_karma_personally_button_pressed(db_service)))
 
     show_history_graph_handler = CommandHandler(
         HISTORY_GRAPH_COMMAND, gen_show_history_graph(db_service))
