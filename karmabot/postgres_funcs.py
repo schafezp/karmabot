@@ -2,7 +2,7 @@
 """
 import logging
 from typing import Optional, Tuple, List, Dict
-from models import User, User_in_Chat, Telegram_Chat, Telegram_Message
+from .models import User, User_in_Chat, Telegram_Chat, Telegram_Message
 
 class UserNotFound(Exception):
     """Returned when no valid user is found"""
@@ -323,7 +323,7 @@ def get_karma_for_user_in_chat(
                 return result[0]
             return result
 
-
+#TODO: depreciate me
 def get_karma_for_users_in_chat(
         chat_id: str, conn) -> List[Tuple[str, str, int]]:
     """Returns username, firstname, karma for all telegram users in a given chat"""
