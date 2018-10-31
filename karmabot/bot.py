@@ -2,18 +2,13 @@
 import logging
 import os
 import sys
-from typing import Tuple, List
-from functools import wraps
 
 from telegram.ext import Filters, CommandHandler, MessageHandler, Updater, CallbackQueryHandler
-import telegram as tg
 
-from .models import User
-from . import postgres_funcs as pf
 from .customutils import attempt_connect, check_env_vars_all_loaded
 
-from .responses import SHOW_KARMA_NO_HISTORY_RESPONSE
-from .commands_strings import START_COMMAND, CLEAR_CHAT_COMMAND, SHOW_KARMA_COMMAND, USER_INFO_COMMAND, CHAT_INFO_COMMAND, HISTORY_GRAPH_COMMAND, SHOW_KARMA_KEYBOARD_COMMAND
+from .commands_strings import START_COMMAND, CLEAR_CHAT_COMMAND, SHOW_KARMA_COMMAND, USER_INFO_COMMAND,\
+    CHAT_INFO_COMMAND, HISTORY_GRAPH_COMMAND, SHOW_KARMA_KEYBOARD_COMMAND
 
 from .handlers import start, show_version, gen_show_karma, gen_reply, gen_show_user_stats, gen_show_chat_info, \
     gen_show_history_graph, gen_clear_chat_with_bot, gen_show_karma_personally, gen_show_karma_personally_button_pressed
@@ -34,45 +29,6 @@ logging.basicConfig(
 LOGGER = logging.getLogger(__name__)
 
 CHANGELOG_URL = 'https://github.com/schafezp/karmabot'
-LIST_OF_ADMINS = []
-
-
-def restricted(func):
-    """Function wrap to deny access to a user based on user_id"""
-    @wraps(func)
-    def wrapped(bot, update, *args, **kwargs):
-        """function to wrap"""
-        user_id = update.effective_user.id
-        if user_id not in LIST_OF_ADMINS:
-            print("Unauthorized access denied for {}.".format(user_id))
-        return func(bot, update, *args, **kwargs)
-    return wrapped
-
-
-
-
-#TODO: move this down into the main function
-#this stops us from importing directly from this function: bad practice
-#blocks here
-conn = attempt_connect()
-
-# TODO: replace this with an annotation maybe?
-
-
-def use_command(command: str, user: User, chat_id: str, arguments=""):
-    """Handler to log when commands are used and with which arguments"""
-    pf.create_chat_if_not_exists(chat_id, conn)
-    pf.save_or_create_user(user, conn)
-    insertcmd = """INSERT INTO command_used (command,arguments,user_id,chat_id) VALUES (%s,%s,%s,%s)"""
-    with conn:
-        with conn.cursor() as crs:
-            crs.execute(insertcmd, [command, arguments, user.id, chat_id])
-
-@restricted
-def am_i_admin(bot, update, args):
-    """Handler to check if user is an admin"""
-    message = "yes you are an admin"
-    bot.send_message(chat_id=update.message.chat_id, text=message)
 
 
 def error(bot, update, _error):
@@ -122,9 +78,6 @@ def main():
         CHAT_INFO_COMMAND, gen_show_chat_info(db_service), pass_args=True)
     dispatcher.add_handler(chat_info_handler)
 
-    am_i_admin_handler = CommandHandler('amiadmin', am_i_admin, pass_args=True)
-    dispatcher.add_handler(am_i_admin_handler)
-
     showversion_handler = CommandHandler(
         'version', show_version, pass_args=True)
     dispatcher.add_handler(showversion_handler)
@@ -149,17 +102,19 @@ def main():
 
     updater.start_polling()
 
+    conn = attempt_connect()
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM pg_catalog.pg_tables;")
     many = cursor.fetchall()
     public_tables = list(
         map(lambda x: x[1], filter(lambda x: x[0] == 'public', many)))
     logging.info(f"public_tables: {str(public_tables)}")
+    cursor.close()
+    conn.close()
 
     updater.idle()
 
-    cursor.close()
-    conn.close()
+
 
 
 if __name__ == '__main__':
