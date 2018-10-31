@@ -10,7 +10,7 @@ from .telegramservice import KarmabotDatabaseService, UserNotFound
 from .formatters import format_show_karma_for_users_in_chat
 from .models import Telegram_Chat, Telegram_Message, user_from_tg_user, User
 from .responses import START_BOT_RESPONSE, FAILED_CLEAR_CHAT_DUE_TO_GROUPCHAT, SUCCESSFUL_CLEAR_CHAT
-from .commands_strings import SHOW_KARMA_COMMAND, USER_INFO_COMMAND, CHAT_INFO_COMMAND, HISTORY_GRAPH_COMMAND
+from .commands_strings import SHOW_KARMA_COMMAND, USER_INFO_COMMAND, CHAT_INFO_COMMAND, HISTORY_GRAPH_COMMAND, SHOW_KARMA_KEYBOARD_COMMAND
 
 VERSION = '1.04'  # TODO: make this automatic
 
@@ -234,10 +234,10 @@ def gen_show_karma_personally(db_service: KarmabotDatabaseService):
     def show_karma_personally(bot, update: tg.Update):
         """Conversation handler to allow users to check karma values through custom keyboard"""
         user_id = update.effective_user.id
-        #user: User = user_from_tg_user(update.effective_user)
+        user: User = user_from_tg_user(update.effective_user)
         chat_id: str = str(update.message.chat_id)
         result = db_service.get_chats_user_is_in(user_id)
-        #use_command('checkchatkarmas', user, chat_id)
+        db_service.use_command(SHOW_KARMA_KEYBOARD_COMMAND, user, chat_id)
 
         keyboard = []
         if result is not None:
