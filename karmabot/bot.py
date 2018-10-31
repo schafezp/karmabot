@@ -59,7 +59,6 @@ def main():
     start_handler = CommandHandler(START_COMMAND, start)
     dispatcher.add_handler(start_handler)
 
-    #TODO: determine better way to get db_service in scope than to inject into each funcntion
     reply_handler = MessageHandler(Filters.reply, gen_reply(db_service))
     dispatcher.add_handler(reply_handler)
 
