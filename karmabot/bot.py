@@ -11,7 +11,8 @@ from .commands_strings import START_COMMAND, CLEAR_CHAT_COMMAND, SHOW_KARMA_COMM
     CHAT_INFO_COMMAND, HISTORY_GRAPH_COMMAND, SHOW_KARMA_KEYBOARD_COMMAND
 
 from .handlers import start, show_version, gen_show_karma, gen_reply, gen_show_user_stats, gen_show_chat_info, \
-    gen_show_history_graph, gen_clear_chat_with_bot, gen_show_karma_personally, gen_show_karma_personally_button_pressed
+    gen_show_history_graph, gen_clear_chat_with_bot, gen_show_karma_personally, gen_show_karma_personally_button_pressed, error
+
 from .telegramservice import PostgresKarmabotDatabaseService, PostgresDBConfig
 
 LOG_LEVEL_ENV_VAR = os.environ.get('LOG_LEVEL')
@@ -29,11 +30,6 @@ logging.basicConfig(
 LOGGER = logging.getLogger(__name__)
 
 CHANGELOG_URL = 'https://github.com/schafezp/karmabot'
-
-
-def error(bot, update, _error):
-    """Log Errors caused by Updates."""
-    logging.warning('Update "%s" caused error "%s"', update, _error)
 
 
 def main():

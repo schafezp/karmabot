@@ -21,6 +21,11 @@ def start(bot, update):
         text=START_BOT_RESPONSE)
 
 
+def error(bot, update, _error):
+    """Log Errors caused by Updates."""
+    logging.warning('Update "%s" caused error "%s"', update, _error)
+
+
 @types
 def show_version(bot, update, args):
     """Handler to show the current version"""
