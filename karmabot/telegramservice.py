@@ -71,7 +71,7 @@ class KarmabotDatabaseService:
             If chat_id matches user_id then the chat is a 1 on 1 with a bot."""
         raise NotImplementedError
 
-    def get_chats_user_is_in(user_id: int, conn) -> Optional[List[Tuple[str, str]]]:
+    def get_chats_user_is_in(self, user_id: int, conn) -> Optional[List[Tuple[str, str]]]:
         raise NotImplementedError
 
     def use_command(self, command: str, user: User, chat_id: str):
