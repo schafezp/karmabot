@@ -70,8 +70,12 @@ return message1, r, message2
 
 
 
-//findout how many upvotes a user has given
-
+//findout how many upvotes a user has received
 MATCH (message1:Message)-[r:REPLIED_TO]->(message2:Message)<-[:AUTHORED_MESSAGE]-(user:User)
 where user.userid="123"
+return user, sum(r.vote)
+
+//findout how many upvotes a user has given
+MATCH (user:User)-[:AUTHORED_MESSAGE]->(message1:Message)-[r:REPLIED_TO]->(message2:Message)
+where user.userid="518"
 return user, sum(r.vote)
