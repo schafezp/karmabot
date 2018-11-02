@@ -34,6 +34,11 @@ CREATE (message2)-[:WRITTEN_IN_CHAT]->(chat2)
 CREATE (message3)-[:WRITTEN_IN_CHAT]->(chat2)
 
 
+//witty response
+
+CREATE (wr1:WittyResponse {text : "USER_FIRSTNAME don't upvote yourself"})
+CREATE (wr2:WittyResponse {text : "USER_FIRSTNAME bad manners"})
+
 MATCH (n:User) RETURN n
 
 MATCH (n:Chat) RETURN n
@@ -79,3 +84,9 @@ return user, sum(r.vote)
 MATCH (user:User)-[:AUTHORED_MESSAGE]->(message1:Message)-[r:REPLIED_TO]->(message2:Message)
 where user.userid="518"
 return user, sum(r.vote)
+
+//get random witty response
+MATCH(wr:WittyResponse)
+with wr, rand() as r
+ORDER BY r limit 1
+return wr
