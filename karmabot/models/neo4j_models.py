@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 @dataclass
-def User():
+class User():
     user_id: int
     user_name: str
     karma: int
