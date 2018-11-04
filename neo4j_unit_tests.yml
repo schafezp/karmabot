@@ -1,0 +1,22 @@
+
+version: '3'
+services:
+  test:
+    build:
+      context: "."
+      dockerfile: "Dockerfile.neo4j_unittest"
+    depends_on:
+      - neo4j
+
+  neo4j:
+    image: neo4j:3.4
+#    volumes:
+#      - ./neo4j:/data
+#      - ./logs:/logs
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    environment:
+      NEO4J_AUTH: "neo4j/admin"
+volumes:
+  data: {}
