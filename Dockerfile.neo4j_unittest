@@ -1,0 +1,12 @@
+FROM python:3
+ENV PYTHONUNBUFFERED 1
+RUN mkdir /code
+WORKDIR /karmabot
+ADD karmabot /karmabot/karmabot
+ADD neo4j_requirements.txt requirements.txt
+
+RUN pip install -r requirements.txt
+ADD test /karmabot/test
+ADD neo4j_unittest_setup.cql .
+
+CMD ["python3", "-m", "unittest", "test.neo4j_unit_tests"]
