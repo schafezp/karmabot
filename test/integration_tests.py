@@ -6,19 +6,19 @@ import re
 from tgintegration import BotIntegrationClient
 from karmabot.responses import START_BOT_RESPONSE, SUCCESSFUL_CLEAR_CHAT, SHOW_KARMA_NO_HISTORY_RESPONSE
 from karmabot.commands_strings import START_COMMAND, CLEAR_CHAT_COMMAND, SHOW_KARMA_COMMAND, USER_INFO_COMMAND, CHAT_INFO_COMMAND, SHOW_KARMA_KEYBOARD_COMMAND
-from .integration_common import setup_bot_client, tear_down_bot_client
+from .integration_common import Common_Integration
 #TODO: move to import module structure invocation from script
 
 
-class IntegrationTests(unittest.TestCase):
+class IntegrationTests(Common_Integration):
     """ Runs intergation tests"""
     client: BotIntegrationClient
     def setUp(self):
-        setup_bot_client(self)
+        self.setup_bot_client()
 
 
     def tearDown(self):
-        tear_down_bot_client(self)
+        self.tear_down_bot_client()
 
     @unittest.skip("dont care that this works for now")
     def test_start(self):
