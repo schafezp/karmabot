@@ -1,3 +1,4 @@
+
 CREATE (user1:User {userid : "123", username: "@user1", karma:5})
 CREATE (user2:User {userid : "984", username: "@user2", karma:3}) 
 CREATE (user3:User {userid : "518", username: "@user3", karma:-1}) 
