@@ -12,7 +12,6 @@ class Neo_Test(unittest.TestCase):
             self.graph.run(line)
 
     def test_get_users(self):
-        data = self.graph.run("MATCH (n:User) return n").data()
         test_karma_values = [5,3,-1]
         users = get_all_users(self.graph)
         karma = [users.karma for user in users]
