@@ -2,7 +2,7 @@
 """
 import logging
 from typing import Optional, Tuple, List, Dict
-from .models import User, User_in_Chat, Telegram_Chat, Telegram_Message
+from .models.postgres_models import User, User_in_Chat, Telegram_Chat, Telegram_Message
 
 class UserNotFound(Exception):
     """Returned when no valid user is found"""

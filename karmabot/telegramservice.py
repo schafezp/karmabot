@@ -3,7 +3,7 @@
 from typing import List, Tuple, Optional, Dict
 from dataclasses import dataclass
 import psycopg2
-from .models import User, Telegram_Chat, Telegram_Message, User_in_Chat
+from .models.postgres_models import User, Telegram_Chat, Telegram_Message, User_in_Chat
 import logging
 
 class InvalidDBConfig(Exception):

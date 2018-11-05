@@ -64,7 +64,6 @@ class IntegrationTests(Common_Integration):
         does_bot_have_zero_karma = bool(re.search(f"{bot_name_without_at}: 0", show_karma_response.messages[0].text))
         self.assertTrue(does_bot_have_zero_karma, '-1 on same message should override last vote')
 
-    @unittest.skip("TEMPORARY")
     def test_upvote(self):
         """Tests that upvoting a message results in +1 karma"""
         self.client.send_command_await(CLEAR_CHAT_COMMAND)
@@ -116,7 +115,6 @@ class IntegrationTests(Common_Integration):
     #TODO: test non existent use cases (userstats where userid doesn't exist, etc)
     #TODO: host multiple bots with swarm and split integration tests amoung them
 
-    @unittest.skip("TEMPORARY")
     def test_userinfo(self):
         # self.client.send_command_await(CLEAR_CHAT_COMMAND)
         # show_karma_response = self.client.send_command_await(SHOW_KARMA_COMMAND, num_expected=1)
