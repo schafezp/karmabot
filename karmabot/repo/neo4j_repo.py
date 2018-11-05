@@ -35,3 +35,33 @@ def get_users_in_chat(g: Graph, chat_id: str) -> Tuple[List[User], Chat]:
     return users, chat
 
 
+def get_karma_given_by_user_in_chat(g: Graph, user_id: str, chat_id: str) -> Tuple[int, int]:
+    """Given a user and a chat, returns how much karma that user has given in that chat; seperated by positive and negative
+
+    :param g: The graph
+    :param user_id:
+    :param chat_id:
+    :return: (positive votes, negative votes)
+    """
+    command = """MATCH (user:User)-[:AUTHORED_MESSAGE]->(message:Message)-[r:REPLIED_TO]->(message_replied_to:Message)
+    MATCH (message:Message)-[:WRITTEN_IN_CHAT]->(chat:Chat)
+    where user.id= {user_id}
+    and chat.id= {chat_id}
+    return distinct(r.vote) as vote_type, count(r.vote) as vote_count
+    order by vote_type asc;"""
+
+    data = g.run(command, {"user_id": user_id, "chat_id": chat_id}).data()
+    if len(data) == 0:
+        return 0, 0
+    if len(data) == 1:
+        row = data[0]
+        if row["vote_type"] == 1:
+            return row["vote_count"], 0
+        else:
+            return 0, row["vote_count"]
+    if len(data) == 2:
+        # query uses order by asc so [0] is positive
+        return data[0]["vote_count"], data[1]["vote_count"]
+
+    return 0,0
+

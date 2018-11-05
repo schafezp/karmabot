@@ -1,6 +1,6 @@
 import unittest
 from py2neo import Graph, Node
-from karmabot.repo.neo4j_repo import get_all_users, get_users_in_chat
+from karmabot.repo.neo4j_repo import get_all_users, get_users_in_chat, get_karma_given_by_user_in_chat
 import warnings
 
 
@@ -30,6 +30,19 @@ class Neo_Test(unittest.TestCase):
         users, chat = get_users_in_chat(self.graph, chat_id)
         self.assertTrue(chat.chat_id == chat_id)
         self.assertTrue(chat.chat_name == chat_name)
+
+    def test_get_karma_given_by_user(self):
+        user_id = "3"
+        chat_id = "1"
+        votes = get_karma_given_by_user_in_chat(self.graph, user_id, chat_id)
+        self.assertEqual(votes[0], 1)
+        self.assertEqual(votes[1], 0)
+        chat_id = "2"
+
+        votes = get_karma_given_by_user_in_chat(self.graph, user_id, chat_id)
+        self.assertEqual(votes[0], 0)
+        self.assertEqual(votes[1], 1)
+
 
 
 
