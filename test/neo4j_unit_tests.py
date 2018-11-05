@@ -27,9 +27,20 @@ class Neo_Test(unittest.TestCase):
     def test_get_users_in_chat(self):
         chat_id = "1"
         chat_name = "A fun chat"
-        users, chat = get_users_in_chat(self.graph, chat_id)
+        result = get_users_in_chat(self.graph, chat_id)
+        self.assertTrue(result is not None)
+        users, chat = result
         self.assertTrue(chat.chat_id == chat_id)
         self.assertTrue(chat.chat_name == chat_name)
+
+    def test_get_users_in_chat_for_chat_not_exists(self):
+        """ Verifies that if a bad chat_id is used none is returned"""
+
+        chat_id = "not_a_valid_chat_id"
+        result = get_users_in_chat(self.graph, chat_id)
+        self.assertEqual(result, None)
+
+
 
     def test_get_karma_given_by_user(self):
         user_id = "3"
