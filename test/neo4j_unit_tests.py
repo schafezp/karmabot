@@ -1,10 +1,12 @@
 import unittest
 from py2neo import Graph, Node
 from karmabot.repo.neo4j_repo import get_all_users, get_users_in_chat
+import warnings
 
 
 class Neo_Test(unittest.TestCase):
     def setUp(self):
+        warnings.simplefilter('ignore', category=ImportWarning)
         self.graph = Graph(host="localhost", password="admin")
         self.graph.run("match (n) detach delete n")
         with open("neo4j_unittest_setup.cql") as cql_setup_files:
