@@ -1,6 +1,6 @@
 from py2neo import Graph
 from karmabot.models.neo4j_models import User, Chat
-from typing import List, Tuple, Dict
+from typing import List, Tuple, Dict, Optional
 
 
 def get_model_user_from_graph_user(user: Dict) -> User:
@@ -22,12 +22,18 @@ def get_all_users(g: Graph) -> List[User]:
     return users
 
 
-def get_users_in_chat(g: Graph, chat_id: str) -> Tuple[List[User], Chat]:
+def get_users_in_chat(g: Graph, chat_id: str) -> Optional[Tuple[List[User], Chat]]:
+    """ Returns all the users in a given chat. If chat does not exist returns none
+    TODO: throw exception if chat not found?
+    :param g:
+    :param chat_id:
+    :return: Tuple of list of users and chat they are a member of. None if chat does not exist.
+    """
+
     command = "MATCH (n:User)-[:USER_IN_CHAT]-> (chat:Chat) where chat.id={chat_id} return collect(n) as users, chat"
     data = g.run(command, {"chat_id": chat_id}).data()
-    #TODO: does this handle if multiple chats exist with same chat id? should be handled by constraint
     if len(data) == 0:
-        return []
+        return None
 
     users = [get_model_user_from_graph_user(user) for user in data[0]["users"]]
     chat = get_model_chat_from_graph_chat(data[0]["chat"])
