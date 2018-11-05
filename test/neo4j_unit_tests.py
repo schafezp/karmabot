@@ -10,6 +10,12 @@ class Neo_Test(unittest.TestCase):
         self.graph = Graph(host="localhost", password="admin")
         self.loadDb()
 
+    def loadDb(self):
+        self.graph.run("match (n) detach delete n")
+        with open("neo4j_unittest_setup.cql") as cql_setup_files:
+            cql_lines = cql_setup_files.readlines()
+            line = " ".join([line.replace("\n", "") for line in cql_lines])
+            self.graph.run(line)
 
     def test_get_users(self):
         test_karma_values = [-1, 3, 5]
@@ -24,12 +30,7 @@ class Neo_Test(unittest.TestCase):
         users, chat = get_users_in_chat(self.graph, chat_id)
         self.assertTrue(chat.chat_id == chat_id)
         self.assertTrue(chat.chat_name == chat_name)
-    def loadDb(self):
-        self.graph.run("match (n) detach delete n")
-        with open("neo4j_unittest_setup.cql") as cql_setup_files:
-            cql_lines = cql_setup_files.readlines()
-            line = " ".join([line.replace("\n", "") for line in cql_lines])
-            self.graph.run(line)
+
 
 
 if __name__ == "__main__":
