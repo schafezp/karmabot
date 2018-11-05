@@ -32,6 +32,7 @@ class Neo_Test(unittest.TestCase):
         users, chat = result
         self.assertTrue(chat.chat_id == chat_id)
         self.assertTrue(chat.chat_name == chat_name)
+        self.assertEqual(len(users), 2)
 
     def test_get_users_in_chat_for_chat_not_exists(self):
         """ Verifies that if a bad chat_id is used none is returned"""
