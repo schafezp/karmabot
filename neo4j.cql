@@ -1,19 +1,19 @@
-CREATE CONSTRAINT ON (user:User) ASSERT user.userid IS UNIQUE
-CREATE CONSTRAINT ON (message:Message) ASSERT message.messageid IS UNIQUE
+CREATE CONSTRAINT ON (user:User) ASSERT user.id IS UNIQUE
+CREATE CONSTRAINT ON (message:Message) ASSERT message.id IS UNIQUE
 
 //clear db
 MATCH (n) detach delete n
 
-CREATE (user1:User {userid : "123", username: "@user1", karma:5}) 
-CREATE (user2:User {userid : "984", username: "@user2", karma:3}) 
-CREATE (user3:User {userid : "518", username: "@user3", karma:-1}) 
+CREATE (user1:User {id : "123", username: "@user1", karma:5}) 
+CREATE (user2:User {id : "984", username: "@user2", karma:3}) 
+CREATE (user3:User {id : "518", username: "@user3", karma:-1}) 
 
-CREATE (chat1:Chat {chatid: "1", name: "A fun chat"})
+CREATE (chat1:Chat {id: "1", name: "A fun chat"})
 CREATE (user1)-[:USER_IN_CHAT]->(chat1)
 CREATE (user3)-[:USER_IN_CHAT]->(chat1)
-CREATE (message1:Message {messageid: "1", text: "message 1 text by user1"})
-CREATE (message4:Message {messageid: "4", text: "+1 message 4 replied to message 1"})
-CREATE (message5:Message {messageid: "5", text: "-1 message 5 replied to message 1"})
+CREATE (message1:Message {id: "1", text: "message 1 text by user1"})
+CREATE (message4:Message {id: "4", text: "+1 message 4 replied to message 1"})
+CREATE (message5:Message {id: "5", text: "-1 message 5 replied to message 1"})
 CREATE (message4)-[:REPLIED_TO {vote: 1}]->(message1)
 CREATE (message5)-[:REPLIED_TO {vote: 1}]->(message1)
 CREATE (user1)-[:AUTHORED_MESSAGE]->(message1)
@@ -23,11 +23,11 @@ CREATE (message1)-[:WRITTEN_IN_CHAT]->(chat1)
 CREATE (message4)-[:WRITTEN_IN_CHAT]->(chat1)
 CREATE (message5)-[:WRITTEN_IN_CHAT]->(chat1)
 
-CREATE (chat2:Chat {chatid: "2", name: "A random chat"})
+CREATE (chat2:Chat {id: "2", name: "A random chat"})
 CREATE (user2)-[:USER_IN_CHAT]->(chat2)
 CREATE (user3)-[:USER_IN_CHAT]->(chat2)
-CREATE (message2:Message {messageid: "2", text: "message 2 text by user2"})
-CREATE (message3:Message {messageid: "3", text: "message 3 text by user3"})
+CREATE (message2:Message {id: "2", text: "message 2 text by user2"})
+CREATE (message3:Message {id: "3", text: "message 3 text by user3"})
 CREATE (user2)-[:AUTHORED_MESSAGE]->(message2)
 CREATE (user3)-[:AUTHORED_MESSAGE]->(message3)
 CREATE (message2)-[:WRITTEN_IN_CHAT]->(chat2)
@@ -54,11 +54,11 @@ MATCH (n:Chat) RETURN n
 
 
 //get all user karma
-MATCH (n:User) return n.userid, n.username, n.karma
+MATCH (n:User) return n.id, n.username, n.karma
 
 //get all user for chat with id 1
 MATCH (n:User)-->(chat:Chat)
-where chat.chatid="1"
+where chat.id="1"
 return n
 
 return 
@@ -66,7 +66,7 @@ return
 //get all messages in chat with id 1
 
 MATCH (n:Message)-[:WRITTEN_IN_CHAT]->(chat:Chat)
-where chat.chatid="1"
+where chat.id="1"
 return n
 
 //find all replies
@@ -75,18 +75,18 @@ return message1, r, message2
 
 //findout how many upvotes a user has received
 MATCH (message1:Message)-[r:REPLIED_TO]->(message2:Message)<-[:AUTHORED_MESSAGE]-(user:User)
-where user.userid="123"
+where user.id="123"
 return user, sum(r.vote)
 
 //findout how many upvotes a user has given
 MATCH (user:User)-[:AUTHORED_MESSAGE]->(message1:Message)-[r:REPLIED_TO]->(message2:Message)
-where user.userid="518"
+where user.id="518"
 return user, sum(r.vote)
 
 //clear chat with bot 
 MATCH (user:User)-->(chat:Chat)
-where user.userid="123"//param1
-and chat.chatid="1"
+where user.id="123"//param1
+and chat.id="1"
 return user, chat
 //detach delete user
 
