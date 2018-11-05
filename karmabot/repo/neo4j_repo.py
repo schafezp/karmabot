@@ -59,6 +59,7 @@ def get_karma_given_by_user_in_chat(g: Graph, user_id: str, chat_id: str) -> Tup
     data = g.run(command, {"user_id": user_id, "chat_id": chat_id}).data()
     return convert_vote_types_from_dict_to_tuple(data, "vote_type", "vote_count")
 
+
 def get_karma_received_by_user_in_chat(g: Graph, user_id: str, chat_id: str) -> Tuple[int,int]:
     command = """MATCH (user:User)-[:AUTHORED_MESSAGE]->(message_replied_to:Message)<-[r:REPLIED_TO]-(message:Message)
     MATCH (message:Message)-[:WRITTEN_IN_CHAT]->(chat:Chat)
@@ -69,6 +70,22 @@ def get_karma_received_by_user_in_chat(g: Graph, user_id: str, chat_id: str) -> 
     data = g.run(command, {"user_id": user_id, "chat_id": chat_id}).data()
     return convert_vote_types_from_dict_to_tuple(data, "vote_type", "vote_count")
 
+
+def get_chats_user_is_in(g: Graph, user_id: str) -> List[Chat]:
+    """
+    Get list of chats a user is in by their id.
+
+    :param g:
+    :param user_id: id of user
+    :return: List of chats the user is in. Returns [] if in no chats
+    """
+    command = """MATCH (user:User)-->(chat:Chat)
+    where user.id = {user_id}
+    return collect(chat) as chats
+    """
+    data = g.run(command, {"user_id": user_id}).data()
+
+    return [get_model_chat_from_graph_chat(chat) for chat in data[0]["chats"]]
 
 
 def convert_vote_types_from_dict_to_tuple(data: List, type_key, count_key) -> Tuple[int, int]:
@@ -93,3 +110,4 @@ def convert_vote_types_from_dict_to_tuple(data: List, type_key, count_key) -> Tu
         return data[1][count_key], data[0][count_key]
 
     return 0, 0
+

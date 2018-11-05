@@ -1,6 +1,6 @@
 import unittest
 from py2neo import Graph, Node
-from karmabot.repo.neo4j_repo import get_all_users, get_users_in_chat, get_karma_given_by_user_in_chat, get_karma_received_by_user_in_chat
+from karmabot.repo.neo4j_repo import get_all_users, get_users_in_chat, get_karma_given_by_user_in_chat, get_karma_received_by_user_in_chat, get_chats_user_is_in
 import warnings
 
 
@@ -59,6 +59,20 @@ class Neo_Test(unittest.TestCase):
         pos, neg = get_karma_received_by_user_in_chat(self.graph, user_id, chat_id)
         self.assertEqual(pos, 1)
         self.assertEqual(neg, 0)
+
+    def test_get_chats_user_is_in(self):
+        user_id = "3"
+        test_chat_ids = ["1", "2"]
+        chats = get_chats_user_is_in(self.graph, user_id)
+        chat_ids = [chat.chat_id for chat in chats]
+        self.assertEqual(chat_ids, test_chat_ids)
+
+    def test_get_chats_user_is_in_non_existant_user_id(self):
+        """Tests behavior of get_chats_user_is_in when userid doesn't exist in db"""
+        user_id = "non_exist_user_id"
+        chats = get_chats_user_is_in(self.graph, user_id)
+        self.assertEqual(chats, [])
+
 
 
 
