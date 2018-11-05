@@ -1,6 +1,6 @@
-CREATE (user1:User {id : "123", username: "@user1", karma:5})
-CREATE (user2:User {id : "984", username: "@user2", karma:3})
-CREATE (user3:User {id : "518", username: "@user3", karma:-1})
+CREATE (user1:User {id : "1", username: "@user1", karma:5})
+CREATE (user2:User {id : "2", username: "@user2", karma:3})
+CREATE (user3:User {id : "3", username: "@user3", karma:-1})
 
 CREATE (chat1:Chat {id: "1", name: "A fun chat"})
 CREATE (user1)-[:USER_IN_CHAT]->(chat1)

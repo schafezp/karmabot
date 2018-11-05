@@ -4,9 +4,9 @@ CREATE CONSTRAINT ON (message:Message) ASSERT message.id IS UNIQUE
 //clear db
 MATCH (n) detach delete n
 
-CREATE (user1:User {id : "123", username: "@user1", karma:5}) 
-CREATE (user2:User {id : "984", username: "@user2", karma:3}) 
-CREATE (user3:User {id : "518", username: "@user3", karma:-1}) 
+CREATE (user1:User {id : "1", username: "@user1", karma:5})
+CREATE (user2:User {id : "2", username: "@user2", karma:3})
+CREATE (user3:User {id : "3", username: "@user3", karma:-1})
 
 CREATE (chat1:Chat {id: "1", name: "A fun chat"})
 CREATE (user1)-[:USER_IN_CHAT]->(chat1)
@@ -37,7 +37,7 @@ CREATE (message3)-[:WRITTEN_IN_CHAT]->(chat2)
 //witty response
 
 CREATE (wr1:WittyResponse {text : "USER_FIRSTNAME don't upvote yourself"})
-CREATE (wr2:WittyResponse {text : "USER_FIRSTNAME bad manners"})
+CREATE (wr2:WittyResponse {text : "USER_FIRSTNAME bad manners"});
 
 MATCH (n:User) RETURN n
 
@@ -75,17 +75,17 @@ return message1, r, message2
 
 //findout how many upvotes a user has received
 MATCH (message1:Message)-[r:REPLIED_TO]->(message2:Message)<-[:AUTHORED_MESSAGE]-(user:User)
-where user.id="123"
+where user.id="1"
 return user, sum(r.vote)
 
 //findout how many upvotes a user has given
 MATCH (user:User)-[:AUTHORED_MESSAGE]->(message1:Message)-[r:REPLIED_TO]->(message2:Message)
-where user.id="518"
+where user.id="2"
 return user, sum(r.vote)
 
 //clear chat with bot 
 MATCH (user:User)-->(chat:Chat)
-where user.id="123"//param1
+where user.id="1"//param1
 and chat.id="1"
 return user, chat
 //detach delete user
@@ -97,4 +97,35 @@ return user, chat
 MATCH(wr:WittyResponse)
 with wr, rand() as r
 ORDER BY r limit 1
-return wr
+return wr;
+
+
+
+MATCH (user:User)-[:AUTHORED_MESSAGE]->(message:Message)-[r:REPLIED_TO]->(message_replied_to:Message)
+where user.id="3"
+RETURN user, message, message_replied_to;
+
+
+MATCH (user:User)-[:AUTHORED_MESSAGE]->(message:Message)-[r:REPLIED_TO]->(message_replied_to:Message)
+MATCH (message:Message)-[:WRITTEN_IN_CHAT]->(chat:Chat)
+where user.id="3"
+//and chat.id="2"
+return r.vote
+ORDER BY r.vote;
+
+//RETURN user, message, message_replied_to, chat
+
+MATCH (user:User)-[:AUTHORED_MESSAGE]->(message:Message)-[r:REPLIED_TO {vote: -1}]->(message_replied_to:Message)
+MATCH (message:Message)-[:WRITTEN_IN_CHAT]->(chat:Chat)
+where user.id="3" and chat.id="2"
+return r;
+
+
+MATCH (user:User)-[:AUTHORED_MESSAGE]->(message:Message)-[r:REPLIED_TO]->(message_replied_to:Message)
+MATCH (message:Message)-[:WRITTEN_IN_CHAT]->(chat:Chat)
+where user.id="3"
+//and chat.id="2"
+return distinct(r.vote) as vote_type, count(r.vote) as vote_count
+order by vote_type asc;
+
+
