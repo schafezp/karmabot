@@ -1,7 +1,9 @@
 import unittest
 from py2neo import Graph, Node
-from karmabot.repo.neo4j_repo import get_all_users, get_users_in_chat, get_karma_given_by_user_in_chat, get_karma_received_by_user_in_chat
+from karmabot.repo.neo4j_repo import get_all_users, get_users_in_chat, get_karma_given_by_user_in_chat, get_karma_received_by_user_in_chat, get_user
+from karmabot.models.neo4j_models import Message
 import warnings
+import uuid
 
 
 class Neo_Test(unittest.TestCase):
@@ -16,6 +18,21 @@ class Neo_Test(unittest.TestCase):
             cql_lines = cql_setup_files.readlines()
             line = " ".join([line.replace("\n", "") for line in cql_lines])
             self.graph.run(line)
+
+    def test_get_user_that_exists(self):
+        user_id = "1"
+        karma = 5
+        username = "@user1"
+        user = get_user(self.graph, user_id)
+        self.assertIsNotNone(user)
+        self.assertEqual(karma, user.karma)
+        self.assertEqual(username, user.user_name)
+
+    def test_get_user_that_does_not_exist(self):
+        user_id = "10231"
+        user = get_user(self.graph, user_id)
+        self.assertIsNone(user)
+
 
     def test_get_users(self):
         test_karma_values = [-1, 3, 5]
@@ -60,6 +77,18 @@ class Neo_Test(unittest.TestCase):
         self.assertEqual(pos, 1)
         self.assertEqual(neg, 0)
 
+    def test_give_karma(self):
+        user_id_1 = "1"
+        user_id_2 = "3"
+        chat_id = "1"
+        message_1_id = str(uuid.uuid4())
+        message_1 = Message(message_1_id, chat_id, user_id_1, "+1 reply to message 2")
+        message_2_id = str(uuid.uuid4())
+        message_2 = Message(message_2_id, chat_id, user_id_2, "good content")
+
+        # pos, neg = get_karma_received_by_user_in_chat(self.graph, user_id, chat_id)
+
+        #vote_on_message(self.graph, message_response, message_receiving_vote, vote)
 
 
 

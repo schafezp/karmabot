@@ -21,6 +21,16 @@ def get_all_users(g: Graph) -> List[User]:
     users = [get_model_user_from_graph_user(user) for user in data[0]["users"]]
     return users
 
+def get_user(g: Graph, user_id: str)-> Optional[User]:
+    data = g.run("MATCH (n:User) where n.id = {user_id} return n as user", {"user_id": user_id}).data()
+    if data == []:
+        return None
+    #TODO: consider raising exception here
+    if len(data) > 1:
+        return None
+    else:
+        return get_model_user_from_graph_user(data[0]["user"])
+
 
 def get_users_in_chat(g: Graph, chat_id: str) -> Optional[Tuple[List[User], Chat]]:
     """ Returns all the users in a given chat. If chat does not exist returns none
