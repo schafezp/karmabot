@@ -1,6 +1,6 @@
 """Module used to encapsulate database query logic"""
 from py2neo import Graph
-from karmabot.models.neo4j_models import User, Chat
+from karmabot.models.neo4j_models import User, Chat, Message
 from typing import List, Tuple, Dict, Optional
 
 # ------------- Database helpers ---------------
@@ -13,6 +13,7 @@ def get_model_user_from_graph_user(user: Dict) -> User:
 def get_model_chat_from_graph_chat(chat: Dict) -> Chat:
     """ Converts neo4j database user into application logic user"""
     return Chat(chat["id"], chat["name"])
+
 
 def convert_vote_types_from_dict_to_tuple(data: List, type_key, count_key) -> Tuple[int, int]:
     """Requires order by type_key asc otherwise not guaranteed correct
@@ -77,6 +78,20 @@ def get_users_in_chat(g: Graph, chat_id: str) -> Optional[Tuple[List[User], Chat
 
     return users, chat
 
+def get_message(g: Graph, message_id: str) -> Message:
+    command = """MATCH (user:User)-[:AUTHORED_MESSAGE]->(m:Message)-[:WRITTEN_IN_CHAT]->(chat:Chat) 
+    where m.id = {message_id} 
+    return m.id as id, m.text as message_text, chat.id as chat_id, user.id as author_user_id"""
+    data = g.run(command, {"message_id": message_id}).data()
+    if data == []:
+        return None
+    if len(data) > 1:
+        return None #raise exception but should be handled by constraint
+    else:
+        result = data[0]
+        return Message(result["id"], result["chat_id"], result["author_user_id"], result["message_text"])
+    pass
+
 
 def get_karma_given_by_user_in_chat(g: Graph, user_id: str, chat_id: str) -> Tuple[int, int]:
     """Given a user and a chat, returns how much karma that user has given in that chat; seperated by positive and negative
@@ -106,5 +121,9 @@ def get_karma_received_by_user_in_chat(g: Graph, user_id: str, chat_id: str) -> 
     data = g.run(command, {"user_id": user_id, "chat_id": chat_id}).data()
     return convert_vote_types_from_dict_to_tuple(data, "vote_type", "vote_count")
 
-# Section for helpers
 
+def vote_on_message(g: Graph, reply_message: str, reply_to_message: str):
+    #give karma to author of reply_to_message
+    #make sure messages are saved
+    #create replied to relationship frmo reply to replied
+    pass

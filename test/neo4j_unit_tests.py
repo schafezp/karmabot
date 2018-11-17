@@ -1,6 +1,6 @@
 import unittest
 from py2neo import Graph, Node
-from karmabot.repo.neo4j_repo import get_all_users, get_users_in_chat, get_karma_given_by_user_in_chat, get_karma_received_by_user_in_chat, get_user
+from karmabot.repo.neo4j_repo import get_all_users, get_users_in_chat, get_karma_given_by_user_in_chat, get_karma_received_by_user_in_chat, get_user, get_message
 from karmabot.models.neo4j_models import Message
 import warnings
 import uuid
@@ -33,7 +33,6 @@ class Neo_Test(unittest.TestCase):
         user = get_user(self.graph, user_id)
         self.assertIsNone(user)
 
-
     def test_get_users(self):
         test_karma_values = [-1, 3, 5]
         users = get_all_users(self.graph)
@@ -50,6 +49,18 @@ class Neo_Test(unittest.TestCase):
         self.assertTrue(chat.chat_id == chat_id)
         self.assertTrue(chat.chat_name == chat_name)
         self.assertEqual(len(users), 2)
+
+    def test_get_message(self):
+        message_id = "1"
+        chat_id = "1"
+        user_id = "1"
+
+        message = get_message(self.graph, message_id)
+        self.assertIsNotNone(message)
+        self.assertEqual(message.chat_id, chat_id)
+        self.assertEqual(message.author_user_id, user_id)
+
+
 
     def test_get_users_in_chat_for_chat_not_exists(self):
         """ Verifies that if a bad chat_id is used none is returned"""
