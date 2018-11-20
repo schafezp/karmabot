@@ -153,14 +153,6 @@ def create_or_update_message(g: Graph, message: Message):
                            }).data()
     return data
 
-# def create_or_update_message(g: Graph, message: Message):
-#     command = """
-#     MERGE (n:Message {id: {id}})
-#     ON CREATE SET n.created = timestamp(), n.text = {text}
-#     ON MATCH SET
-#     n.accessTime = timestamp(), n.text = {text}
-#     """
-#     data = g.run(command, {"id": message.message_id, "text": message.message_text})
 
 def vote_on_message(g: Graph, reply_message: Message, reply_to_message: Message):
     #give karma to author of reply_to_message
