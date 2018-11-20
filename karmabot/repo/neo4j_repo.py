@@ -90,7 +90,6 @@ def get_message(g: Graph, message_id: str) -> Message:
     else:
         result = data[0]
         return Message(result["id"], result["chat_id"], result["author_user_id"], result["message_text"])
-    pass
 
 
 def get_karma_given_by_user_in_chat(g: Graph, user_id: str, chat_id: str) -> Tuple[int, int]:
@@ -121,8 +120,49 @@ def get_karma_received_by_user_in_chat(g: Graph, user_id: str, chat_id: str) -> 
     data = g.run(command, {"user_id": user_id, "chat_id": chat_id}).data()
     return convert_vote_types_from_dict_to_tuple(data, "vote_type", "vote_count")
 
+def get_message(g: Graph, message_id: str) -> Optional[Message]:
+    commmand = """
+    MATCH (user:User)-[:AUTHORED_MESSAGE]->(message:Message)-[:WRITTEN_IN_CHAT]->(chat:Chat)
+    WHERE message.id = {id}
+    return user, message, chat
+    """
+    data = g.run(commmand, {"id": message_id}).data()
+    if data == []:
+        return None
+    result = data[0]
+    user = get_model_user_from_graph_user(result['user'])
+    chat = get_model_chat_from_graph_chat(result['chat'])
+    m = result['message']
+    message = Message(m['id'], chat.chat_id, user.user_id, m['text'])
+    return message
 
-def vote_on_message(g: Graph, reply_message: str, reply_to_message: str):
+def create_or_update_message(g: Graph, message: Message):
+    command = """
+    MATCH (user:User), (chat:Chat)
+    where user.id = {user_id} AND chat.id = {chat_id}
+    MERGE (user)-[:AUTHORED_MESSAGE]->(message:Message {id: {message_id}})-[:WRITTEN_IN_CHAT]
+    ->(chat)
+    ON CREATE SET message.created = timestamp(), message.text = {text}
+    ON MATCH SET
+    message.accessTime = timestamp(), message.text = {text}
+    """
+    data = g.run(command, {"user_id": message.author_user_id,
+                           "chat_id": message.chat_id,
+                           "message_id": message.message_id,
+                           "text": message.message_text
+                           }).data()
+    return data
+
+# def create_or_update_message(g: Graph, message: Message):
+#     command = """
+#     MERGE (n:Message {id: {id}})
+#     ON CREATE SET n.created = timestamp(), n.text = {text}
+#     ON MATCH SET
+#     n.accessTime = timestamp(), n.text = {text}
+#     """
+#     data = g.run(command, {"id": message.message_id, "text": message.message_text})
+
+def vote_on_message(g: Graph, reply_message: Message, reply_to_message: Message):
     #give karma to author of reply_to_message
     #make sure messages are saved
     #create replied to relationship frmo reply to replied

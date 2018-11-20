@@ -1,6 +1,7 @@
 import unittest
 from py2neo import Graph, Node
-from karmabot.repo.neo4j_repo import get_all_users, get_users_in_chat, get_karma_given_by_user_in_chat, get_karma_received_by_user_in_chat, get_user, get_message
+# from karmabot.repo.neo4j_repo import get_all_users, get_users_in_chat, get_karma_given_by_user_in_chat, get_karma_received_by_user_in_chat, get_user, get_message, create_or_update_message
+from karmabot.repo.neo4j_repo import *
 from karmabot.models.neo4j_models import Message
 import warnings
 import uuid
@@ -59,6 +60,22 @@ class Neo_Test(unittest.TestCase):
         self.assertIsNotNone(message)
         self.assertEqual(message.chat_id, chat_id)
         self.assertEqual(message.author_user_id, user_id)
+
+    def test_create_message(self):
+        message_id = "59"
+        chat_id = "1"
+        user_id = "1"
+        message_text = "this is a message"
+        message = Message(message_id, chat_id, user_id, message_text)
+        result = get_message(self.graph, message.message_id)
+        self.assertIsNone(result)
+        create_or_update_message(self.graph, message)
+        result = get_message(self.graph, message.message_id)
+        self.assertIsNotNone(result)
+        self.assertEqual(message.message_id, message_id)
+        self.assertEqual(message.chat_id, chat_id)
+        self.assertEqual(message.author_user_id, user_id)
+        self.assertEqual(message.message_text, message_text)
 
 
 
