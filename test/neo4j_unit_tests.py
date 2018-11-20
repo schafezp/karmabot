@@ -72,10 +72,30 @@ class Neo_Test(unittest.TestCase):
         create_or_update_message(self.graph, message)
         result = get_message(self.graph, message.message_id)
         self.assertIsNotNone(result)
-        self.assertEqual(message.message_id, message_id)
-        self.assertEqual(message.chat_id, chat_id)
-        self.assertEqual(message.author_user_id, user_id)
-        self.assertEqual(message.message_text, message_text)
+        self.assertEqual(result.message_id, message_id)
+        self.assertEqual(result.chat_id, chat_id)
+        self.assertEqual(result.author_user_id, user_id)
+        self.assertEqual(result.message_text, message_text)
+
+    def test_update_message(self):
+        message_id = "59"
+        chat_id = "1"
+        user_id = "1"
+        message_text = "this is a message"
+        message = Message(message_id, chat_id, user_id, message_text)
+        create_or_update_message(self.graph, message)
+        result = get_message(self.graph, message.message_id)
+        self.assertIsNotNone(result)
+        self.assertEqual(result.message_id, message_id)
+        self.assertEqual(result.chat_id, chat_id)
+        self.assertEqual(result.author_user_id, user_id)
+        self.assertEqual(result.message_text, message_text)
+        updated_message_text = "another message"
+        message.message_text = updated_message_text
+        create_or_update_message(self.graph, message)
+        result = get_message(self.graph, message.message_id)
+        self.assertEqual(result.message_text, updated_message_text)
+
 
 
 
