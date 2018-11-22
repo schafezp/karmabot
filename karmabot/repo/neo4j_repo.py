@@ -154,6 +154,23 @@ def create_or_update_message(g: Graph, message: Message):
                            }).data()
     return data
 
+def get_user_karma_in_chat(g: Graph, user_id: str, chat_id: str) -> Optional[int]:
+    get_user_karma_command = """
+    MATCH (user:User)-[r:USER_IN_CHAT]->(chat:Chat)
+    WHERE user.id = {user_id} AND chat.id = {chat_id}
+    return r.karma as karma"""
+
+    result = g.run(get_user_karma_command,
+                   {"user_id": user_id,
+                    "chat_id": chat_id}).data()
+
+    if len(result) == 0:
+        return None
+    else:
+        return result[0]["karma"]
+
+
+
 
 def vote_on_message(g: Graph, reply_message: Message, reply_to_message: Message, vote: int):
     #give karma to author of reply_to_message
@@ -162,9 +179,15 @@ def vote_on_message(g: Graph, reply_message: Message, reply_to_message: Message,
     create_or_update_message(g, reply_message)
     create_or_update_message(g, reply_to_message)
 
-    #FIXME: set karma on relationship to chat
+    #TODO: test that this relationship is created when it doesn't exist
     update_user_karma_command = """
-    MERGE (user:User {id: {user_id}})"""
+    MERGE (user:User {id: {user_id}})
+    -[r:USER_IN_CHAT]->(chat1)
+    ON MATCH SET
+    r.karma  = r.karma + {vote}
+    ON CREATE SET
+    r.karma = {vote}
+    """
     g.run(update_user_karma_command,
                  {"user_id": reply_to_message.author_user_id,
                   "vote": vote}).data()

@@ -128,13 +128,25 @@ class Neo_Test(unittest.TestCase):
         message_2 = Message(message_2_id, chat_id, user_id_2, "good content")
         upvote_amount = 1
         pos, neg = get_karma_received_by_user_in_chat(self.graph, user_id_2, chat_id)
+        user_2_karma = get_user_karma_in_chat(self.graph, user_id_2, chat_id)
 
         vote_on_message(self.graph, message_1, message_2, upvote_amount)
 
         pos_after, neg_after = get_karma_received_by_user_in_chat(self.graph, user_id_2, chat_id)
+        user_2_karma_after = get_user_karma_in_chat(self.graph, user_id_2, chat_id)
         self.assertTrue("+1 karma should have been given", pos_after == pos + 1)
+        self.assertEqual(user_2_karma + 1, user_2_karma_after,
+                         "karma value should be updated on relationship")
 
-        print()
+
+    def test_get_user_karma_in_chat(self):
+        user_id = "1"
+        chat_id = "1"
+        result = get_user_karma_in_chat(self.graph, user_id, chat_id)
+        self.assertIsNotNone(result)
+        self.assertEqual(result, 5)
+
+
 
 
 
