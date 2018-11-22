@@ -42,6 +42,10 @@ def convert_vote_types_from_dict_to_tuple(data: List, type_key, count_key) -> Tu
 # ------------- Database calls ---------------
 
 def get_all_users(g: Graph) -> List[User]:
+    """
+    :param g:
+    :return: Returns all users in the database
+    """
     data = g.run("MATCH (n:User) return collect(n) as users").data()
     if len(data) == 0:
         return []
@@ -78,6 +82,7 @@ def get_users_in_chat(g: Graph, chat_id: str) -> Optional[Tuple[List[User], Chat
 
     return users, chat
 
+
 def get_message(g: Graph, message_id: str) -> Message:
     command = """MATCH (user:User)-[:AUTHORED_MESSAGE]->(m:Message)-[:WRITTEN_IN_CHAT]->(chat:Chat) 
     where m.id = {message_id} 
@@ -110,7 +115,15 @@ def get_karma_given_by_user_in_chat(g: Graph, user_id: str, chat_id: str) -> Tup
     data = g.run(command, {"user_id": user_id, "chat_id": chat_id}).data()
     return convert_vote_types_from_dict_to_tuple(data, "vote_type", "vote_count")
 
+
 def get_karma_received_by_user_in_chat(g: Graph, user_id: str, chat_id: str) -> Tuple[int,int]:
+    """Get number of positive and negative votes received by a user in a chat.
+
+    :param g:
+    :param user_id:
+    :param chat_id:
+    :return: tuple of [positive vote count, negative vote count]: default to 0
+    """
     command = """MATCH (user:User)-[:AUTHORED_MESSAGE]->(message_replied_to:Message)<-[r:REPLIED_TO]-(message:Message)
     MATCH (message:Message)-[:WRITTEN_IN_CHAT]->(chat:Chat)
     where user.id= {user_id}
@@ -120,7 +133,15 @@ def get_karma_received_by_user_in_chat(g: Graph, user_id: str, chat_id: str) -> 
     data = g.run(command, {"user_id": user_id, "chat_id": chat_id}).data()
     return convert_vote_types_from_dict_to_tuple(data, "vote_type", "vote_count")
 
+
 def get_message(g: Graph, message_id: str) -> Optional[Message]:
+    """
+    Get message for message_id and construct message object that includes user_id and chat_id
+    #TODO: handle case where message lacks relationship to user and chat
+    :param g:
+    :param message_id:
+    :return: message if exists, otherwise none.
+    """
     commmand = """
     MATCH (user:User)-[:AUTHORED_MESSAGE]->(message:Message)-[:WRITTEN_IN_CHAT]->(chat:Chat)
     WHERE message.id = {id}
@@ -136,7 +157,14 @@ def get_message(g: Graph, message_id: str) -> Optional[Message]:
     message = Message(m['id'], chat.chat_id, user.user_id, m['text'])
     return message
 
+
 def create_or_update_message(g: Graph, message: Message):
+    """
+    Store message with relationship to user and chat in database.
+    :param g:
+    :param message:
+    :return:
+    """
     command = """
     MATCH (user:User), (chat:Chat)
     where user.id = {user_id} AND chat.id = {chat_id}
@@ -154,7 +182,15 @@ def create_or_update_message(g: Graph, message: Message):
                            }).data()
     return data
 
+
 def get_user_karma_in_chat(g: Graph, user_id: str, chat_id: str) -> Optional[int]:
+    """Return the karma a user has in a given chat. Stored on relationship to chat.
+    #TODO: return optional or 0 by default?
+    :param g:
+    :param user_id:
+    :param chat_id:
+    :return:
+    """
     get_user_karma_command = """
     MATCH (user:User)-[r:USER_IN_CHAT]->(chat:Chat)
     WHERE user.id = {user_id} AND chat.id = {chat_id}
@@ -170,9 +206,16 @@ def get_user_karma_in_chat(g: Graph, user_id: str, chat_id: str) -> Optional[int
         return result[0]["karma"]
 
 
-
-
 def vote_on_message(g: Graph, reply_message: Message, reply_to_message: Message, vote: int):
+    """ Applies a karma vote to a user for a given message.
+    #TODO: raise exceptions for error conditions such as invalid message, vote, etc
+
+    :param g: graph to operate on
+    :param reply_message: message with the +1 or -1
+    :param reply_to_message: message being replied to
+    :param vote: the value of the vote being applied. should only be 1 or -1 (filtered by server)
+    :return:
+    """
     #give karma to author of reply_to_message
     #make sure messages are saved
     #create replied to relationship frmo reply to replied
