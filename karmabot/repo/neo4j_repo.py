@@ -232,6 +232,7 @@ def get_karma_for_users_in_chat(g: Graph, chat_id: str) -> List[Tuple[User, int]
 def vote_on_message(g: Graph, reply_message: Message, reply_to_message: Message, vote: int):
     """ Applies a karma vote to a user for a given message.
     #TODO: raise exceptions for error conditions such as invalid message, vote, etc
+    #TODO: check if vote already given: how?
 
     :param g: graph to operate on
     :param reply_message: message with the +1 or -1
@@ -242,8 +243,29 @@ def vote_on_message(g: Graph, reply_message: Message, reply_to_message: Message,
     #give karma to author of reply_to_message
     #make sure messages are saved
     #create replied to relationship frmo reply to replied
+    assert vote in [-1, 1]
     create_or_update_message(g, reply_message)
     create_or_update_message(g, reply_to_message)
+
+    check_if_user_already_voted_cmd = """
+    MATCH (user:User)-[:AUTHORED_MESSAGE]->(reply_message:Message)-[r:REPLIED_TO]->(reply_to_message:Message)
+    where  user.id = {user_id} AND reply_to_message.id = {reply_to_message_id}
+    return r.vote as vote
+    """
+    result = g.run(check_if_user_already_voted_cmd,
+                   {"user_id": reply_message.author_user_id,
+                    "reply_to_message_id": reply_to_message.message_id}).data()
+
+    if len(result) >= 1:# was already replied to
+        existing_vote = result[0]['vote']
+        if vote == existing_vote:
+            return
+        else:
+            vote = 2 * vote
+    #TODO: override existing react relation
+
+    # if vote matches vote value then do nothing
+    # else add (-2)*vote to karma
 
     #TODO: test that this relationship is created when it doesn't exist
     update_user_karma_command = """
@@ -259,9 +281,13 @@ def vote_on_message(g: Graph, reply_message: Message, reply_to_message: Message,
                   "vote": vote}).data()
 
     create_react_relation = """
-    MATCH (reply_message:Message), (reply_to_message:Message)
+    MATCH (reply_message:Message), (reply_to_message:Message) 
     where  reply_message.id = {reply_message_id} AND reply_to_message.id = {reply_to_message_id}
-    MERGE (reply_message)-[:REPLIED_TO {vote: {vote}}]->(reply_to_message)
+    MERGE (reply_message)-[r:REPLIED_TO]->(reply_to_message)
+    ON MATCH SET
+    r.vote = {vote}
+    ON CREATE SET
+    r.vote = {vote}
     """
 
     result = g.run(create_react_relation,

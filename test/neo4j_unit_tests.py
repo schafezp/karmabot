@@ -169,6 +169,41 @@ class Neo_Test(unittest.TestCase):
         self.assertEqual(len(result), 2)
         self.assertEqual(test_karma.sort(), result_karma.sort())
 
+    def test_cant_double_vote(self):
+        #TODO: this could be handled at the
+        user_id_1 = "1"; user_id_2 = "3"; chat_id = "1"
+        message_1 = Message(str(uuid.uuid4()), chat_id, user_id_1, "+1 reply to message 2")
+        message_2 = Message(str(uuid.uuid4()), chat_id, user_id_2, "good content")
+        message_3 = Message(str(uuid.uuid4()), chat_id, user_id_1, "+1 a double vote for m2")
+        user_2_karma_before = get_karma_for_user_in_chat(self.graph, user_id_2, chat_id)
+        vote_on_message(self.graph, message_1, message_2, 1)
+        user_2_karma_mid = get_karma_for_user_in_chat(self.graph, user_id_2, chat_id)
+        self.assertEqual(user_2_karma_before + 1, user_2_karma_mid,
+                         "user should get +1 karma")
+
+        vote_on_message(self.graph, message_3, message_2, 1)
+        user_2_karma_after = get_karma_for_user_in_chat(self.graph, user_id_2, chat_id)
+        self.assertEqual(user_2_karma_before + 1, user_2_karma_after,
+                         "karma value should only get +1 ")
+
+    def test_can_override_vote(self):
+        user_id_1 = "1";
+        user_id_2 = "3";
+        chat_id = "1"
+        message_1 = Message(str(uuid.uuid4()), chat_id, user_id_1, "+1 reply to message 2")
+        message_2 = Message(str(uuid.uuid4()), chat_id, user_id_2, "good content")
+        message_3 = Message(str(uuid.uuid4()), chat_id, user_id_1, "+1 a double vote for m2")
+        user_2_karma_before = get_karma_for_user_in_chat(self.graph, user_id_2, chat_id)
+        vote_on_message(self.graph, message_1, message_2, 1)
+        user_2_karma_mid = get_karma_for_user_in_chat(self.graph, user_id_2, chat_id)
+        self.assertEqual(user_2_karma_before + 1, user_2_karma_mid,
+                         "user should get +1 karma")
+
+        vote_on_message(self.graph, message_3, message_2, -1)
+        user_2_karma_after = get_karma_for_user_in_chat(self.graph, user_id_2, chat_id)
+        self.assertEqual(user_2_karma_before - 1, user_2_karma_after,
+                         "karma value be -1 of original")
+
 
 if __name__ == "__main__":
     unittest.main()
