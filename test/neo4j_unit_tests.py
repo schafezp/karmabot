@@ -4,6 +4,7 @@ from karmabot.models.neo4j_models import Message
 import warnings
 import uuid
 
+#TODO: break tests into multiple classes
 
 class Neo_Test(unittest.TestCase):
     def setUp(self):
