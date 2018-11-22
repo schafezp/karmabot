@@ -146,6 +146,7 @@ def create_or_update_message(g: Graph, message: Message):
     ON MATCH SET
     message.accessTime = timestamp(), message.text = {text}
     """
+    #TODO: handle failure cases (what if user or chat doesn't exist?)
     data = g.run(command, {"user_id": message.author_user_id,
                            "chat_id": message.chat_id,
                            "message_id": message.message_id,
@@ -154,8 +155,35 @@ def create_or_update_message(g: Graph, message: Message):
     return data
 
 
-def vote_on_message(g: Graph, reply_message: Message, reply_to_message: Message):
+def vote_on_message(g: Graph, reply_message: Message, reply_to_message: Message, vote: int):
     #give karma to author of reply_to_message
     #make sure messages are saved
     #create replied to relationship frmo reply to replied
-    pass
+    create_or_update_message(g, reply_message)
+    create_or_update_message(g, reply_to_message)
+    update_user_karma_command = """
+    MERGE (user:User {id: {user_id}})
+    ON MATCH SET
+    user.karma = user.karma + {vote}
+    """
+    set_karma = g.run(update_user_karma_command,
+                 {"user_id": reply_to_message.author_user_id,
+                  "vote": vote}).data()
+    r = g.run("""
+    MATCH (reply_message:Message), (reply_to_message:Message)
+    where  reply_message.id = {reply_message_id} AND reply_to_message.id = {reply_to_message_id}
+    return reply_message, reply_to_message
+    """, {"reply_message_id": reply_to_message.message_id,
+                    "reply_to_message_id": reply_to_message.message_id}).data()
+
+    create_react_relation = """
+    MATCH (reply_message:Message), (reply_to_message:Message)
+    where  reply_message.id = {reply_message_id} AND reply_to_message.id = {reply_to_message_id}
+    MERGE (reply_message)-[:REPLIED_TO {vote: {vote}}]->(reply_to_message)
+    """
+
+    result = g.run(create_react_relation,
+                   {"reply_message_id": reply_message.message_id,
+                    "reply_to_message_id": reply_to_message.message_id,
+                       "vote": vote}).data()
+    return result
