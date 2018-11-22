@@ -1,6 +1,4 @@
 import unittest
-from py2neo import Graph, Node
-# from karmabot.repo.neo4j_repo import get_all_users, get_users_in_chat, get_karma_given_by_user_in_chat, get_karma_received_by_user_in_chat, get_user, get_message, create_or_update_message
 from karmabot.repo.neo4j_repo import *
 from karmabot.models.neo4j_models import Message
 import warnings
@@ -22,11 +20,9 @@ class Neo_Test(unittest.TestCase):
 
     def test_get_user_that_exists(self):
         user_id = "1"
-        karma = 5
         username = "@user1"
         user = get_user(self.graph, user_id)
         self.assertIsNotNone(user)
-        self.assertEqual(karma, user.karma)
         self.assertEqual(username, user.user_name)
 
     def test_get_user_that_does_not_exist(self):
@@ -35,17 +31,15 @@ class Neo_Test(unittest.TestCase):
         self.assertIsNone(user)
 
     def test_get_users(self):
-        test_karma_values = [-1, 3, 5]
         users = get_all_users(self.graph)
-        karma = [user.karma for user in users]
-        karma.sort()
-        self.assertTrue(test_karma_values.sort() == karma.sort())
+        self.assertEqual(len(users), 3)
+
 
     def test_get_users_in_chat(self):
         chat_id = "1"
         chat_name = "A fun chat"
         result = get_users_in_chat(self.graph, chat_id)
-        self.assertTrue(result is not None)
+        self.assertIsNotNone(result)
         users, chat = result
         self.assertTrue(chat.chat_id == chat_id)
         self.assertTrue(chat.chat_name == chat_name)
@@ -134,7 +128,7 @@ class Neo_Test(unittest.TestCase):
         upvote_amount = 1
         pos, neg = get_karma_received_by_user_in_chat(self.graph, user_id_2, chat_id)
 
-        result = vote_on_message(self.graph, message_1, message_2, upvote_amount)
+        vote_on_message(self.graph, message_1, message_2, upvote_amount)
 
         pos_after, neg_after = get_karma_received_by_user_in_chat(self.graph, user_id_2, chat_id)
         self.assertTrue("+1 karma should have been given", pos_after == pos + 1)
@@ -142,8 +136,6 @@ class Neo_Test(unittest.TestCase):
         print()
 
 
-#TODO:  Problem: track user in chat karma. How to maintain backwards compat?
-# Users should not have karma.
 
 if __name__ == "__main__":
     unittest.main()

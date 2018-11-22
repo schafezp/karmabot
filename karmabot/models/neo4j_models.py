@@ -4,7 +4,8 @@ from dataclasses import dataclass
 class User():
     user_id: str
     user_name: str
-    karma: int
+    #TODO: add first/last
+
 
 
 @dataclass
