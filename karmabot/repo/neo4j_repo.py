@@ -183,7 +183,7 @@ def create_or_update_message(g: Graph, message: Message):
     return data
 
 
-def get_user_karma_in_chat(g: Graph, user_id: str, chat_id: str) -> Optional[int]:
+def get_karma_for_user_in_chat(g: Graph, user_id: str, chat_id: str) -> Optional[int]:
     """Return the karma a user has in a given chat. Stored on relationship to chat.
     #TODO: return optional or 0 by default?
     :param g:
@@ -204,6 +204,29 @@ def get_user_karma_in_chat(g: Graph, user_id: str, chat_id: str) -> Optional[int
         return None
     else:
         return result[0]["karma"]
+
+def get_karma_for_users_in_chat(g: Graph, chat_id: str) -> List[Tuple[User, int]]:
+    """Return the karma for all users in a given chat.
+    #TODO: Should this return list of tuples, list of named tuples, class, or dict?
+    :param g:
+    :param user_id:
+    :param chat_id:
+    :return:
+    """
+    get_user_karma_command = """
+    MATCH (user:User)-[r:USER_IN_CHAT]->(chat:Chat)
+    WHERE chat.id = {chat_id}
+    return user, r.karma as karma"""
+
+    result = g.run(get_user_karma_command,
+                   {"chat_id": chat_id}).data()
+
+    # TODO: verify behavior when chat doesn't exist
+    if len(result) == 0:
+        return []
+    else:
+        user_result = list(map(lambda x: (get_model_user_from_graph_user(x['user']), x['karma']), result))
+        return user_result
 
 
 def vote_on_message(g: Graph, reply_message: Message, reply_to_message: Message, vote: int):
