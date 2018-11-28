@@ -16,7 +16,6 @@ class IntegrationTests(Common_Integration):
     def setUp(self):
         self.setup_bot_client()
 
-
     def tearDown(self):
         self.tear_down_bot_client()
 
@@ -37,7 +36,6 @@ class IntegrationTests(Common_Integration):
         self.assertEqual(len(show_karma_response.messages), 1)
         self.assertEqual(show_karma_response.messages[0].text, SHOW_KARMA_NO_HISTORY_RESPONSE)
 
-    @unittest.skip("vote overriding broken right now")
     def test_votes_can_be_overriden(self):
         """Tests that if a message is +1 and then -1, the total net karma is 0"""
         self.client.send_command_await(CLEAR_CHAT_COMMAND, num_expected=1)
@@ -81,7 +79,6 @@ class IntegrationTests(Common_Integration):
         does_bot_have_1_karma = re.search(f"{bot_name_without_at}: 1", bot_response)
         self.assertTrue(does_bot_have_1_karma, "Bot should have 1 karma after 1 plus 1")
 
-    @unittest.skip("dont care that this works for now")
     def test_downvote(self):
         """Tests that downvoting a message results in -1 karma"""
         self.client.send_command_await(CLEAR_CHAT_COMMAND)
