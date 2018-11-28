@@ -209,8 +209,7 @@ class PostgresKarmabotDatabaseService(KarmabotDatabaseService):
         Saves both users, both messages, updates user in chat and creates a user_reacted_to_message row"""
         user: User = self.save_or_create_user(reply_from_user_unsaved)
         reply_to_user: User = self.save_or_create_user(reply_to_user_unsaved)
-        if not self.does_chat_exist(chat.chat_id):
-            self.save_or_create_chat(chat)
+        self.save_or_create_chat(chat)
 
         uic: User_in_Chat = self.save_or_create_user_in_chat(user, chat.chat_id)
         self.save_or_create_user_in_chat(reply_to_user, chat.chat_id)
