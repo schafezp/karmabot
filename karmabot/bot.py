@@ -13,7 +13,7 @@ from .commands_strings import START_COMMAND, CLEAR_CHAT_COMMAND, SHOW_KARMA_COMM
 from .handlers import start, show_version, gen_show_karma, gen_reply, gen_show_user_stats, gen_show_chat_info, \
     gen_show_history_graph, gen_clear_chat_with_bot, gen_show_karma_personally, gen_show_karma_personally_button_pressed, error
 
-from .telegramservice import PostgresKarmabotDatabaseService, PostgresDBConfig
+from karmabot.services.postgres_db_service import PostgresKarmabotDatabaseService, PostgresDBConfig
 
 LOG_LEVEL_ENV_VAR = os.environ.get('LOG_LEVEL')
 LOG_LEVEL = None

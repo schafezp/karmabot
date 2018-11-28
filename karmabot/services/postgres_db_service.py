@@ -1,17 +1,10 @@
-"""Manages class for telegram service.
-"""
 from typing import List, Tuple, Optional, Dict
 from dataclasses import dataclass
 import psycopg2
-from .models.postgres_models import User, Telegram_Chat, Telegram_Message, User_in_Chat
+from karmabot.models.postgres_models import User, Telegram_Chat, Telegram_Message, User_in_Chat
 import logging
+from .telegramservice import KarmabotDatabaseService
 
-class InvalidDBConfig(Exception):
-    pass
-
-class UserNotFound(Exception):
-    """Returned when no valid user is found"""
-    pass
 
 @dataclass
 class PostgresDBConfig:
@@ -21,66 +14,10 @@ class PostgresDBConfig:
     user: str
     password: str
 
-
-class KarmabotDatabaseService:
-    """Base class for karmabot service"""
-    #TODO: make sure all my methods have docstrings
-    def get_karma_for_users_in_chat(self, chat_id: str) -> List[Tuple[str, str, int]]:
-        """Gets karma for user in chat"""
-        raise NotImplementedError
-
-    #TODO: determine if this should be on public api
-    # def get_user_by_username(self, username: str) -> User:
-    #     raise NotImplementedError
-    #TODO: don't return optional
-    def get_random_witty_response(self) -> Optional[str]:
-        raise NotImplementedError
-
-    def save_or_create_user(self, user: User) -> User:
-        raise NotImplementedError
-
-    def save_or_create_chat(self, chat: Telegram_Chat) -> Telegram_Chat:
-        raise NotImplementedError
-
-    def user_reply_to_message(self,
-            reply_from_user_unsaved: User,
-            reply_to_user_unsaved: User,
-            chat: Telegram_Chat,
-            original_message: Telegram_Message,
-            reply_message: Telegram_Message,
-            karma: int):
-        raise NotImplementedError
-
-    def get_user_stats(self, username: str, chat_id: str) -> Dict:
-        raise NotImplementedError
-
-    def get_chat_info(self, chat_id: str) -> Dict:
-        raise NotImplementedError
-
-    def get_chat_name(self, chat_id: str) -> Optional[str]:
-        raise NotImplementedError
-    # TODO: give option for using day/week as well as start/end date
-
-    def get_responses_per_day(self, chat_id: str) -> Optional[Tuple[str, str]]:
-        """Returns responses per day per chat"""
-        raise NotImplementedError
-
-    #TODO: throw exception if chat is not with bot
-    def clear_chat_with_bot(self, chat_id, user_id):
-        """Clears all history from a chat but only if chat_id matches user_id
-            If chat_id matches user_id then the chat is a 1 on 1 with a bot."""
-        raise NotImplementedError
-
-    def get_chats_user_is_in(self, user_id: int) -> Optional[List[Tuple[str, str]]]:
-        raise NotImplementedError
-
-    def use_command(self, command: str, user: User, chat_id: str):
-        raise NotImplementedError
-
-
 class PostgresKarmabotDatabaseService(KarmabotDatabaseService):
     """Does connections to postgres"""
-    #TODO: trigger use_commmand on function invocations (perhaps add annotation?)
+
+    # TODO: trigger use_commmand on function invocations (perhaps add annotation?)
     def __init__(self, db_config: PostgresDBConfig) -> None:
         try:
             self.conn = psycopg2.connect(
@@ -92,7 +29,7 @@ class PostgresKarmabotDatabaseService(KarmabotDatabaseService):
             raise oe
 
     def get_karma_for_users_in_chat(self,
-        chat_id: str) -> List[Tuple[str, str, int]]:
+                                    chat_id: str) -> List[Tuple[str, str, int]]:
         """Returns username, firstname, karma for all telegram users in a given chat"""
         cmd = """select username, first_name, karma from telegram_user tu
             LEFT JOIN user_in_chat uic ON uic.user_id=tu.user_id
@@ -113,8 +50,7 @@ class PostgresKarmabotDatabaseService(KarmabotDatabaseService):
                 res = crs.fetchone()
                 return User(res[0], res[1], res[2], res[3])
 
-
-    def get_random_witty_response(self)-> Optional[str]:
+    def get_random_witty_response(self) -> Optional[str]:
         """Returns a random witty response. Uses USER_FIRST_NAME as replace string for actual user first name"""
         cmd = """SELECT response FROM attempted_self_plus_one_response ORDER BY RANDOM() LIMIT 1"""
 
@@ -171,9 +107,9 @@ class PostgresKarmabotDatabaseService(KarmabotDatabaseService):
                 return crs.fetchone() is not None
 
     def save_or_create_user_in_chat(self,
-            user: User,
-            chat_id: str,
-            change_karma=0) -> User_in_Chat:
+                                    user: User,
+                                    chat_id: str,
+                                    change_karma=0) -> User_in_Chat:
         """Creates user in chat if not exists otherwise updates user_in_chat karma"""
         with self.conn:
             with self.conn.cursor() as crs:  # I would love type hints here but psycopg2.cursor isn't a defined class
@@ -199,12 +135,12 @@ class PostgresKarmabotDatabaseService(KarmabotDatabaseService):
                 return User_in_Chat(user.id, chat_id, karma)
 
     def user_reply_to_message(self,
-            reply_from_user_unsaved: User,
-            reply_to_user_unsaved: User,
-            chat: Telegram_Chat,
-            original_message: Telegram_Message,
-            reply_message: Telegram_Message,
-            karma: int):
+                              reply_from_user_unsaved: User,
+                              reply_to_user_unsaved: User,
+                              chat: Telegram_Chat,
+                              original_message: Telegram_Message,
+                              reply_message: Telegram_Message,
+                              karma: int):
         """Processes a user replying to another users message with a given karma.
         Saves both users, both messages, updates user in chat and creates a user_reacted_to_message row"""
         user: User = self.save_or_create_user(reply_from_user_unsaved)
@@ -242,7 +178,7 @@ class PostgresKarmabotDatabaseService(KarmabotDatabaseService):
                 self.save_or_create_user_in_chat(
                     reply_to_user, chat.chat_id, change_karma=karma)
             else:
-                #TODO: move logging into handler
+                # TODO: move logging into handler
                 logging.info(
                     f"invalid karma: {karma} passed to user_reply_to_message")
             with self.conn:
@@ -266,7 +202,7 @@ class PostgresKarmabotDatabaseService(KarmabotDatabaseService):
                         reply_message.message_id]
                     crs.execute(inserturtm, argsurtm)
 
-    #TODO: determine if this should be in the public api (super)
+    # TODO: determine if this should be in the public api (super)
     def did_user_react_to_messages(self, username: str) -> bool:
         """Returns true if a user has responded to some messages"""
         select_user_replies = """select username, message_id, react_score, react_message_id  from telegram_user tu
@@ -280,8 +216,8 @@ class PostgresKarmabotDatabaseService(KarmabotDatabaseService):
                 return reacted_messages_result is not None
 
     def get_karma_for_user_in_chat(self,
-            username: str,
-            chat_id: str) -> Optional[int]:
+                                   username: str,
+                                   chat_id: str) -> Optional[int]:
         """Returns karma for a particular user in chat
         if that uic does not exist, return None"""
         cmd = """select karma from telegram_user tu
@@ -421,7 +357,8 @@ class PostgresKarmabotDatabaseService(KarmabotDatabaseService):
                 crs.execute(del_user_reacted_to_message_cmd, [chat_id_str])
                 crs.execute(del_telegram_messages, [chat_id_str])
                 crs.execute(del_command_used, [chat_id_str])
-    #TODO: don't return optional
+
+    # TODO: don't return optional
 
     def get_chats_user_is_in(self, user_id: int) -> Optional[List[Tuple[str, str]]]:
         """Returns a list of chat_ids and chat names """
@@ -465,9 +402,3 @@ class PostgresKarmabotDatabaseService(KarmabotDatabaseService):
         with self.conn:
             with self.conn.cursor() as crs:
                 crs.execute(insertcmd, [command, arguments, user.id, chat_id])
-
-
-class Neo4jKarmabotDatabaseService(KarmabotDatabaseService):
-    """Does connections to neo4j"""
-    pass
-

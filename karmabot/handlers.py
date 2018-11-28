@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
 
 from .annotations import types
-from .telegramservice import KarmabotDatabaseService, UserNotFound
+from karmabot.services.telegramservice import KarmabotDatabaseService, UserNotFound
 from .formatters import format_show_karma_for_users_in_chat
 from .models.postgres_models import Telegram_Chat, Telegram_Message, user_from_tg_user, User
 from .responses import START_BOT_RESPONSE, FAILED_CLEAR_CHAT_DUE_TO_GROUPCHAT, SUCCESSFUL_CLEAR_CHAT
