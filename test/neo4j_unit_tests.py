@@ -35,7 +35,6 @@ class Neo_Test(unittest.TestCase):
         users = get_all_users(self.graph)
         self.assertEqual(len(users), 3)
 
-
     def test_get_users_in_chat(self):
         chat_id = "1"
         chat_name = "A fun chat"
