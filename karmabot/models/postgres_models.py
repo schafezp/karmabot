@@ -1,10 +1,12 @@
 """This module stores the models for the telegram bot"""
 from typing import Optional
 
+
 class User:
     """
     A representation of a telegram user
     """
+
     id: int
     __karma: int
     first_name: str
@@ -12,11 +14,8 @@ class User:
     username: Optional[str]
 
     def __init__(
-            self,
-            user_id: int,
-            username: str,
-            first_name: str,
-            last_name: str) -> None:
+        self, user_id: int, username: str, first_name: str, last_name: str
+    ) -> None:
         self.__karma = 0
         self.id = user_id
         self.username = username
@@ -46,19 +45,23 @@ class User:
     def __str__(self):
         """Returns string represntation of userr"""
         if self.username is not None:
-            message = "Username: " + self.username + \
-                " karma: " + str(self.get_karma())
+            message = "Username: " + self.username + " karma: " + str(self.get_karma())
             # clean this logic up
-            message = message + " first: " + \
-                str(self.get_first_name()) + " last: " + str(self.get_last_name())
+            message = (
+                message
+                + " first: "
+                + str(self.get_first_name())
+                + " last: "
+                + str(self.get_last_name())
+            )
             return message
         else:
-            return "First Name: " + self.first_name + \
-                " karma: " + str(self.get_karma())
+            return "First Name: " + self.first_name + " karma: " + str(self.get_karma())
 
 
 class User_in_Chat:
     """Model for user_in_chat row"""
+
     user_id: int
     chat_id: str
     karma: int
@@ -71,6 +74,7 @@ class User_in_Chat:
 
 class Telegram_Chat:
     """Model for telegram_chat row"""
+
     chat_id: str
     chat_name: str
 
@@ -81,17 +85,15 @@ class Telegram_Chat:
 
 class Telegram_Message:
     """Model for telegram_message row"""
+
     message_id: int
     chat_id: str
     author_user_id: int
     message_text: str
 
     def __init__(
-            self,
-            message_id: int,
-            chat_id: str,
-            author_user_id: int,
-            message_text: str) -> None:
+        self, message_id: int, chat_id: str, author_user_id: int, message_text: str
+    ) -> None:
         self.message_id = message_id
         self.message_text = message_text
         self.chat_id = chat_id
@@ -100,6 +102,7 @@ class Telegram_Message:
 
 class User_reacted_to_message:
     """Model for user_reacted_to_message row"""
+
     id: int
     user_in_chat_id: int
     message_id: int
@@ -107,12 +110,8 @@ class User_reacted_to_message:
     react_message_id: str
 
     def __init__(
-            self,
-            user_id,
-            user_in_chat_id,
-            message_id,
-            react_score,
-            react_message_id):
+        self, user_id, user_in_chat_id, message_id, react_score, react_message_id
+    ):
         self.id = user_id
         self.user_in_chat_id = user_in_chat_id
         self.message_id = message_id
@@ -120,7 +119,7 @@ class User_reacted_to_message:
         self.react_message_id = react_message_id
 
 
-#TODO: move these helpers functions elsewhere
+# TODO: move these helpers functions elsewhere
 def user_from_tg_user(user) -> User:
     """Creates a User object from a Telegram User object """
     return User(user.id, user.username, user.first_name, user.last_name)
@@ -129,7 +128,5 @@ def user_from_tg_user(user) -> User:
 def message_from_tg_message(message):
     """Creates a Telegram_message object from a Telegram message passed into the bot"""
     return Telegram_Message(
-        message.message_id,
-        message.chat.id,
-        message.from_user.id,
-        message.text)
+        message.message_id, message.chat.id, message.from_user.id, message.text
+    )

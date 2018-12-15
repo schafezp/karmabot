@@ -5,6 +5,7 @@ from typing import List, Tuple, Dict, Optional
 
 # ------------- Database helpers ---------------
 
+
 def get_model_user_from_graph_user(user: Dict) -> User:
     """ Converts neo4j database user into application logic user"""
     return User(user["id"], user["username"])
@@ -15,7 +16,9 @@ def get_model_chat_from_graph_chat(chat: Dict) -> Chat:
     return Chat(chat["id"], chat["name"])
 
 
-def convert_vote_types_from_dict_to_tuple(data: List, type_key, count_key) -> Tuple[int, int]:
+def convert_vote_types_from_dict_to_tuple(
+    data: List, type_key, count_key
+) -> Tuple[int, int]:
     """Requires order by type_key asc otherwise not guaranteed correct
     Data is a list.
     If list has 0 things then 0 positive and 0 negative votes were given.
@@ -41,6 +44,7 @@ def convert_vote_types_from_dict_to_tuple(data: List, type_key, count_key) -> Tu
 
 # ------------- Database calls ---------------
 
+
 def get_all_users(g: Graph) -> List[User]:
     """
     :param g:
@@ -53,11 +57,14 @@ def get_all_users(g: Graph) -> List[User]:
     users = [get_model_user_from_graph_user(user) for user in data[0]["users"]]
     return users
 
-def get_user(g: Graph, user_id: str)-> Optional[User]:
-    data = g.run("MATCH (n:User) where n.id = {user_id} return n as user", {"user_id": user_id}).data()
+
+def get_user(g: Graph, user_id: str) -> Optional[User]:
+    data = g.run(
+        "MATCH (n:User) where n.id = {user_id} return n as user", {"user_id": user_id}
+    ).data()
     if data == []:
         return None
-    #TODO: consider raising exception here
+    # TODO: consider raising exception here
     if len(data) > 1:
         return None
     else:
@@ -91,13 +98,20 @@ def get_message(g: Graph, message_id: str) -> Message:
     if data == []:
         return None
     if len(data) > 1:
-        return None #raise exception but should be handled by constraint
+        return None  # raise exception but should be handled by constraint
     else:
         result = data[0]
-        return Message(result["id"], result["chat_id"], result["author_user_id"], result["message_text"])
+        return Message(
+            result["id"],
+            result["chat_id"],
+            result["author_user_id"],
+            result["message_text"],
+        )
 
 
-def get_karma_given_by_user_in_chat(g: Graph, user_id: str, chat_id: str) -> Tuple[int, int]:
+def get_karma_given_by_user_in_chat(
+    g: Graph, user_id: str, chat_id: str
+) -> Tuple[int, int]:
     """Given a user and a chat, returns how much karma that user has given in that chat; seperated by positive and negative
 
     :param g: The graph
@@ -116,7 +130,9 @@ def get_karma_given_by_user_in_chat(g: Graph, user_id: str, chat_id: str) -> Tup
     return convert_vote_types_from_dict_to_tuple(data, "vote_type", "vote_count")
 
 
-def get_karma_received_by_user_in_chat(g: Graph, user_id: str, chat_id: str) -> Tuple[int,int]:
+def get_karma_received_by_user_in_chat(
+    g: Graph, user_id: str, chat_id: str
+) -> Tuple[int, int]:
     """Get number of positive and negative votes received by a user in a chat.
 
     :param g:
@@ -151,10 +167,10 @@ def get_message(g: Graph, message_id: str) -> Optional[Message]:
     if data == []:
         return None
     result = data[0]
-    user = get_model_user_from_graph_user(result['user'])
-    chat = get_model_chat_from_graph_chat(result['chat'])
-    m = result['message']
-    message = Message(m['id'], chat.chat_id, user.user_id, m['text'])
+    user = get_model_user_from_graph_user(result["user"])
+    chat = get_model_chat_from_graph_chat(result["chat"])
+    m = result["message"]
+    message = Message(m["id"], chat.chat_id, user.user_id, m["text"])
     return message
 
 
@@ -174,12 +190,16 @@ def create_or_update_message(g: Graph, message: Message):
     ON MATCH SET
     message.accessTime = timestamp(), message.text = {text}
     """
-    #TODO: handle failure cases (what if user or chat doesn't exist?)
-    data = g.run(command, {"user_id": message.author_user_id,
-                           "chat_id": message.chat_id,
-                           "message_id": message.message_id,
-                           "text": message.message_text
-                           }).data()
+    # TODO: handle failure cases (what if user or chat doesn't exist?)
+    data = g.run(
+        command,
+        {
+            "user_id": message.author_user_id,
+            "chat_id": message.chat_id,
+            "message_id": message.message_id,
+            "text": message.message_text,
+        },
+    ).data()
     return data
 
 
@@ -196,14 +216,15 @@ def get_karma_for_user_in_chat(g: Graph, user_id: str, chat_id: str) -> Optional
     WHERE user.id = {user_id} AND chat.id = {chat_id}
     return r.karma as karma"""
 
-    result = g.run(get_user_karma_command,
-                   {"user_id": user_id,
-                    "chat_id": chat_id}).data()
+    result = g.run(
+        get_user_karma_command, {"user_id": user_id, "chat_id": chat_id}
+    ).data()
 
     if len(result) == 0:
         return None
     else:
         return result[0]["karma"]
+
 
 def get_karma_for_users_in_chat(g: Graph, chat_id: str) -> List[Tuple[User, int]]:
     """Return the karma for all users in a given chat.
@@ -218,18 +239,24 @@ def get_karma_for_users_in_chat(g: Graph, chat_id: str) -> List[Tuple[User, int]
     WHERE chat.id = {chat_id}
     return user, r.karma as karma"""
 
-    result = g.run(get_user_karma_command,
-                   {"chat_id": chat_id}).data()
+    result = g.run(get_user_karma_command, {"chat_id": chat_id}).data()
 
     # TODO: verify behavior when chat doesn't exist
     if len(result) == 0:
         return []
     else:
-        user_result = list(map(lambda x: (get_model_user_from_graph_user(x['user']), x['karma']), result))
+        user_result = list(
+            map(
+                lambda x: (get_model_user_from_graph_user(x["user"]), x["karma"]),
+                result,
+            )
+        )
         return user_result
 
 
-def vote_on_message(g: Graph, reply_message: Message, reply_to_message: Message, vote: int):
+def vote_on_message(
+    g: Graph, reply_message: Message, reply_to_message: Message, vote: int
+):
     """ Applies a karma vote to a user for a given message.
     #TODO: raise exceptions for error conditions such as invalid message, vote, etc
     #TODO: check if vote already given: how?
@@ -240,9 +267,9 @@ def vote_on_message(g: Graph, reply_message: Message, reply_to_message: Message,
     :param vote: the value of the vote being applied. should only be 1 or -1 (filtered by server)
     :return:
     """
-    #give karma to author of reply_to_message
-    #make sure messages are saved
-    #create replied to relationship frmo reply to replied
+    # give karma to author of reply_to_message
+    # make sure messages are saved
+    # create replied to relationship frmo reply to replied
     assert vote in [-1, 1]
     create_or_update_message(g, reply_message)
     create_or_update_message(g, reply_to_message)
@@ -252,22 +279,26 @@ def vote_on_message(g: Graph, reply_message: Message, reply_to_message: Message,
     where  user.id = {user_id} AND reply_to_message.id = {reply_to_message_id}
     return r.vote as vote
     """
-    result = g.run(check_if_user_already_voted_cmd,
-                   {"user_id": reply_message.author_user_id,
-                    "reply_to_message_id": reply_to_message.message_id}).data()
+    result = g.run(
+        check_if_user_already_voted_cmd,
+        {
+            "user_id": reply_message.author_user_id,
+            "reply_to_message_id": reply_to_message.message_id,
+        },
+    ).data()
 
-    if len(result) >= 1:# was already replied to
-        existing_vote = result[0]['vote']
+    if len(result) >= 1:  # was already replied to
+        existing_vote = result[0]["vote"]
         if vote == existing_vote:
             return
         else:
             vote = 2 * vote
-    #TODO: override existing react relation
+    # TODO: override existing react relation
 
     # if vote matches vote value then do nothing
     # else add (-2)*vote to karma
 
-    #TODO: test that this relationship is created when it doesn't exist
+    # TODO: test that this relationship is created when it doesn't exist
     update_user_karma_command = """
     MERGE (user:User {id: {user_id}})
     -[r:USER_IN_CHAT]->(chat1)
@@ -276,9 +307,10 @@ def vote_on_message(g: Graph, reply_message: Message, reply_to_message: Message,
     ON CREATE SET
     r.karma = {vote}
     """
-    g.run(update_user_karma_command,
-                 {"user_id": reply_to_message.author_user_id,
-                  "vote": vote}).data()
+    g.run(
+        update_user_karma_command,
+        {"user_id": reply_to_message.author_user_id, "vote": vote},
+    ).data()
 
     create_react_relation = """
     MATCH (reply_message:Message), (reply_to_message:Message) 
@@ -290,8 +322,12 @@ def vote_on_message(g: Graph, reply_message: Message, reply_to_message: Message,
     r.vote = {vote}
     """
 
-    result = g.run(create_react_relation,
-                   {"reply_message_id": reply_message.message_id,
-                    "reply_to_message_id": reply_to_message.message_id,
-                       "vote": vote}).data()
+    result = g.run(
+        create_react_relation,
+        {
+            "reply_message_id": reply_message.message_id,
+            "reply_to_message_id": reply_to_message.message_id,
+            "vote": vote,
+        },
+    ).data()
     return result
