@@ -8,17 +8,31 @@ from matplotlib.ticker import MaxNLocator
 from .annotations import types
 from karmabot.services.telegramservice import KarmabotDatabaseService, UserNotFound
 from .formatters import format_show_karma_for_users_in_chat
-from .models.postgres_models import Telegram_Chat, Telegram_Message, user_from_tg_user, User
-from .responses import START_BOT_RESPONSE, FAILED_CLEAR_CHAT_DUE_TO_GROUPCHAT, SUCCESSFUL_CLEAR_CHAT
-from .commands_strings import SHOW_KARMA_COMMAND, USER_INFO_COMMAND, CHAT_INFO_COMMAND, HISTORY_GRAPH_COMMAND, SHOW_KARMA_KEYBOARD_COMMAND
+from .models.postgres_models import (
+    Telegram_Chat,
+    Telegram_Message,
+    user_from_tg_user,
+    User,
+)
+from .responses import (
+    START_BOT_RESPONSE,
+    FAILED_CLEAR_CHAT_DUE_TO_GROUPCHAT,
+    SUCCESSFUL_CLEAR_CHAT,
+)
+from .commands_strings import (
+    SHOW_KARMA_COMMAND,
+    USER_INFO_COMMAND,
+    CHAT_INFO_COMMAND,
+    HISTORY_GRAPH_COMMAND,
+    SHOW_KARMA_KEYBOARD_COMMAND,
+)
 
-VERSION = '1.04'  # TODO: make this automatic
+VERSION = "1.04"  # TODO: make this automatic
+
 
 def start(bot, update):
     """Message sent by bot upon first 1 on 1 interaction with the bot"""
-    bot.send_message(
-        chat_id=update.message.chat_id,
-        text=START_BOT_RESPONSE)
+    bot.send_message(chat_id=update.message.chat_id, text=START_BOT_RESPONSE)
 
 
 def error(bot, update, _error):
@@ -31,7 +45,7 @@ def show_version(bot, update, args):
     """Handler to show the current version"""
     message = f"Version: {VERSION}\nBot powered by Python."
     # harder to hack the bot if source code is obfuscated :p
-    #message = message + "\nChangelog found at: " + changelog_url
+    # message = message + "\nChangelog found at: " + changelog_url
     bot.send_message(chat_id=update.message.chat_id, text=message)
 
 
@@ -42,6 +56,7 @@ def gen_show_karma(dbservice: KarmabotDatabaseService):
         'showkarma', user_from_tg_user(
             update.message.from_user), str(
                 update.message.chat_id)) """
+
     @types
     def show_karma(bot, update, args):
         # returns username, first_name, karma
@@ -52,11 +67,14 @@ def gen_show_karma(dbservice: KarmabotDatabaseService):
         dbservice.use_command(SHOW_KARMA_COMMAND, user, chat_id)
         users_and_karma = dbservice.get_karma_for_users_in_chat(chat_id)
         message = format_show_karma_for_users_in_chat(users_and_karma)
-        bot.send_message(chat_id=update.message.chat_id, text=message, parse_mode=tg.ParseMode.HTML)
+        bot.send_message(
+            chat_id=update.message.chat_id, text=message, parse_mode=tg.ParseMode.HTML
+        )
+
     return show_karma
 
-def gen_reply(dbservice: KarmabotDatabaseService):
 
+def gen_reply(dbservice: KarmabotDatabaseService):
     def reply(bot: tg.Bot, update: tg.Update):
         """Handler that's run when one user replies to another userself.
         This handler checks if an upvote or downvote are given"""
@@ -68,18 +86,23 @@ def gen_reply(dbservice: KarmabotDatabaseService):
             update.message.reply_to_message.message_id,
             chat.chat_id,
             reply_user.id,
-            update.message.reply_to_message.text)
+            update.message.reply_to_message.text,
+        )
         reply_message = Telegram_Message(
             update.message.message_id,
             chat.chat_id,
             replying_user.id,
-            update.message.text)
+            update.message.text,
+        )
         reply_text = reply_message.message_text
 
         if re.match("^([+pP][1-9][0-9]*|[Pp]{2}).*", reply_text):
             # if user tried to +1 self themselves
             # chat id is user_id when the user is talking 1 on 1 with the bot
-            if(replying_user.id == update.message.reply_to_message.from_user.id and chat_id != str(reply_user.id)):
+            if (
+                replying_user.id == update.message.reply_to_message.from_user.id
+                and chat_id != str(reply_user.id)
+            ):
                 default_respose = "USER_FIRST_NAME you cannot +1 yourself"
                 response = dbservice.get_random_witty_response()
                 if response is None:
@@ -89,27 +112,20 @@ def gen_reply(dbservice: KarmabotDatabaseService):
                 bot.send_message(chat_id=chat_id, text=message)
             else:  # user +1 someone else
                 dbservice.user_reply_to_message(
-                    replying_user,
-                    reply_user,
-                    chat,
-                    original_message,
-                    reply_message,
-                    1)
+                    replying_user, reply_user, chat, original_message, reply_message, 1
+                )
                 logging.debug("user replying other user")
                 logging.debug(replying_user)
                 logging.debug(reply_user)
         # user -1 someone else
         elif re.match("^([\-mM][1-9][0-9]*|[Dd]{2}).*", reply_text):
             dbservice.user_reply_to_message(
-                replying_user,
-                reply_user,
-                chat,
-                original_message,
-                reply_message,
-                -1)
+                replying_user, reply_user, chat, original_message, reply_message, -1
+            )
             logging.debug("user replying other user")
             logging.debug(replying_user)
             logging.debug(reply_user)
+
     return reply
 
 
@@ -122,8 +138,7 @@ def gen_show_user_stats(db_service: KarmabotDatabaseService):
         # fail due to psycopg2.IntegrityError: insert or update on table
         # "command_used" violates foreign key constraint
         # "command_used_chat_id_fkey"
-        chat = Telegram_Chat(str(update.message.chat_id),
-                             update.message.chat.title)
+        chat = Telegram_Chat(str(update.message.chat_id), update.message.chat.title)
         db_service.save_or_create_chat(chat)
 
         user = user_from_tg_user(update.message.from_user)
@@ -133,7 +148,8 @@ def gen_show_user_stats(db_service: KarmabotDatabaseService):
         if len(args) != 1:
             bot.send_message(
                 chat_id=update.message.chat_id,
-                text="use command like: /userinfo username")
+                text="use command like: /userinfo username",
+            )
             return
         username = args[0]
         if username[0] == "@":
@@ -152,18 +168,22 @@ def gen_show_user_stats(db_service: KarmabotDatabaseService):
             Upvotes, Downvotes, Total Votes, Net Karma
             {:d}, {:d}, {:d}, {:d}"""
             message = message.format(
-                result['username'],
-                result['karma'],
-                result['upvotes_given'],
-                result['downvotes_given'],
-                result['total_votes_given'],
-                result['net_karma_given'])
+                result["username"],
+                result["karma"],
+                result["upvotes_given"],
+                result["downvotes_given"],
+                result["total_votes_given"],
+                result["net_karma_given"],
+            )
         except UserNotFound as _:
             message = f"No user with username: {username}"
 
-        bot.send_message(chat_id=update.message.chat_id, text=message, parse_mode=tg.ParseMode.HTML)
+        bot.send_message(
+            chat_id=update.message.chat_id, text=message, parse_mode=tg.ParseMode.HTML
+        )
 
     return show_user_stats
+
 
 def gen_show_chat_info(db_service: KarmabotDatabaseService):
     @types
@@ -177,12 +197,16 @@ def gen_show_chat_info(db_service: KarmabotDatabaseService):
             title = "No Title"
         result = db_service.get_chat_info(chat_id)
         message = "<b>Chat Name:</b> {:s}\n Number of Users with Karma: {:d}\n Total Reply Count: {:d}".format(
-            title, result['user_with_karma_count'], result['reply_count'])
-        bot.send_message(chat_id=update.message.chat_id, text=message, parse_mode=tg.ParseMode.HTML)
+            title, result["user_with_karma_count"], result["reply_count"]
+        )
+        bot.send_message(
+            chat_id=update.message.chat_id, text=message, parse_mode=tg.ParseMode.HTML
+        )
+
     return show_chat_info
 
-def gen_show_history_graph(db_service: KarmabotDatabaseService):
 
+def gen_show_history_graph(db_service: KarmabotDatabaseService):
     def show_history_graph(bot: tg.Bot, update: tg.Update):
         """Handler to show a graph of upvotes/downvotes per day"""
         chat_id = str(update.message.chat_id)
@@ -195,28 +219,30 @@ def gen_show_history_graph(db_service: KarmabotDatabaseService):
         logging.info(f"result: {result}")
 
         if result is None or result == []:
-            bot.send_message(chat_id=update.message.chat_id, text="No responses for this chat")
+            bot.send_message(
+                chat_id=update.message.chat_id, text="No responses for this chat"
+            )
             return
 
         bot.send_chat_action(
-            chat_id=update.message.chat_id,
-            action=tg.ChatAction.UPLOAD_PHOTO)
+            chat_id=update.message.chat_id, action=tg.ChatAction.UPLOAD_PHOTO
+        )
 
         days, responses = zip(*result)
 
-        figure_name = f'/output/graph_{chat_id}.png'
+        figure_name = f"/output/graph_{chat_id}.png"
         fig = plt.figure()
         ax = fig.add_subplot(1, 1, 1)
         ax.plot(days, responses)
-        ax.set_ylabel('Upvotes and Downvotes')
-        ax.set_xlabel('Day')
+        ax.set_ylabel("Upvotes and Downvotes")
+        ax.set_xlabel("Day")
         ax.yaxis.set_major_locator(MaxNLocator(integer=True))
-        ax.set_title(f'{chat_name}: User votes per day')
+        ax.set_title(f"{chat_name}: User votes per day")
         fig.autofmt_xdate()
         fig.savefig(figure_name)
 
+        bot.send_photo(chat_id=update.message.chat_id, photo=open(figure_name, "rb"))
 
-        bot.send_photo(chat_id=update.message.chat_id, photo=open(figure_name, 'rb'))
     return show_history_graph
 
 
@@ -226,7 +252,9 @@ def gen_clear_chat_with_bot(db_service: KarmabotDatabaseService):
         chat_id = update.message.chat_id
         user_id = update.message.from_user.id
         if user_id != chat_id:
-            bot.send_message(chat_id=update.message.chat_id, text=FAILED_CLEAR_CHAT_DUE_TO_GROUPCHAT)
+            bot.send_message(
+                chat_id=update.message.chat_id, text=FAILED_CLEAR_CHAT_DUE_TO_GROUPCHAT
+            )
             return
         bot.send_message(chat_id=update.message.chat_id, text=SUCCESSFUL_CLEAR_CHAT)
         db_service.clear_chat_with_bot(chat_id, user_id)
@@ -249,14 +277,21 @@ def gen_show_karma_personally(db_service: KarmabotDatabaseService):
             for (chat_id, chat_name) in result:
                 if chat_name is not None:
                     logging.info(f"Chat name:{chat_name}")
-                    keyboard.append([tg.InlineKeyboardButton(chat_name, callback_data=chat_id)])
+                    keyboard.append(
+                        [tg.InlineKeyboardButton(chat_name, callback_data=chat_id)]
+                    )
             reply_markup = tg.InlineKeyboardMarkup(keyboard)
-            update.message.reply_text('Please choose a chat:', reply_markup=reply_markup)
+            update.message.reply_text(
+                "Please choose a chat:", reply_markup=reply_markup
+            )
         else:
-            update.message.reply_text("""No chats available.
-            You can only see chats you have given or received karma in.""")
+            update.message.reply_text(
+                """No chats available.
+            You can only see chats you have given or received karma in."""
+            )
 
     return show_karma_personally
+
 
 def gen_show_karma_personally_button_pressed(db_service: KarmabotDatabaseService):
     def show_karma_personally_button_pressed(bot, update):
@@ -270,8 +305,11 @@ def gen_show_karma_personally_button_pressed(db_service: KarmabotDatabaseService
         if chat_name is not None:
             message = f"<b>Chat name: {chat_name}</b>\n{message}"
 
-        bot.edit_message_text(text=message,
-                              chat_id=query.message.chat_id,
-                              message_id=query.message.message_id,
-                              parse_mode=tg.ParseMode.HTML)
+        bot.edit_message_text(
+            text=message,
+            chat_id=query.message.chat_id,
+            message_id=query.message.message_id,
+            parse_mode=tg.ParseMode.HTML,
+        )
+
     return show_karma_personally_button_pressed

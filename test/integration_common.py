@@ -20,7 +20,7 @@ class Common_Integration(unittest.TestCase):
 
         # botname on test object
         self.TEST_BOT_NAME = TEST_BOT_NAME
-        SESSION_NAME = './session/my_account'
+        SESSION_NAME = "./session/my_account"
 
         client = BotIntegrationClient(
             bot_under_test=TEST_BOT_NAME,
@@ -28,13 +28,14 @@ class Common_Integration(unittest.TestCase):
             api_id=API_ID,  # See "Requirements" above, ...
             api_hash=API_HASH,  # alternatively use a `config.ini` file
             max_wait_response=15,  # Maximum timeout for bot responses
-            min_wait_consecutive=2  # Minimum time to wait for consecutive messages
+            min_wait_consecutive=2,  # Minimum time to wait for consecutive messages
         )
         self.client = client
-        #TODO: move start
+        # TODO: move start
         client.start()
 
     def tear_down_bot_client(test_suite):
         test_suite.client.stop()
 
-#https://github.com/schafezp/tgintegration.git
+
+# https://github.com/schafezp/tgintegration.git

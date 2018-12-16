@@ -6,6 +6,7 @@ import time
 from typing import Tuple
 import psycopg2
 
+
 def attempt_connect(time_sleep=1, do_log=True):
     """ returns connection to postgres
     attempts to reconnect every time_sleep seconds"""
@@ -17,10 +18,8 @@ def attempt_connect(time_sleep=1, do_log=True):
             USER = os.environ.get("POSTGRES_USER")
             PASSWORD = os.environ.get("POSTGRES_PASS")
             conn = psycopg2.connect(
-                host=HOST,
-                database=DATABASE,
-                user=USER,
-                password=PASSWORD)
+                host=HOST, database=DATABASE, user=USER, password=PASSWORD
+            )
             return conn
         except psycopg2.OperationalError as oe:
             if do_log:
@@ -29,10 +28,7 @@ def attempt_connect(time_sleep=1, do_log=True):
     return conn
 
 
-
-def check_env_vars_all_loaded(env_vars,
-                              do_log=True
-                             ) -> Tuple[bool, str]:
+def check_env_vars_all_loaded(env_vars, do_log=True) -> Tuple[bool, str]:
     """Checks required environment variables and returns false if required env vars are not set
     """
 
@@ -40,7 +36,7 @@ def check_env_vars_all_loaded(env_vars,
         logging.info("Environment Variables:")
     for var in env_vars:
         val = os.environ.get(var)
-        if val is None or val == '':
+        if val is None or val == "":
             if do_log:
                 logging.info(f"Variable: {var} Value: VALUE MISSING. EXITING")
             return (False, var)
@@ -48,5 +44,5 @@ def check_env_vars_all_loaded(env_vars,
             if do_log:
                 logging.info(f"Variable: {var} Value: {val}")
 
-    #TODO: return sensical second option; consider Optional[str]
+    # TODO: return sensical second option; consider Optional[str]
     return (True, "All Env vars loaded")

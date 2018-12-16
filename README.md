@@ -1,4 +1,6 @@
 # Karma Bot
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
+
 Karma bot tracks a karma score for each user. Use the bot with your friends to see who gets the most upvotes!
 
 ## Using the Bot
