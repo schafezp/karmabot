@@ -1,0 +1,6 @@
+\COPY command_used to 'command_used.csv' CSV HEADER
+telegram_chat
+telegram_message
+user_in_chat
+user_reacted_to_message
+witty_responses
