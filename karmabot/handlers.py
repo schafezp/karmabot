@@ -2,6 +2,7 @@ import re
 import logging
 
 import telegram as tg
+from telegram.ext import CallbackContext
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
 
@@ -43,8 +44,9 @@ def gen_show_karma(dbservice: KarmabotDatabaseService):
             update.message.from_user), str(
                 update.message.chat_id)) """
     @types
-    def show_karma(bot, update, args):
+    def show_karma(update: tg.Update, context: CallbackContext):
         # returns username, first_name, karma
+        bot: tg.Bot = context.bot
 
         logging.debug(f"Chat id: {str(update.message.chat_id)}")
         user = user_from_tg_user(update.message.from_user)
@@ -57,9 +59,10 @@ def gen_show_karma(dbservice: KarmabotDatabaseService):
 
 def gen_reply(dbservice: KarmabotDatabaseService):
 
-    def reply(bot: tg.Bot, update: tg.Update):
+    def reply(update: tg.Update, context: CallbackContext):
         """Handler that's run when one user replies to another userself.
         This handler checks if an upvote or downvote are given"""
+        bot: tg.Bot = context.bot
         reply_user = user_from_tg_user(update.message.reply_to_message.from_user)
         replying_user = user_from_tg_user(update.message.from_user)
         chat_id = str(update.message.chat_id)
@@ -115,13 +118,16 @@ def gen_reply(dbservice: KarmabotDatabaseService):
 
 def gen_show_user_stats(db_service: KarmabotDatabaseService):
     @types
-    def show_user_stats(bot, update, args):
+    def show_user_stats(update: tg.Update, context: CallbackContext, args):
+
         """Handler to return statistics on user"""
         # TODO: remove this boiler plate code somehow
         # without this if this is the first command run alone with the bot it will
         # fail due to psycopg2.IntegrityError: insert or update on table
         # "command_used" violates foreign key constraint
         # "command_used_chat_id_fkey"
+        args = context.args
+        bot = context.bot
         chat = Telegram_Chat(str(update.message.chat_id),
                              update.message.chat.title)
         db_service.save_or_create_chat(chat)
@@ -167,8 +173,10 @@ def gen_show_user_stats(db_service: KarmabotDatabaseService):
 
 def gen_show_chat_info(db_service: KarmabotDatabaseService):
     @types
-    def show_chat_info(bot, update, args):
+    def show_chat_info(update: tg.Update, context: CallbackContext):
         """Handler to show information about current chat """
+
+        bot = context.bot
         user = user_from_tg_user(update.message.from_user)
         chat_id = str(update.message.chat_id)
         db_service.use_command(CHAT_INFO_COMMAND, user, chat_id)
@@ -183,8 +191,10 @@ def gen_show_chat_info(db_service: KarmabotDatabaseService):
 
 def gen_show_history_graph(db_service: KarmabotDatabaseService):
 
-    def show_history_graph(bot: tg.Bot, update: tg.Update):
+    def show_history_graph(update: tg.Update, context: CallbackContext):
         """Handler to show a graph of upvotes/downvotes per day"""
+        bot = context.bot
+
         chat_id = str(update.message.chat_id)
         chat_name = str(update.message.chat.title)
         user = user_from_tg_user(update.message.from_user)
@@ -221,8 +231,9 @@ def gen_show_history_graph(db_service: KarmabotDatabaseService):
 
 
 def gen_clear_chat_with_bot(db_service: KarmabotDatabaseService):
-    def clear_chat_with_bot(bot, update):
+    def clear_chat_with_bot(update: tg.Update, context: CallbackContext):
         """Clears chat with bot"""
+        bot = context.bot
         chat_id = update.message.chat_id
         user_id = update.message.from_user.id
         if user_id != chat_id:
@@ -236,7 +247,7 @@ def gen_clear_chat_with_bot(db_service: KarmabotDatabaseService):
 
 def gen_show_karma_personally(db_service: KarmabotDatabaseService):
     @types
-    def show_karma_personally(bot, update: tg.Update):
+    def show_karma_personally(update: tg.Update, context: CallbackContext):
         """Conversation handler to allow users to check karma values through custom keyboard"""
         user_id = update.effective_user.id
         user: User = user_from_tg_user(update.effective_user)
@@ -259,8 +270,9 @@ def gen_show_karma_personally(db_service: KarmabotDatabaseService):
     return show_karma_personally
 
 def gen_show_karma_personally_button_pressed(db_service: KarmabotDatabaseService):
-    def show_karma_personally_button_pressed(bot, update):
+    def show_karma_personally_button_pressed(update: tg.Update, context: CallbackContext):
         """Runs /showkarma on chat the user_selected"""
+        bot = context.bot
         query = update.callback_query
         chat_id: str = str(query.data)
         karma_rows = db_service.get_karma_for_users_in_chat(chat_id)
