@@ -121,7 +121,6 @@ def gen_reply(dbservice: KarmabotDatabaseService):
 def gen_show_user_stats(db_service: KarmabotDatabaseService):
     @types
     def show_user_stats(update: tg.Update, context: CallbackContext):
-
         """Handler to return statistics on user"""
         # TODO: remove this boiler plate code somehow
         # without this if this is the first command run alone with the bot it will
