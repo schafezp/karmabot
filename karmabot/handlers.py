@@ -15,20 +15,22 @@ from .commands_strings import SHOW_KARMA_COMMAND, USER_INFO_COMMAND, CHAT_INFO_C
 
 VERSION = '1.04'  # TODO: make this automatic
 
-def start(bot, update):
+def start(update, context: CallbackContext):
     """Message sent by bot upon first 1 on 1 interaction with the bot"""
+    bot = context.bot
     bot.send_message(
         chat_id=update.message.chat_id,
         text=START_BOT_RESPONSE)
 
 
-def error(bot, update, _error):
+def error(update, context, _error):
     """Log Errors caused by Updates."""
     logging.warning('Update "%s" caused error "%s"', update, _error)
 
 
 @types
-def show_version(bot, update, args):
+def show_version(update, context: CallbackContext):
+    bot = context.bot
     """Handler to show the current version"""
     message = f"Version: {VERSION}\nBot powered by Python."
     # harder to hack the bot if source code is obfuscated :p
@@ -118,8 +120,7 @@ def gen_reply(dbservice: KarmabotDatabaseService):
 
 def gen_show_user_stats(db_service: KarmabotDatabaseService):
     @types
-    def show_user_stats(update: tg.Update, context: CallbackContext, args):
-
+    def show_user_stats(update: tg.Update, context: CallbackContext):
         """Handler to return statistics on user"""
         # TODO: remove this boiler plate code somehow
         # without this if this is the first command run alone with the bot it will

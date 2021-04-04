@@ -31,7 +31,7 @@ def attempt_connect(time_sleep=1, do_log=True):
 
 
 def check_env_vars_all_loaded(env_vars,
-                              do_log=True
+                              do_log=False
                              ) -> Tuple[bool, str]:
     """Checks required environment variables and returns false if required env vars are not set
     """
